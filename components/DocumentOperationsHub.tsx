@@ -3,10 +3,11 @@ import {useState} from "react";
 import DocumentWorkspace from "./DocumentWorkspace";
 import DocumentIntake from "./DocumentIntake";
 import HelpButton from "./HelpButton";
-import {employees} from "../lib/people";
+import {useHR} from "../lib/hrState";
 import type {Branch,Role} from "../lib/mock";
 type Request={id:number;employeeId:string;document:string;expiry:string;status:string};
 export default function DocumentOperationsHub({role,branch}:{role:Role;branch:Branch}){
+ const {data}=useHR();const employees=data.people;
  const [tab,setTab]=useState("Library & Templates"),[recipient,setRecipient]=useState(""),[document,setDocument]=useState("Employment Contract"),[expiry,setExpiry]=useState("2026-10-18"),[requests,setRequests]=useState<Request[]>([{id:1001,employeeId:"UC-0001",document:"Employee Accountability Form",expiry:"2026-10-20",status:"Pending request"}]),[notice,setNotice]=useState("");
  const users=employees.filter(p=>branch==="All Shops"||p.branch===branch);
  function create(){if(!recipient){setNotice("Select one employee for this request.");return}setRequests(p=>[{id:Date.now(),employeeId:recipient,document,expiry,status:"Prepared — secure link unavailable"},...p]);setNotice("Individual request prepared for review. No secure signing link has been issued.")}
