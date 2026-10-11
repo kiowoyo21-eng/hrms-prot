@@ -1,3 +1,11 @@
+## Public Incident Reporting (frontend review patch)
+
+Open the public workplace concern form at **`/report`** (same app domain), or via the login page or Incident Reports module. It has no login gate and displays intended routing: reported BM => HR-only; other staff => branch BM with HR CC; unknown => HR screening.
+
+**Not live:** The public form intentionally does **not** submit, email, store, or route sensitive reports until secure backend and permissions exist. The review page can download a local text draft. See `docs/PUBLIC-INCIDENT-REPORT-REVIEW.md` for completion criteria and privacy/security requirements.
+
+---
+
 # Underchargers HR — Frontend Workflow Review
 
 Next.js / React / TypeScript frontend review project (post-Phase 16 consolidated workflow simplification release).
