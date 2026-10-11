@@ -4,7 +4,8 @@ export const branches: Branch[] = ["All Shops","UC Mandaluyong","UC Las Piñas",
 export const modules = [
  {id:"dashboard",name:"Dashboard",icon:"LayoutDashboard",count:0},
  {id:"employees",name:"Employee 201 Files",icon:"FolderOpen",count:8},
- {id:"lifecycle",name:"Employee Life Cycle",icon:"Workflow",count:5},
+ {id:"submissions",name:"Employee Document Submission",icon:"FileUp",count:0},
+ {id:"lifecycle",name:"Recruitment & Hiring",icon:"Workflow",count:5},
  {id:"payroll",name:"Payroll",icon:"Wallet",count:3},
  {id:"leave",name:"Leave Management",icon:"CalendarCheck",count:2},
  {id:"loans",name:"Loans & Advances",icon:"HandCoins",count:2},
@@ -15,17 +16,13 @@ export const modules = [
  {id:"documents",name:"Documents & Templates",icon:"Files",count:0},
  {id:"filters",name:"Custom Filters & Reports",icon:"SlidersHorizontal",count:0},
  {id:"audit",name:"Grouped Audit Logs",icon:"ScrollText",count:2},
- {id:"completion",name:"HR Workflow Center",icon:"ClipboardList",count:0},
- {id:"advanced",name:"Advanced HR Screens",icon:"ClipboardList",count:0},
- {id:"qa",name:"Frontend QA Center",icon:"ClipboardCheck",count:0},
- {id:"review",name:"Final Review Hub",icon:"ClipboardCheck",count:0},
  {id:"settings",name:"Account Settings",icon:"Settings",count:0}
 ] as const;
 export type ModuleId = typeof modules[number]["id"];
 export const permissions: Record<Role, ModuleId[]> = {
  "Super Admin":modules.map(m=>m.id),
- "HR": ["dashboard","employees","lifecycle","payroll","leave","loans","ir","assets","compliance","tasks","documents","filters","audit","completion","advanced","qa","review","settings"],
- "BM": ["dashboard","employees","lifecycle","leave","ir","assets","tasks","documents","settings"]
+ "HR": ["dashboard","employees","lifecycle","payroll","leave","loans","ir","assets","compliance","tasks","documents","filters","audit","settings"],
+ "BM": ["dashboard","submissions","lifecycle","leave","ir","tasks","settings"]
 };
 export const demoAccounts = [{username:"admin",password:"admin12345",role:"Super Admin" as Role},{username:"hraccount",password:"hraccount12345",role:"HR" as Role},{username:"bmaccount",password:"bm12345",role:"BM" as Role}];
 export type Task = {id:number,module:ModuleId,title:string,branch:Branch,priority:"Critical"|"Urgent"|"Normal",status:"Pending"|"For Review"|"Overdue",owner:"HR"|"BM"|"Super Admin",due:string};
