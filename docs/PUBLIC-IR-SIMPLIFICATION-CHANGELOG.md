@@ -1,3 +1,5 @@
+> Historical reference only. The current public form behavior is in `PUBLIC-FORMS-REVISION-CHECKLIST.md`: `/report` has a Submit Report validation alert instead of a draft download, and `/apply` is the hiring form.
+
 # Public Incident Report — Simplicity and Required Identity Patch
 
 ## Completed

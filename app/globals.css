@@ -151,3 +151,17 @@
 .public-ir-draft-ready svg{flex-shrink:0}
 .public-ir-field input:focus-visible,.public-ir-field textarea:focus-visible,.public-ir-field select:focus-visible,.public-ir-option:focus-within{outline:2px solid #d3a72a;outline-offset:2px}
 @media(max-width:650px){.public-ir-target-options{grid-template-columns:1fr}.public-ir-card{padding:19px 17px}.public-ir-header h1{letter-spacing:-.8px}}
+
+/* Public careers application — uses the same single-page design as incident reporting */
+.public-application-upload{display:flex;align-items:center;flex-wrap:wrap;gap:11px;background:#fbfcfe;border:1px dashed #c4ccda;border-radius:11px;padding:17px;color:#8c6b13;min-width:0}
+.public-application-upload>div{flex:1;min-width:190px;display:grid;gap:5px;overflow-wrap:anywhere}
+.public-application-upload strong{font-size:13px;color:#273446;font-weight:700}
+.public-application-upload small{font-size:11px;color:#758397;font-weight:400}
+.public-application-upload input[type=file]{width:auto;max-width:100%;padding:8px;border:1px solid #e2e6ee;background:#fff;cursor:pointer;color:#405166;font-size:12px}
+.public-application-upload input[type=file]::file-selector-button{border:0;border-radius:7px;background:#fff2cb;padding:8px 11px;color:#6b4f07;font-weight:700;cursor:pointer;margin-right:9px}
+.public-application-upload:focus-within{outline:2px solid #d7ad34;outline-offset:2px}
+.public-application-file-error{color:#b12b2b;font-size:12px}
+.public-ir-foot-actions>span{display:inline-flex;align-items:center;gap:7px;line-height:1.5}
+@media(max-width:620px){.public-application-upload{align-items:flex-start}.public-application-upload input[type=file]{width:100%}}
+.phase2-head>a.secondary{text-decoration:none;white-space:nowrap}
+@media(max-width:700px){.phase2-head>a.secondary{white-space:normal}}

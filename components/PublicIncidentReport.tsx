@@ -1,7 +1,7 @@
 "use client";
 
 import {useState, type FormEvent} from "react";
-import {AlertTriangle, ArrowRight, ClipboardCheck, Download, FileText, Info, LockKeyhole, ShieldCheck} from "lucide-react";
+import {AlertTriangle, ArrowRight, ClipboardCheck, Send, FileText, Info, LockKeyhole, ShieldCheck} from "lucide-react";
 import {getIncidentRouting, type IncidentRespondentType} from "../lib/incidentRouting";
 
 type IncidentForm = {
@@ -36,45 +36,17 @@ function validPhone(phone:string){
 }
 function validEmail(email:string){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);}
 
-function downloadDraft(data:IncidentForm){
-  const routing=getIncidentRouting(data.respondentType as IncidentRespondentType);
-  const contents=[
-    "UNDERCHARGERS — WORKPLACE INCIDENT REPORT",
-    "PERSONAL DRAFT • NOT SUBMITTED OR RECEIVED", "",
-    `Reporter: ${data.reporterName.trim()}`,
-    `Phone: ${data.phone.trim() || "Not provided"}`,
-    `Email: ${data.email.trim() || "Not provided"}`, "",
-    `Branch: ${data.branch}`,
-    `Person's role: ${TARGETS.find(t=>t.value===data.respondentType)?.label || ""}`,
-    `Person being reported: ${data.respondentName.trim() || "Not specified"}`,
-    `Category: ${data.category}`,
-    `Incident date: ${data.incidentDate || "Not specified"}`,
-    `Location: ${data.incidentLocation.trim() || "Not specified"}`,
-    `Intended case handler: ${routing.heading}`,
-    "", "WHAT HAPPENED", data.description.trim(),
-    "", "WITNESSES / ADDITIONAL PEOPLE", data.witnesses.trim() || "Not provided",
-    "", "This is a locally generated personal draft. Nothing was sent to HR or any Branch Manager.",
-  ].join("\r\n");
-  const blob=new Blob([contents],{type:"text/plain;charset=utf-8"});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url; a.download="underchargers-incident-report-draft.txt"; a.click();
-  window.setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-
 export default function PublicIncidentReport(){
   const [form,setForm]=useState<IncidentForm>(INITIAL);
   const [errors,setErrors]=useState<string[]>([]);
-  const [draftReady,setDraftReady]=useState(false);
   const update=<K extends keyof IncidentForm>(field:K,value:IncidentForm[K])=>{
     setForm(previous=>({...previous,[field]:value}));
-    setDraftReady(false);
     if(errors.length)setErrors([]);
   };
   const routing=form.respondentType?getIncidentRouting(form.respondentType):null;
   const routingLabel=form.respondentType==="branch_manager"?"HR only — Branch Manager excluded":form.respondentType==="other_staff"?"Branch Manager handles; HR copied":"HR screens the report first";
 
-  function checkAndDownload(e:FormEvent<HTMLFormElement>){
+  function handleSubmit(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     const next:string[]=[];
     if(!form.reporterName.trim() || form.reporterName.trim().length<2)next.push("Enter your full name.");
@@ -86,9 +58,10 @@ export default function PublicIncidentReport(){
     if(!form.category)next.push("Select an incident category.");
     if(form.description.trim().length<30)next.push("Describe what happened in at least 30 characters.");
     setErrors(next);
-    if(next.length){setDraftReady(false);return;}
-    downloadDraft(form);
-    setDraftReady(true);
+    if(next.length)return;
+    const recipient=getIncidentRouting(form.respondentType as IncidentRespondentType);
+    const intended=recipient.handler==="HR"?"HR screening only":"Branch Manager, with HR copied";
+    window.alert(`Form validated. Intended recipient: ${intended}.\n\nThis is a frontend preview: your incident report was NOT sent, saved, or received. Do not use this page for real confidential reports until secure submission is activated.`);
   }
 
   return <main className="public-ir-page">
@@ -108,11 +81,11 @@ export default function PublicIncidentReport(){
       <div className="public-ir-unavailable" role="note">
         <AlertTriangle size={20}/>
         <div><strong>Preview only — reports are not being received yet.</strong>
-          <p>Do not enter real confidential case details. This page can only download a draft to your device; it does not submit or notify anyone.</p>
+          <p>Do not enter real confidential case details. The Submit button shows a preview alert only. No report is sent, saved, or delivered to HR/BM.</p>
         </div>
       </div>
 
-      <form className="public-ir-form" onSubmit={checkAndDownload} noValidate>
+      <form className="public-ir-form" onSubmit={handleSubmit} noValidate>
         <section className="public-ir-card">
           <div className="public-ir-section-title">
             <span className="public-ir-section-icon"><FileText size={20}/></span>
@@ -190,10 +163,9 @@ export default function PublicIncidentReport(){
         </section>
 
         {errors.length>0&&<div className="public-ir-errors" role="alert"><strong>Please complete the following:</strong><ul>{errors.map(error=><li key={error}>{error}</li>)}</ul></div>}
-        {draftReady&&<div className="public-ir-draft-ready" role="status"><Download size={19}/><span><strong>Personal draft downloaded.</strong> This did not create a case or send a report. You may update the form and download another draft.</span></div>}
         <div className="public-ir-foot-actions">
-          <span>Attachments and secure submission will be enabled when the backend is ready.</span>
-          <button type="submit" className="primary"><Download size={17}/> Download Draft (Not Submitted)</button>
+          <span>Submit checks the required fields and displays an alert. No report will be delivered yet.</span>
+          <button type="submit" className="primary"><Send size={17}/> Submit Report</button>
         </div>
       </form>
       <footer className="public-ir-footer"><span>Underchargers · Workplace Reporting</span><span>Public page · No login needed · No active submissions</span></footer>

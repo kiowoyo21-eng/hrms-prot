@@ -1,17 +1,19 @@
-## Latest Update: Public Incident Form Simplification
+# Underchargers HR PWA — Public Forms Frontend Patch
 
-- Streamlined public `/report` page into a single-page form with required reporter full name and at least one valid contact method.
-- Routing retained: complaints against a BM to HR only; other staff to BM with HR copied; unclear cases to HR screening.
-- The form **does not submit reports**; it produces a local personal draft only. Do not request real confidential details while in preview mode.
-- Read `docs/PUBLIC-IR-SIMPLIFICATION-CHANGELOG.md` for changes and testing instructions.
+## Latest changes
 
-## Public Incident Reporting (frontend review patch)
+**Public incident report (`/report`)**
+- Removed local text-draft download.
+- **Submit Report** validates required fields and displays an explicit *NOT SENT* browser alert. No report, case or notification is created.
+- Intended routing remains: reports about a Branch Manager → HR only; reports about other employees → BM with HR copied; unclear role → HR screening.
 
-Open the public workplace concern form at **`/report`** (same app domain), or via the login page or Incident Reports module. It has no login gate and displays intended routing: reported BM => HR-only; other staff => branch BM with HR CC; unknown => HR screening.
+**Public hiring application (`/apply`)**
+- New login-free single-page job application form with Full Name, Email, Contact Number, Position, Preferred Branch, optional Experience/Introduction and a **required Resume/CV selector**.
+- CV selection accepts PDF/DOC/DOCX files of at most 10 MB. The file remains in browser memory: it is **not uploaded, saved, emailed, or received**.
+- **Submit Application** validates the form and shows an explicit *NOT SENT* browser alert.
+- Links are available from the HR login page and the Recruitment & Hiring workspace. Both paths work directly with a shared deployment domain.
 
-**Not live:** The public form intentionally does **not** submit, email, store, or route sensitive reports until secure backend and permissions exist. The review page can download a local text draft. See `docs/PUBLIC-INCIDENT-REPORT-REVIEW.md` for completion criteria and privacy/security requirements.
-
----
+See `docs/PUBLIC-FORMS-REVISION-CHECKLIST.md` for a detailed completed/pending checklist.
 
 # Underchargers HR — Frontend Workflow Review
 
