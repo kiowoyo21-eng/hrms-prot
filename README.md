@@ -36,3 +36,10 @@ The review environment indicator remains in the UI; feature cards do not repetit
 ## Validation caveat
 
 TypeScript/JSX **syntax** checked using local TypeScript parser. Production compilation / full type checking was not possible because the required React/Next.js packages are not available offline. Please review build logs in Vercel and report the first genuine compiler error for remediation.
+
+
+## Phase 16 Build Correction (Legacy Files)
+
+Older files left on GitHub from direct browser uploads can still be compiled even when no longer present in the latest ZIP. The TypeScript entry-point scope now covers Next.js app files and shared library files, with all components imported by those files included transitively. Unused legacy screens are no longer independently typechecked. No application screens or workflows were removed in this fix.
+
+Please delete old components from GitHub once, as documented in `docs/GITHUB-LEGACY-CLEANUP.md`. The build fix does not make the frontend production-ready or implement backend security.
