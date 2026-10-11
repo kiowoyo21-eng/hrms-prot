@@ -1,31 +1,25 @@
-# Underchargers HR PWA — Phase 2 (Frontend)
+# Underchargers HR PWA — Phase 4 (Frontend Prototype)
 
-**Stack:** Next.js 15, React 19, TypeScript, Lucide. This is a UI prototype with in-memory mock data, not a secure production application.
+Complete replacement repository for GitHub → Vercel. Includes all Phase 1–3 files and the Phase 4 Documents & Templates workspace.
 
-## What's new in Phase 2
-- Employee 201 directory with name, ID, branch and employment-status filters.
-- New employee wizard-like form (HR / Super Admin in demo) for employment starting status, probation months, daily OR monthly salary and employee-specific SIL/VIL allocation/eligibility.
-- Profile view with Overview, Employment, Salary & Benefits, Documents and History tabs.
-- Branch filtering and BM access preview; the BM cannot use Add Employee in this UI.
-- Existing Phase 1 dashboard, login demo, sidebar, task badges, grouped logs and settings retained.
+## Run
+- Install dependencies: `npm install`
+- Development: `npm run dev`
+- Build: `npm run build`
+- Type check: `npm run lint`
 
-## Deployment — direct GitHub upload
-1. Extract the ZIP.
-2. Upload the **contents of this folder**, including `package.json` and `app/`, into the root of your GitHub repo (replace Phase 1 files with same names).
-3. Commit. Existing Vercel Git integration should deploy the new commit automatically.
-4. Use Next.js Framework Preset and `./` root directory.
+Use Next.js preset in Vercel and repository root containing `package.json`. No Supabase credentials are needed.
 
-If GitHub does not accept folder dragging, upload files with their paths using GitHub web upload or an appropriate repository editor; do not upload the ZIP itself as the app.
+## New in Phase 4
+- Dynamic document library filters, selection and CSV index export
+- One-at-a-time local file upload (PNG/JPG/PDF) with temporary preview and download/print
+- Template management interface (no actual autofill engine yet)
+- Practice signature drawing on-device
+- Sample QR and copyable signing URL (`example.invalid` intentionally cannot perform signing)
+- Proposed incremental schema in `docs/PHASE-4-DATABASE-BLUEPRINT.md`
 
-## Demo accounts — DEVELOPMENT ONLY
-- `admin` / `admin12345`
-- `hraccount` / `hraccount12345`
-- `bmaccount` / `bm12345`
+## Do not use with live employee data
+Accounts are frontend-only demo logins; uploaded files only exist in browser memory and disappear on refresh. Signatures here are practice images, not completed legal e-signing workflows. No approved document persists, and sample QR URLs are intentionally nonfunctional. Backend, authentication, approval workflow, secure storage, and logs come later.
 
-These credentials are visible in frontend code. **Do not upload employee information, sensitive documents, or use this as an actual HR login.** All Phase 2 employee additions are lost on browser refresh. No live files are uploaded or persisted.
-
-## Run locally (optional)
-`npm install` then `npm run dev`; run `npm run build` before production use.
-
-## Next phase
-Design and review frontend workflows for hiring, document templates, payroll and calendar; then approve incremental database blueprints, implement proper Supabase Auth and RLS, and connect one module at a time. The Phase 2 UI is not connected to Supabase.
+## GitHub update
+Extract ZIP and upload **contents** to repo root, preserving folder names; commit to trigger Vercel redeploy. Never upload ZIP as a file instead of extracting it.
