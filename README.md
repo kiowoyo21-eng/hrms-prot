@@ -1,33 +1,31 @@
-# Underchargers HR PWA — Phase 1 Frontend Prototype
+# Underchargers HR PWA — Phase 2 (Frontend)
 
-A Next.js TypeScript UI prototype for the UC/MM HR Management System.
+**Stack:** Next.js 15, React 19, TypeScript, Lucide. This is a UI prototype with in-memory mock data, not a secure production application.
 
-## Run locally
+## What's new in Phase 2
+- Employee 201 directory with name, ID, branch and employment-status filters.
+- New employee wizard-like form (HR / Super Admin in demo) for employment starting status, probation months, daily OR monthly salary and employee-specific SIL/VIL allocation/eligibility.
+- Profile view with Overview, Employment, Salary & Benefits, Documents and History tabs.
+- Branch filtering and BM access preview; the BM cannot use Add Employee in this UI.
+- Existing Phase 1 dashboard, login demo, sidebar, task badges, grouped logs and settings retained.
 
-Requires Node.js 20.9+ and npm.
+## Deployment — direct GitHub upload
+1. Extract the ZIP.
+2. Upload the **contents of this folder**, including `package.json` and `app/`, into the root of your GitHub repo (replace Phase 1 files with same names).
+3. Commit. Existing Vercel Git integration should deploy the new commit automatically.
+4. Use Next.js Framework Preset and `./` root directory.
 
-```bash
-npm install
-npm run dev
-```
+If GitHub does not accept folder dragging, upload files with their paths using GitHub web upload or an appropriate repository editor; do not upload the ZIP itself as the app.
 
-Open http://localhost:3000.
+## Demo accounts — DEVELOPMENT ONLY
+- `admin` / `admin12345`
+- `hraccount` / `hraccount12345`
+- `bmaccount` / `bm12345`
 
-## Demo accounts (development only)
+These credentials are visible in frontend code. **Do not upload employee information, sensitive documents, or use this as an actual HR login.** All Phase 2 employee additions are lost on browser refresh. No live files are uploaded or persisted.
 
-- Super Admin: `admin` / `admin12345`
-- HR: `hraccount` / `hraccount12345`
-- Branch Manager: `bmaccount` / `bm12345`
+## Run locally (optional)
+`npm install` then `npm run dev`; run `npm run build` before production use.
 
-**Security:** Demo credentials and role filtering are client-side only. They are unsuitable for production or real HR data. No actual authentication, DB writes, document signing, or secure role enforcement is implemented. Use Supabase Auth, backend permission checks and PostgreSQL RLS before connecting real employee records. Do not use these passwords in a live deployment.
-
-## Phase status
-
-- Implemented: navigation shell, demo login, responsive dashboard, scoped preview menus, sample task counters and filtering, grouped audit UI, account settings preview, and PWA manifest.
-- Not implemented: real persistence, attendance integration, payroll processing, government reporting, files/signatures, notifications, offline mode, and production authentication.
-
-See `docs/PHASE-1-CHECKLIST.md`.
-
-## Architecture direction
-
-Frontend-first with incremental schema blueprinting. Implement approved modules end-to-end (API, database, security, audit logs) after interface reviews.
+## Next phase
+Design and review frontend workflows for hiring, document templates, payroll and calendar; then approve incremental database blueprints, implement proper Supabase Auth and RLS, and connect one module at a time. The Phase 2 UI is not connected to Supabase.
