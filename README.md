@@ -1,9 +1,7 @@
-# Underchargers HR PWA — Phase 12
+# Underchargers HR PWA — Phase 13
 
-Full frontend project for GitHub/Vercel, incorporating all preceding phases and **15 detailed mock forms** inside HR Workflow Center.
+Frontend-only Next.js project for GitHub/Vercel. Includes previous Phase 1–12 UI plus the **Advanced HR Screens** module: dedicated sections for Employee 201, Payroll, Documents, Administration and Reports. Data is illustrative and exists only in browser memory. No backend, persistence or real authorization.
 
-UI only. No backend or Supabase. Draft entries and checklist status are volatile. Never enter real employee payroll/incident/private data or rely on demo access controls.
+Please read `docs/PHASE-13-REQUIREMENTS-AUDIT.md` before considering the frontend final.
 
-To deploy: extract ZIP and upload contents to repository root, replacing matching paths. Vercel build should be validated using `npm install && npm run build` when dependencies are available.
-
-See `docs/PHASE-12-CHECKLIST.md`.
+Run: `npm install`, then `npm run build` or `npm run dev`. Demo credentials are for review only.
