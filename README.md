@@ -1,25 +1,21 @@
-# Underchargers HR PWA — Phase 4 (Frontend Prototype)
+# Underchargers HR PWA — Phase 5 Frontend
 
-Complete replacement repository for GitHub → Vercel. Includes all Phase 1–3 files and the Phase 4 Documents & Templates workspace.
+This is a complete **replacement source project** containing all previous Phase 1–4 frontend modules plus the Phase 5 Payroll Workspace.
 
-## Run
-- Install dependencies: `npm install`
-- Development: `npm run dev`
-- Build: `npm run build`
-- Type check: `npm run lint`
+## Deploy using GitHub + Vercel (no IDE required)
+1. Extract the ZIP on your computer.
+2. Upload **the files inside this folder** into your existing GitHub repo root, preserving folders (`app/`, `components/`, `docs/`, `lib/`, `public/`).
+3. Replace matching files and commit. The Vercel integration can redeploy automatically.
+4. Keep Vercel Framework = Next.js, Root Directory = `./` if `package.json` is at the repo root.
 
-Use Next.js preset in Vercel and repository root containing `package.json`. No Supabase credentials are needed.
+## Phase 5 features
+- Thursday–Wednesday cutoff navigation
+- Demo payroll register and branch filter
+- Rate settings, holiday calendar, attendance CSV preview
+- Deduction and computation previews, approval status simulation, payslip list, CSV export
+- Architecture notes and checklist at `docs/PHASE-5-*.md`
 
-## New in Phase 4
-- Dynamic document library filters, selection and CSV index export
-- One-at-a-time local file upload (PNG/JPG/PDF) with temporary preview and download/print
-- Template management interface (no actual autofill engine yet)
-- Practice signature drawing on-device
-- Sample QR and copyable signing URL (`example.invalid` intentionally cannot perform signing)
-- Proposed incremental schema in `docs/PHASE-4-DATABASE-BLUEPRINT.md`
+## Critical warning
+All logins and data are frontend mock-ups. Demo payroll uses deliberately simplified formulas and is **not suitable for real pay, legal/tax/benefit compliance, actual approvals or real confidential employee data**. No Supabase backend has been configured. Demo state resets on refresh.
 
-## Do not use with live employee data
-Accounts are frontend-only demo logins; uploaded files only exist in browser memory and disappear on refresh. Signatures here are practice images, not completed legal e-signing workflows. No approved document persists, and sample QR URLs are intentionally nonfunctional. Backend, authentication, approval workflow, secure storage, and logs come later.
-
-## GitHub update
-Extract ZIP and upload **contents** to repo root, preserving folder names; commit to trigger Vercel redeploy. Never upload ZIP as a file instead of extracting it.
+The existing Phase 4 Document Workspace and other preceding modules remain in this project.
