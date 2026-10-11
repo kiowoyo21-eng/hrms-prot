@@ -1,21 +1,26 @@
-# Underchargers HR PWA — Phase 8 Frontend
+# Underchargers HR PWA — Phase 10 Frontend Review Baseline
 
-Complete replacement source for phases 1–8. Frontend prototype only (not a real HR/compliance application).
+A complete frontend-only continuation of Phases 1–9. This package adds grouped audit-search controls, usability/accessibility refinements and a Phase 10 validation checklist.
 
-## What's new
+## Running and deploying
 
-Government agency cards, compliance task workspace, search/filters, urgency labels, configurable recurrence previews, annual approval workflow simulation, task notes/status updates, demo evidence attachments (filename only), filtered CSV export, and Mandaluyong permit examples.
+Upload the **contents** of this directory directly into the existing GitHub repository root. Vercel should detect the Next.js framework automatically.
 
-Existing Phase 1–7 pages are retained. Agency logos are icon placeholders rather than official logo files.
+Local commands if Node is available:
 
-## GitHub + Vercel
+```sh
+npm install
+npm run build
+npm run dev
+```
 
-Extract ZIP, upload files in repository root (where `package.json` is located), preserve paths, and commit. `npm run build` on Vercel. No environment variables needed for frontend demo.
+## Prototype limitations
 
-## Important
+- All account credentials, data and permissions are demos. No secure authentication, backend, or database exists.
+- No live payroll calculations, official government submissions, secure e-signing, or permanent audit logs exist.
+- Source syntax was inspected, but a complete Next.js production build was **not verified** because dependency download was unavailable.
+- See `docs/PHASE-10-CHECKLIST.md` for the remaining acceptance tests.
 
-- All accounts are demo-only, insecure, and suitable only for non-sensitive prototypes.
-- Records are in memory and disappear on refresh.
-- All dates are illustrative; do not use this tool to file real compliance reports.
-- No backend, Supabase, secure auth, real file storage, government submission or live notifications.
-- Use production build testing before treating this as a working deployment.
+## Next stage
+
+Owner-led frontend layout revisions. Only after the UI is accepted should backend and incremental Supabase schema implementation begin.
