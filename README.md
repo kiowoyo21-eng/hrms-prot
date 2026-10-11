@@ -1,12 +1,10 @@
-# Underchargers HR PWA — Phase 14
+# Underchargers / MM HR Management PWA — Phase 15
 
-Complete frontend-only Next.js prototype from Phases 1–14. Phase 14 adds a dedicated **Frontend QA Center**, accessible to the HR and Super Admin demo roles. It provides searchable module checklist, manual review marks, gap summaries, navigation to screens, and CSV export.
+**Consolidated frontend review candidate** (not production or legal/payroll certified).
 
-**NOT PRODUCTION READY.** Sample data and hardcoded demo logins. No authentication, persistent records, payroll processing, secure signing or backend. Do not enter real employee data.
+Next.js 15, TypeScript, React 19 and client-side demo mock records. This ZIP retains previous Phase 1–14 modules and adds a **Final Review Hub** with 16 detailed, reviewable mock flows. Feedback can be written in-screen and downloaded as CSV; drafts are in-memory only. Do not use real employee data.
 
-## Local test (when npm dependencies are available)
-`npm install`
-`npm run lint`
-`npm run build`
+## GitHub & Vercel
+Extract ZIP and commit its contents at the root of the existing GitHub repository. Vercel rebuilds automatically if configured. Run `npm install && npm run build` in a networked build environment. Keep development-only credentials out of public production use.
 
-See `docs/PHASE-14-AUDIT.md` for verification and known limitations. Upload this project's root files to the existing GitHub repository to deploy a Vercel preview.
+See `docs/PHASE-15-FINAL-FRONTEND-REVIEW.md` for review steps and limitations.
