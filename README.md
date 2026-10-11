@@ -1,19 +1,9 @@
-# Underchargers HR Management PWA — Phase 11
+# Underchargers HR PWA — Phase 12
 
-Complete frontend-only project including Phases 1–10 and the Phase 11 **HR Workflow Center**.
+Full frontend project for GitHub/Vercel, incorporating all preceding phases and **15 detailed mock forms** inside HR Workflow Center.
 
-Phase 11 brings previously underrepresented requirements into an interactive, reviewable, multi-tab demo. Included categories: employee lifecycle, payroll controls, documents/signing, evaluations/requests, and administration. Search, status filter, mock add, demo status update, print and CSV export work in browser memory.
+UI only. No backend or Supabase. Draft entries and checklist status are volatile. Never enter real employee payroll/incident/private data or rely on demo access controls.
 
-## Deploy
+To deploy: extract ZIP and upload contents to repository root, replacing matching paths. Vercel build should be validated using `npm install && npm run build` when dependencies are available.
 
-Upload the **contents** of this ZIP at the root of your existing GitHub repository (where `package.json` lives) and commit. If already connected, Vercel starts a new deployment.
-
-## Important limitations
-
-- This is a **frontend prototype**, not a complete production HR system or a verified final layout.
-- No Supabase, database, secure authentication, live payments/payroll, real approvals, private file storage, or legally sufficient signatures. Do not use sensitive actual employee data.
-- The new HR Workflow Center is a consolidated review surface and does not replace in-depth screens/form implementations for each workflow.
-- Development-only credentials exist in `lib/mock.ts`; remove before real deployment with authentication.
-- No complete `next build` is claimed unless dependencies become available. Check Vercel build logs.
-
-See `docs/PHASE-11-CHECKLIST.md` for coverage and gaps.
+See `docs/PHASE-12-CHECKLIST.md`.
