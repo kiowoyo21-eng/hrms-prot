@@ -15,12 +15,13 @@ export const modules = [
  {id:"documents",name:"Documents & Templates",icon:"Files",count:0},
  {id:"filters",name:"Custom Filters & Reports",icon:"SlidersHorizontal",count:0},
  {id:"audit",name:"Grouped Audit Logs",icon:"ScrollText",count:2},
+ {id:"completion",name:"HR Workflow Center",icon:"ClipboardList",count:0},
  {id:"settings",name:"Account Settings",icon:"Settings",count:0}
 ] as const;
 export type ModuleId = typeof modules[number]["id"];
 export const permissions: Record<Role, ModuleId[]> = {
  "Super Admin":modules.map(m=>m.id),
- "HR": ["dashboard","employees","lifecycle","payroll","leave","loans","ir","assets","compliance","tasks","documents","filters","audit","settings"],
+ "HR": ["dashboard","employees","lifecycle","payroll","leave","loans","ir","assets","compliance","tasks","documents","filters","audit","completion","settings"],
  "BM": ["dashboard","employees","lifecycle","leave","ir","assets","tasks","documents","settings"]
 };
 export const demoAccounts = [{username:"admin",password:"admin12345",role:"Super Admin" as Role},{username:"hraccount",password:"hraccount12345",role:"HR" as Role},{username:"bmaccount",password:"bm12345",role:"BM" as Role}];

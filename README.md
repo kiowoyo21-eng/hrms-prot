@@ -1,26 +1,19 @@
-# Underchargers HR PWA — Phase 10 Frontend Review Baseline
+# Underchargers HR Management PWA — Phase 11
 
-A complete frontend-only continuation of Phases 1–9. This package adds grouped audit-search controls, usability/accessibility refinements and a Phase 10 validation checklist.
+Complete frontend-only project including Phases 1–10 and the Phase 11 **HR Workflow Center**.
 
-## Running and deploying
+Phase 11 brings previously underrepresented requirements into an interactive, reviewable, multi-tab demo. Included categories: employee lifecycle, payroll controls, documents/signing, evaluations/requests, and administration. Search, status filter, mock add, demo status update, print and CSV export work in browser memory.
 
-Upload the **contents** of this directory directly into the existing GitHub repository root. Vercel should detect the Next.js framework automatically.
+## Deploy
 
-Local commands if Node is available:
+Upload the **contents** of this ZIP at the root of your existing GitHub repository (where `package.json` lives) and commit. If already connected, Vercel starts a new deployment.
 
-```sh
-npm install
-npm run build
-npm run dev
-```
+## Important limitations
 
-## Prototype limitations
+- This is a **frontend prototype**, not a complete production HR system or a verified final layout.
+- No Supabase, database, secure authentication, live payments/payroll, real approvals, private file storage, or legally sufficient signatures. Do not use sensitive actual employee data.
+- The new HR Workflow Center is a consolidated review surface and does not replace in-depth screens/form implementations for each workflow.
+- Development-only credentials exist in `lib/mock.ts`; remove before real deployment with authentication.
+- No complete `next build` is claimed unless dependencies become available. Check Vercel build logs.
 
-- All account credentials, data and permissions are demos. No secure authentication, backend, or database exists.
-- No live payroll calculations, official government submissions, secure e-signing, or permanent audit logs exist.
-- Source syntax was inspected, but a complete Next.js production build was **not verified** because dependency download was unavailable.
-- See `docs/PHASE-10-CHECKLIST.md` for the remaining acceptance tests.
-
-## Next stage
-
-Owner-led frontend layout revisions. Only after the UI is accepted should backend and incremental Supabase schema implementation begin.
+See `docs/PHASE-11-CHECKLIST.md` for coverage and gaps.
