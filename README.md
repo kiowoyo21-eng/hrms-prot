@@ -1,21 +1,12 @@
-# Underchargers HR PWA — Phase 5 Frontend
+# Underchargers HR PWA — Phase 6 Frontend
 
-This is a complete **replacement source project** containing all previous Phase 1–4 frontend modules plus the Phase 5 Payroll Workspace.
+**Complete replacement repository** (Phase 1–5 files retained) for direct GitHub upload and Vercel deployment.
 
-## Deploy using GitHub + Vercel (no IDE required)
-1. Extract the ZIP on your computer.
-2. Upload **the files inside this folder** into your existing GitHub repo root, preserving folders (`app/`, `components/`, `docs/`, `lib/`, `public/`).
-3. Replace matching files and commit. The Vercel integration can redeploy automatically.
-4. Keep Vercel Framework = Next.js, Root Directory = `./` if `package.json` is at the repo root.
+## What's included
+Phase 6 adds a frontend-only Leave Management, Loans & Cash Advances, and Assets & Devices workspace with sample data, filtered CSV export, add forms, sample status transitions, SOA file-selection preview, and an incremental database blueprint.
 
-## Phase 5 features
-- Thursday–Wednesday cutoff navigation
-- Demo payroll register and branch filter
-- Rate settings, holiday calendar, attendance CSV preview
-- Deduction and computation previews, approval status simulation, payslip list, CSV export
-- Architecture notes and checklist at `docs/PHASE-5-*.md`
+Run with `npm install` and `npm run dev`; validate with `npm run build` before deploying. No Supabase environment variables are needed yet.
 
-## Critical warning
-All logins and data are frontend mock-ups. Demo payroll uses deliberately simplified formulas and is **not suitable for real pay, legal/tax/benefit compliance, actual approvals or real confidential employee data**. No Supabase backend has been configured. Demo state resets on refresh.
+**Security:** Demo credentials appear in client source and are not real authentication. No real employee data, medical files, loan information or signatures should be uploaded. This demonstration does not persist state or enforce server-side role restrictions. All approvals, remittances and signatures are simulations.
 
-The existing Phase 4 Document Workspace and other preceding modules remain in this project.
+Read `docs/PHASE-6-CHECKLIST.md` and `docs/PHASE-6-DATABASE-BLUEPRINT.md`.
