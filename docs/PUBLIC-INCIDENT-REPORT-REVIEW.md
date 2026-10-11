@@ -3,8 +3,8 @@
 ## Available UI
 - `/report` public page in the Next.js app; no login needed to view or complete draft fields.
 - Entry from HR login page and Incident Reports > Open Public Form / Copy Public Link.
-- Branch selection, target classification, issue type, incident date/location, description, witnesses, desired action, optional contact information and urgency.
-- Responsive form, basic required field checks, read-back review and personal text draft download.
+- Branch selection, target classification, issue type, incident date/location, description, and witnesses; **required reporter full name and at least one valid contact method (phone or email)**.
+- Responsive single-page form, required field checks, and a personal text draft download; no duplicate review screen.
 - Explanatory routing: reports involving a Branch Manager -> HR only (exclude BM); reports involving other employees -> assigned branch BM as primary handler and HR copied; unclear identity -> HR first for safe screening.
 
 ## Critical limitation: NOT a live reporting system
@@ -26,9 +26,9 @@ This is a frontend review prototype. No report is transmitted or saved to a serv
 ## Manual frontend review
 - Open `/report` in an incognito window; no sign-in is requested.
 - Pick each target option and check exact routing copy.
-- Confirm branch, role, category, subject, narrative validation.
-- Check optional contact vs no-name controls, responsive mobile layout and print-free review screen.
-- Finish review and download a draft; it must explicitly state NOT SUBMITTED.
+- Confirm branch, role, category, narrative (30+ characters), full name, and at least one valid contact method.
+- Check name is required, no anonymous option remains, and mobile layout works.
+- Download a draft; it must explicitly state NOT SUBMITTED.
 - Open HR workspace > Incident Reports and use both Open Public Form and Copy Public Link.
 - Do NOT test with personal/sensitive employee records.
 

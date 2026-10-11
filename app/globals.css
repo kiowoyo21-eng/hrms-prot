@@ -83,7 +83,7 @@
 .public-ir-progress>div.public-ir-progress-on{background:#fff2c9;border-color:#e9c854;color:#322b19}
 .public-ir-progress span{display:grid;place-items:center;border:1px solid #d6dbe2;border-radius:50%;width:24px;height:24px;flex-shrink:0;font-size:11px}
 .public-ir-progress-on span{background:#f1be26;border-color:#e4b71d;color:#26210c}
-.public-ir-form,.public-ir-review{display:grid;gap:17px}
+.public-ir-form{display:grid;gap:17px}
 .public-ir-card{background:#fff;border:1px solid #e5eaf0;border-radius:15px;padding:26px 27px;box-shadow:0 2px 12px #1c273707}
 .public-ir-section-title{display:flex;align-items:flex-start;gap:14px;padding-bottom:19px;margin-bottom:20px;border-bottom:1px solid #e9ebef}
 .public-ir-section-icon{display:grid;place-items:center;width:42px;height:42px;background:#fff4d3;border-radius:12px;color:#8f6b0e;flex-shrink:0}
@@ -132,3 +132,22 @@
 .ir-public-entry-actions a{text-decoration:none}
 @media(max-width:620px){.public-ir-page{padding:0 12px 18px}.public-ir-brand{padding:18px 2px 12px}.public-ir-header{padding:15px 0}.public-ir-card{padding:20px 17px}.public-ir-two,.public-ir-review-grid{grid-template-columns:1fr}.public-ir-progress{gap:6px}.public-ir-progress>div{padding:10px 9px;font-size:10px}.public-ir-section-title{gap:10px}.public-ir-foot-actions{align-items:stretch}.public-ir-foot-actions button{flex:1}.public-ir-home{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.public-ir-page *, .public-ir-page *::before, .public-ir-page *::after{scroll-behavior:auto!important;transition:none!important}}
+
+/* Simplified one-page public intake */
+.public-ir-shell{max-width:780px}
+.public-ir-header{padding:16px 0 10px}
+.public-ir-card{padding:24px 27px}
+.public-ir-section-title{padding-bottom:14px;margin-bottom:17px}
+.public-ir-section-title-compact{margin-bottom:15px}
+.public-ir-fields{gap:16px}
+.public-ir-target-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.public-ir-option{align-items:center;padding:12px 10px;min-height:48px}
+.public-ir-option input{margin-top:0}
+.public-ir-option strong{font-size:12px}
+.public-ir-target{gap:10px}
+.public-ir-route,.public-ir-route.private{padding:10px 12px;align-items:center}
+.public-ir-route span{font-size:12px;line-height:1.5}
+.public-ir-draft-ready{display:flex;align-items:flex-start;gap:10px;padding:13px 15px;background:#eaf8ef;border:1px solid #b3d8c0;border-radius:10px;color:#1c6440;font-size:12px;line-height:1.6}
+.public-ir-draft-ready svg{flex-shrink:0}
+.public-ir-field input:focus-visible,.public-ir-field textarea:focus-visible,.public-ir-field select:focus-visible,.public-ir-option:focus-within{outline:2px solid #d3a72a;outline-offset:2px}
+@media(max-width:650px){.public-ir-target-options{grid-template-columns:1fr}.public-ir-card{padding:19px 17px}.public-ir-header h1{letter-spacing:-.8px}}

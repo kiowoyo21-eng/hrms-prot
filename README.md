@@ -1,3 +1,10 @@
+## Latest Update: Public Incident Form Simplification
+
+- Streamlined public `/report` page into a single-page form with required reporter full name and at least one valid contact method.
+- Routing retained: complaints against a BM to HR only; other staff to BM with HR copied; unclear cases to HR screening.
+- The form **does not submit reports**; it produces a local personal draft only. Do not request real confidential details while in preview mode.
+- Read `docs/PUBLIC-IR-SIMPLIFICATION-CHANGELOG.md` for changes and testing instructions.
+
 ## Public Incident Reporting (frontend review patch)
 
 Open the public workplace concern form at **`/report`** (same app domain), or via the login page or Incident Reports module. It has no login gate and displays intended routing: reported BM => HR-only; other staff => branch BM with HR CC; unknown => HR screening.
