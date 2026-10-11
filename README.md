@@ -1,7 +1,12 @@
-# Underchargers HR PWA — Phase 13
+# Underchargers HR PWA — Phase 14
 
-Frontend-only Next.js project for GitHub/Vercel. Includes previous Phase 1–12 UI plus the **Advanced HR Screens** module: dedicated sections for Employee 201, Payroll, Documents, Administration and Reports. Data is illustrative and exists only in browser memory. No backend, persistence or real authorization.
+Complete frontend-only Next.js prototype from Phases 1–14. Phase 14 adds a dedicated **Frontend QA Center**, accessible to the HR and Super Admin demo roles. It provides searchable module checklist, manual review marks, gap summaries, navigation to screens, and CSV export.
 
-Please read `docs/PHASE-13-REQUIREMENTS-AUDIT.md` before considering the frontend final.
+**NOT PRODUCTION READY.** Sample data and hardcoded demo logins. No authentication, persistent records, payroll processing, secure signing or backend. Do not enter real employee data.
 
-Run: `npm install`, then `npm run build` or `npm run dev`. Demo credentials are for review only.
+## Local test (when npm dependencies are available)
+`npm install`
+`npm run lint`
+`npm run build`
+
+See `docs/PHASE-14-AUDIT.md` for verification and known limitations. Upload this project's root files to the existing GitHub repository to deploy a Vercel preview.
