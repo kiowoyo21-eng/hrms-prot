@@ -80,3 +80,7 @@ See `docs/REVISION-2026-10-12.md` for an itemized implementation and limitations
 The standalone HR Tasks module and duplicate Dashboard task listing have been removed. Module headers are compact with contextual info and a module-specific alert bell; notifications point to the originating record where implemented. Compliance is now organized into standalone **agency workspaces within the module** (not merely an agency list filter), with progress tracking, due-date urgency, all-branch/selected-branch applicability and per-branch review status. Leave and Incident records expose more detail; device inventory exposes registered branch and accountable employee. Recruitment can record interview dates and outcomes.
 
 **Deployment warning:** This remains a frontend review build. Sample accounts are not authenticated, role visibility is not secure authorization, browser storage is not appropriate for personal employee files, document uploads/signatures are not backend-verified, and government deadlines require independent official confirmation before relying on them. Use fictional data only. Build requires npm packages (`npm install`), which were unavailable in the packaging environment.
+
+## October 12 — Asset branch TypeScript build fix
+
+Fixed Vercel TypeScript error in `components/AssetWorkspace.tsx` Add Device branch selection. Also fixed a stale memo dependency for the inventory branch filter. See `docs/VERCEL-ASSET-BRANCH-TYPE-FIX.md`.

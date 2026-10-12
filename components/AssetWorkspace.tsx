@@ -56,10 +56,10 @@ export default function AssetWorkspace({branch,role}:{branch:Branch;role:Role}){
  const [outcome,setOutcome]=useState<"Free"|"Maintenance"|"Retired">("Free");
  const [message,setMessage]=useState("");
  const [adding,setAdding]=useState(false);
- const [newDevice,setNewDevice]=useState({name:"",serial:"",condition:"Good",accessories:"",homeBranch:branch==="All Shops"?"UC Mandaluyong":branch});
+ const [newDevice,setNewDevice]=useState<{name:string;serial:string;condition:string;accessories:string;homeBranch:string}>({name:"",serial:"",condition:"Good",accessories:"",homeBranch:branch==="All Shops"?"UC Mandaluyong":branch});
  const asset=assets.find(a=>a.id===selected);
  const employee=people.find(p=>p.id===employeeId);
- const visibleAssets=useMemo(()=>assets.filter(a=>(filter==="All"||a.status===filter)&&(branchFilter==="All"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branchFilter)&&(branch==="All Shops"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branch)&&`${a.id} ${a.name} ${a.serial} ${people.find(p=>p.id===a.employeeId)?.name||""}`.toLowerCase().includes(search.toLowerCase())),[assets,people,filter,search]);
+ const visibleAssets=useMemo(()=>assets.filter(a=>(filter==="All"||a.status===filter)&&(branchFilter==="All"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branchFilter)&&(branch==="All Shops"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branch)&&`${a.id} ${a.name} ${a.serial} ${people.find(p=>p.id===a.employeeId)?.name||""}`.toLowerCase().includes(search.toLowerCase())),[assets,people,filter,search,branchFilter,branch]);
  const employeeMatches=people.filter(p=>(branch==="All Shops"||p.branch===branch)&&`${p.id} ${p.name}`.toLowerCase().includes(employeeSearch.toLowerCase()));
  const scopedAssets=assets.filter(a=>branch==="All Shops"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branch);
  const count=(status:AssetStatus)=>scopedAssets.filter(a=>a.status===status).length;
