@@ -1,10 +1,11 @@
 "use client";
 
-import {useMemo,useState,type FormEvent} from "react";
+import {useEffect,useMemo,useState,type FormEvent} from "react";
+import {createPortal} from "react-dom";
 import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
 import {shopNames,type Shop} from "../lib/people";
-import {useHR,effectiveRate,type HRPerson} from "../lib/hrState";
+import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
 import HelpButton from "./HelpButton";
 import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
 
@@ -67,7 +68,9 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const [tab,setTab]=useState("Profile");
  const [salaryPeriod,setSalaryPeriod]=useState<"month"|"year"|"all">("year");
  const [uploads,setUploads]=useState<Record<string,LocalEmployeeFile[]>>({});
- const [employmentDraft,setEmploymentDraft]=useState<{department:string;probation:number;sil:number;vil:number}|null>(null);
+ const [employmentDraft,setEmploymentDraft]=useState<{probation:number;sil:number;vil:number}|null>(null);
+ const [historyKind,setHistoryKind]=useState<"branch"|"role"|null>(null);
+ const [requestedMemo,setRequestedMemo]=useState<string|null>(null);
  const [add,setAdd]=useState(false);
  const [form,setForm]=useState({...emptyForm});
  const [editing,setEditing]=useState(false);
@@ -77,12 +80,15 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const [effective,setEffective]=useState("2026-10-12");
  const [dest,setDest]=useState<Shop>("UC Mandaluyong");
  const [newPosition,setNewPosition]=useState("");
+ const [newDepartment,setNewDepartment]=useState("Operations");
+ const [memoReference,setMemoReference]=useState("");
  const [newRate,setNewRate]=useState("");
  const [reason,setReason]=useState("");
  const [decision,setDecision]=useState("Approved");
  const [separationType,setSeparationType]=useState("Resignation");
  const [message,setMessage]=useState("");
 
+ useEffect(()=>{if(!historyKind)return;const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setHistoryKind(null)};window.addEventListener("keydown",onKey);return ()=>window.removeEventListener("keydown",onKey)},[historyKind]);
  const positions=useMemo(()=>[...new Set(data.people.filter(p=>branch==="All Shops"||p.branch===branch).map(p=>p.position))].sort(),[data.people,branch]);
  const genders=useMemo(()=>[...new Set(data.people.filter(p=>branch==="All Shops"||p.branch===branch).map(p=>p.gender))].sort(),[data.people,branch]);
  const people=useMemo(()=>{
@@ -147,6 +153,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   salaryPeriod==="all"||(salaryPeriod==="year"&&r.paidAt.startsWith(String(new Date().getFullYear())))||(salaryPeriod==="month"&&r.paidAt.startsWith(new Date().toISOString().slice(0,7)))
  )):[];
  const totals=paidSalary.reduce((t,r)=>({gross:t.gross+r.gross,deductions:t.deductions+r.deductions,net:t.net+r.net}),{gross:0,deductions:0,net:0});
+ const assignmentHistory:EmployeeAssignment[]=person?(person.assignmentHistory?.length?person.assignmentHistory:[{id:`legacy-current-${person.id}`,effectiveDate:"",kind:"Initial Assignment",branch:person.branch,department:person.department,position:person.position}]):[];
  const assignedAssets=person?data.assets.filter(a=>a.employeeId===person.id&&["Assigned","For Return","Inspection"].includes(a.status)):[];
  const draft=personal;
 
@@ -157,11 +164,12 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const openProfile=(id:string,edit=false)=>{
   const target=data.people.find(p=>p.id===id);
   setSelected(id);setTab("Profile");setAction(null);setEditing(edit);setPersonal(edit&&target?toPersonalDraft(target):null);
-  setEmploymentDraft(edit&&target?{department:target.department,probation:target.probation,sil:target.sil,vil:target.vil}:null);
+  setEmploymentDraft(edit&&target?{probation:target.probation,sil:target.sil,vil:target.vil}:null);
+  setHistoryKind(null);setRequestedMemo(null);
   setMessage("");setAdd(false);
  };
  const backToDirectory=()=>{
-  setSelected(null);setAction(null);setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("");setAdd(false);
+  setSelected(null);setHistoryKind(null);setRequestedMemo(null);setAction(null);setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("");setAdd(false);
  };
  const setFilter=(fn:()=>void)=>{fn();setPage(1)};
  const resetFilters=()=>{
@@ -178,14 +186,14 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   if(key==="hiredFrom")setHiredFrom("");if(key==="hiredTo")setHiredTo("");
   if(key==="documents")setDocumentFilter("All");if(key==="quick")setQuick("All");
  });
- const startEdit=()=>{if(!person)return;setTab("Profile");setPersonal(toPersonalDraft(person));setEmploymentDraft({department:person.department,probation:person.probation,sil:person.sil,vil:person.vil});setEditing(true);setMessage("")};
+ const startEdit=()=>{if(!person)return;setTab("Profile");setPersonal(toPersonalDraft(person));setEmploymentDraft({probation:person.probation,sil:person.sil,vil:person.vil});setEditing(true);setMessage("")};
  const persistProfile=()=>{
   if(!draft||!draft.name.trim()){setMessage("Employee full name is required.");return}
   updatePerson(p=>({...p,...draft,...(employmentDraft||{}),hire:p.hire,name:draft.name.trim(),timeline:[`${new Date().toISOString().slice(0,10)} · Personal details updated`,...p.timeline]}));
   setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("Employee details saved to this browser.");
  };
  const savePersonal=(e:FormEvent)=>{e.preventDefault();persistProfile()};
- const hasUnsavedEdit=()=>Boolean(person&&editing&&((personal&&JSON.stringify(personal)!==JSON.stringify(toPersonalDraft(person)))||(employmentDraft&&JSON.stringify(employmentDraft)!==JSON.stringify({department:person.department,probation:person.probation,sil:person.sil,vil:person.vil}))));
+ const hasUnsavedEdit=()=>Boolean(person&&editing&&((personal&&JSON.stringify(personal)!==JSON.stringify(toPersonalDraft(person)))||(employmentDraft&&JSON.stringify(employmentDraft)!==JSON.stringify({probation:person.probation,sil:person.sil,vil:person.vil}))));
  const confirmLeavingEdits=()=>!hasUnsavedEdit()||window.confirm("You have unsaved employee changes. Discard them and continue?");
  const openAssetsForPerson=()=>{if(person&&onAssignDevice&&confirmLeavingEdits())onAssignDevice(person.id)};
  const openPayRates=()=>{if(person&&onOpenPayroll&&confirmLeavingEdits())onOpenPayroll(person.id)};
@@ -193,7 +201,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   if(!person||!confirmLeavingEdits())return;
   setEditing(false);setPersonal(null);setEmploymentDraft(null);
   setAction(a);setStep(0);setReason("");setDecision("Approved");setSeparationType("Resignation");setEffective("2026-10-12");
-  setDest(person.branch);setNewPosition(person.position);setNewRate(String(person.rate));setMessage("");
+  setDest(person.branch);setNewPosition(person.position);setNewDepartment(person.department);setNewRate(String(person.rate));setMemoReference("");setMessage("");
  };
  function create(e:FormEvent){
   e.preventDefault();
@@ -212,7 +220,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
    emergencyName:form.emergencyName,emergencyRelationship:form.emergencyRelationship,
    emergencyPhone:form.emergencyPhone,
    documents:["Resume","Medical Clearance","Employment Contract","NDA / Company Policies","Government IDs"].map(name=>({name,status:"Missing"})),
-   timeline:[`${form.hire} · Employee registered at ${form.branch}`]
+   timeline:[`${form.hire} · Employee registered at ${form.branch}`],assignmentHistory:[{id:`initial-${id}`,effectiveDate:form.hire,kind:"Initial Assignment",branch:form.branch,department:form.department,position:form.position}]
   };
   update(s=>({...s,people:[p,...s.people]}));
   setForm({...emptyForm});setAdd(false);openProfile(id);
@@ -222,23 +230,33 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   if(!person||!action||!reason.trim()){
    setMessage("Enter a supporting reason, evaluation or approval reference before recording the action.");return;
   }
-  if(action==="Transfer"&&dest===person.branch){setMessage("Select a different destination branch.");return}
+  if(action==="Transfer"&&dest===person.branch&&newDepartment===person.department&&newPosition.trim()===person.position){setMessage("Change the branch, department, or position to record a transfer/reassignment.");return}
   if(action==="Promote"&&(!newPosition.trim()||!(Number(newRate)>0))){setMessage("Enter the new position and approved basic rate.");return}
+  if((action==="Transfer"||action==="Promote")&&!newDepartment.trim()){setMessage("Select the receiving department.");return}
   if(action==="Offboard"&&decision==="Approved"&&assignedAssets.length>0){
    setMessage("Complete device retrieval and inspection before marking offboarding as approved.");return;
   }
   const entry=`${effective} · ${action}${action==="Offboard"?` — ${separationType}`:""} (${decision}) · ${reason.trim()}`;
   const employmentChange:Partial<HRPerson>=decision!=="Approved"?{}:
    action==="Regularize"?{status:"Regular",probation:0}:
-   action==="Transfer"?{branch:dest}:
-   action==="Promote"?{position:newPosition.trim(),rate:Number(newRate)}:
+   action==="Transfer"?{branch:dest,department:newDepartment,position:newPosition.trim()}:
+   action==="Promote"?{department:newDepartment,position:newPosition.trim(),rate:Number(newRate)}:
    action==="Offboard"?{status:"Clearance Pending"}:{};
-  updatePerson(p=>({...p,...employmentChange,timeline:[entry,...p.timeline]}));
+  const isAssignmentChange=decision==="Approved"&&(action==="Transfer"||action==="Promote");
+  const memoId=memoReference.trim().toUpperCase();
+  updatePerson(p=>({
+   ...p,...employmentChange,timeline:[entry,...p.timeline],
+   assignmentHistory:isAssignmentChange?[
+    ...(p.assignmentHistory?.length?p.assignmentHistory:[{id:`legacy-baseline-${p.id}-${Date.now()}`,effectiveDate:"",kind:"Initial Assignment" as const,branch:p.branch,department:p.department,position:p.position}]),
+    {id:`assignment-${Date.now()}`,effectiveDate:effective,kind:action==="Transfer"?(dest===p.branch?"Reassignment":"Transfer"):"Promotion",branch:action==="Transfer"?dest:p.branch,department:newDepartment,position:newPosition.trim(),...(memoId?{memoId,memoType:action==="Transfer"?(dest===p.branch?"Memo of Reassignment":"Memo of Transfer"):"Memo of Promotion"}:{})}
+   ]:p.assignmentHistory
+  }));
   setAction(null);setStep(0);setMessage(`${action} decision recorded in employee history.`);
  }
  const next=()=>{
   if(!action)return;
   if(step===0&&action==="Promote"&&(!newPosition.trim()||!(Number(newRate)>0))){setMessage("Enter the proposed position and approved basic rate.");return}
+  if(step===0&&action==="Transfer"&&(!newPosition.trim()||(dest===person?.branch&&newDepartment===person.department&&newPosition.trim()===person.position))){setMessage("Select a changed assignment and fill in the assigned position.");return}
   if(step>=1&&!reason.trim()){setMessage("Provide a written reason or approval reference before continuing.");return}
   setMessage("");setStep(n=>Math.min(2,n+1));
  };
@@ -389,8 +407,15 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
       </section>}
       {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-employment">
        <div className="rev-title"><h4>Employment Details</h4></div>
-       {editing&&employmentDraft&&<div className="rev-form emp201-edit-inline"><label>Department<select value={employmentDraft.department} onChange={e=>setEmploymentDraft(v=>v?{...v,department:e.target.value}:v)}>{departments.map(x=><option key={x}>{x}</option>)}</select></label><label>Probation Months<input type="number" min="0" max="12" value={employmentDraft.probation} onChange={e=>setEmploymentDraft(v=>v?{...v,probation:Number(e.target.value)}:v)}/></label><label>SIL Allocation (days)<input type="number" min="0" value={employmentDraft.sil} onChange={e=>setEmploymentDraft(v=>v?{...v,sil:Number(e.target.value)}:v)}/></label><label>VIL Allocation (days)<input type="number" min="0" value={employmentDraft.vil} onChange={e=>setEmploymentDraft(v=>v?{...v,vil:Number(e.target.value)}:v)}/></label></div>}
-       <div className="rev-facts employee201-facts"><div><small>Employee ID</small><b>{person.id}</b></div><div><small>Branch</small><b>{person.branch}</b></div><div><small>Department</small><b>{editing&&employmentDraft?employmentDraft.department:person.department}</b></div><div><small>Position</small><b>{person.position}</b></div><div><small>Status</small><b>{person.status}</b></div><div className="emp201-date-fact"><small>Hire Date <span title="Set during hiring/onboarding. Locked after employee registration." className="emp201-lock-mark"><ShieldCheck size={12}/></span></small><b>{formatDate(person.hire)}</b></div><div><small>Probation</small><b>{person.probation?`${person.probation} months`:"Not applicable"}</b></div></div>
+       {editing&&employmentDraft&&<div className="rev-form emp201-edit-inline"><label>Probation Months<input type="number" min="0" max="12" value={employmentDraft.probation} onChange={e=>setEmploymentDraft(v=>v?{...v,probation:Number(e.target.value)}:v)}/></label><label>SIL Allocation (days)<input type="number" min="0" value={employmentDraft.sil} onChange={e=>setEmploymentDraft(v=>v?{...v,sil:Number(e.target.value)}:v)}/></label><label>VIL Allocation (days)<input type="number" min="0" value={employmentDraft.vil} onChange={e=>setEmploymentDraft(v=>v?{...v,vil:Number(e.target.value)}:v)}/></label></div>}
+       <div className="rev-facts employee201-facts emp201-employment-facts">
+        <div><small>Employee ID</small><b>{person.id}</b></div>
+        <div className="emp201-clickable-fact"><small>Branch</small><button type="button" onClick={()=>setHistoryKind("branch")} title="View branch assignment and transfer history"><b>{person.branch}</b><span>View branch history <ArrowRight size={12}/></span></button></div>
+        <div className="emp201-clickable-fact"><small>Department & Position</small><button type="button" onClick={()=>setHistoryKind("role")} title="View department, position, promotion and reassignment history"><b>{person.department} — {person.position}</b><span>View assignment history <ArrowRight size={12}/></span></button></div>
+        <div><small>Status</small><b>{person.status}</b></div>
+        <div className="emp201-date-fact"><small>Hire Date <span title="Set during hiring/onboarding. Locked after employee registration." className="emp201-lock-mark"><ShieldCheck size={12}/></span></small><b>{formatDate(person.hire)}</b></div>
+        <div><small>Probation</small><b>{person.probation?`${person.probation} months`:"Not applicable"}</b></div>
+       </div>
        
       </section>}
       </div>}
@@ -405,7 +430,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         <div><small>Regular overtime</small><b>{effectiveRate(person,data.rates).ot}%</b></div><div><small>Rest-day work</small><b>{effectiveRate(person,data.rates).rdw}%</b></div><div><small>Rest-day overtime</small><b>{effectiveRate(person,data.rates).rdot}%</b></div><div><small>Regular holiday</small><b>{effectiveRate(person,data.rates).regular}%</b></div><div><small>Special day</small><b>{effectiveRate(person,data.rates).special}%</b></div>
        </div>
       </section>}
-      {tab==="Documents"&&<EmployeeDocumentLibrary person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} onUpload={(folder,file)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file}]}));return id}}/>}
+      {tab==="Documents"&&<EmployeeDocumentLibrary person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} onUpload={(folder,file,memoId)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId}]}));return id}}/>}
       {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-evaluations">
        <h4>Performance Reviews <span className="emp201-heading-count">{person.timeline.filter(t=>t.includes("Evaluate")).length}</span></h4>
        {person.timeline.filter(t=>t.includes("Evaluate")).map((t,i)=><div className="rev-row" key={i}><ClipboardList size={17}/><span>{t}</span></div>)}
@@ -436,12 +461,25 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
       <div className="emp201-offboarding"><div><h5>End Employment</h5><span>Resignation, termination, or contract completion</span></div><button type="button" className="emp201-offboard-button" disabled={person.status==="Clearance Pending"} onClick={()=>startAction("Offboard")}>Process Offboarding <ArrowRight size={15}/></button></div>
      </div>}
     </>}
+    {historyKind&&createPortal(<div className="emp201-history-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setHistoryKind(null)}}>
+      <section className="emp201-history-modal" role="dialog" aria-modal="true" aria-labelledby="emp201-history-title">
+       <header><div><h3 id="emp201-history-title">{historyKind==="branch"?"Branch History":"Department & Position History"}</h3><p>{person.name} · {person.id}</p></div><button type="button" className="secondary" aria-label="Close assignment history" onClick={()=>setHistoryKind(null)}><X size={16}/> Close</button></header>
+       <div className="emp201-history-current"><small>Current {historyKind==="branch"?"Branch":"Department & Position"}</small><b>{historyKind==="branch"?person.branch:`${person.department} — ${person.position}`}</b></div>
+       <div className="emp201-history-scroll"><table><thead><tr><th>{historyKind==="branch"?"Branch":"Department & Position"}</th><th>Effective Date</th><th>Change</th><th>Memo</th></tr></thead><tbody>{[...assignmentHistory].sort((a,b)=>b.effectiveDate.localeCompare(a.effectiveDate)).map((h,i)=><tr key={h.id||i}>
+        <td><b>{historyKind==="branch"?h.branch:h.department}</b>{historyKind==="role"&&<small>{h.position}</small>}{historyKind==="branch"&&<small>{h.department} · {h.position}</small>}</td>
+        <td>{h.effectiveDate?formatDate(h.effectiveDate):"Not recorded"}</td><td>{h.kind}</td>
+        <td>{h.memoId?<button type="button" className="emp201-memo-link" onClick={()=>{setHistoryKind(null);setTab("Documents");setRequestedMemo(h.memoId||null)}}><FileText size={14}/><span>{h.memoId}<small>{h.memoType||"Employment Memo"}</small></span></button>:<span className="emp201-no-memo">No memo attached</span>}</td>
+       </tr>)}</tbody></table></div>
+       <footer><span>Memo links open Employee 201 → Documents → Employment Memos. Older browser records may not include complete assignment history.</span></footer>
+      </section>
+     </div>,document.body)}
     {action&&<div className="rev-process">
      <div className="rev-title"><h3>{actionLabels[action]} — {person.name}</h3><button className="secondary" onClick={()=>setAction(null)}>Cancel</button></div>
      <div className="rev-steps">{stages[action].map((x,i)=><span key={x} className={i<=step?"active":""}>{i+1}. {x}</span>)}</div>
      <p><strong>Step {step+1}:</strong> {stages[action][step]}</p>
-     {action==="Transfer"&&<label>Receiving branch<select value={dest} onChange={e=>setDest(e.target.value as Shop)}>{shopNames.map(x=><option key={x}>{x}</option>)}</select></label>}
-     {action==="Promote"&&<div className="rev-form"><label>New position<input value={newPosition} onChange={e=>setNewPosition(e.target.value)}/></label><label>Approved basic rate<input type="number" min="1" value={newRate} onChange={e=>setNewRate(e.target.value)}/></label></div>}
+     {action==="Transfer"&&<div className="rev-form"><label>Receiving branch<select value={dest} onChange={e=>setDest(e.target.value as Shop)}>{shopNames.map(x=><option key={x}>{x}</option>)}</select></label><label>Assigned department<select value={newDepartment} onChange={e=>setNewDepartment(e.target.value)}>{departments.map(x=><option key={x}>{x}</option>)}</select></label><label>Assigned position<input value={newPosition} onChange={e=>setNewPosition(e.target.value)} required/></label></div>}
+     {action==="Promote"&&<div className="rev-form"><label>New department<select value={newDepartment} onChange={e=>setNewDepartment(e.target.value)}>{departments.map(x=><option key={x}>{x}</option>)}</select></label><label>New position<input value={newPosition} onChange={e=>setNewPosition(e.target.value)}/></label><label>Approved basic rate<input type="number" min="1" value={newRate} onChange={e=>setNewRate(e.target.value)}/></label></div>}
+     {(action==="Transfer"||action==="Promote")&&<label>Memo reference (if issued)<input maxLength={64} value={memoReference} placeholder="e.g. MEMO-2026-001" onChange={e=>setMemoReference(e.target.value)}/><small className="muted">Link the uploaded memo in Documents → Employment Memos using this reference.</small></label>}
      {action==="Offboard"&&<><label>Separation Type<select value={separationType} onChange={e=>setSeparationType(e.target.value)}><option>Resignation</option><option>Termination</option><option>Contract Completion</option><option>End of Project</option><option>Retirement</option></select></label><p className="rev-note">{assignedAssets.length} outstanding device(s). Final approval requires completed equipment retrieval and inspection. Termination decisions require appropriate documentation and authorized review.</p></>}
      <label>Effective date<input type="date" value={effective} onChange={e=>setEffective(e.target.value)}/></label>
      <label>Assessment, supporting reason or approval reference<textarea rows={3} value={reason} onChange={e=>setReason(e.target.value)} placeholder="Explain the decision and supporting information"/></label>

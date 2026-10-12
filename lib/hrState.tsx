@@ -1,10 +1,14 @@
 "use client";
 import {createContext,useContext,useEffect,useMemo,useState,type ReactNode} from "react";
 import {employees as samples,type Person} from "./people";
+export type EmployeeAssignment={
+ id:string;effectiveDate:string;kind:"Initial Assignment"|"Transfer"|"Promotion"|"Reassignment";
+ branch:string;department:string;position:string;memoId?:string;memoType?:string;
+};
 export type HRDocument={name:string;status:"Missing"|"Submitted"|"Verified"};
 export type HRPerson=Person & {
  email:string;phone:string;hire:string;probation:number;sil:number;vil:number;
- documents:HRDocument[];timeline:string[];
+ documents:HRDocument[];timeline:string[];assignmentHistory?:EmployeeAssignment[];
  // Optional profile fields allow older browser-stored employees to remain compatible.
  birthDate?:string;civilStatus?:string;address?:string;
  emergencyName?:string;emergencyRelationship?:string;emergencyPhone?:string;
@@ -23,7 +27,7 @@ const requirements=["Resume","Medical Clearance","Employment Contract","NDA / Co
 export const defaultRate:PremiumProfile={ot:125,rdw:130,rdot:169,regular:200,special:130,effective:"2026-10-01",reason:"Company reference profile"};
 export const deptRate:Record<string,Partial<PremiumProfile>>={Operations:{ot:200,rdw:200,rdot:260},Service:{ot:150}};
 export const initialState:HRState={
- people:samples.map((p,i)=>({...p,email:"",phone:"",probation:p.status==="Probationary"?6:0,sil:5,vil:i%2?5:0,documents:requirements.map((name,j)=>({name,status:j===0?"Verified":j===1?"Missing":"Submitted"})),timeline:[`${p.hire} · Hired at ${p.branch}`]})),
+ people:samples.map((p,i)=>({...p,email:"",phone:"",probation:p.status==="Probationary"?6:0,sil:5,vil:i%2?5:0,documents:requirements.map((name,j)=>({name,status:j===0?"Verified":j===1?"Missing":"Submitted"})),timeline:[`${p.hire} · Hired at ${p.branch}`],assignmentHistory:[{id:`initial-${p.id}`,effectiveDate:p.hire,kind:"Initial Assignment" as const,branch:p.branch,department:p.department,position:p.position}]})),
  rates:{"UC-0001":{...defaultRate,ot:200,rdw:200,rdot:260,effective:"2026-10-01",reason:"Approved individual reference profile"}},
  assets:[
  {id:"AST-1001",homeBranch:"UC Mandaluyong",name:"Mac mini M2",serial:"UC-MAC-1001",status:"Assigned",employeeId:"UC-0001",condition:"Good",accessories:"Keyboard, power cable",history:["2026-10-03 · Assigned to UC-0001"],signed:true,date:"2026-10-03"},

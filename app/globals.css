@@ -372,3 +372,37 @@
 .empdoc-preview.full .empdoc-paper{width:100%;height:100%;margin:0;padding:30px}
 @media(max-width:750px){.empdoc-pageframe{width:min(100%,290px)}.empdoc-previewbody{min-height:280px;max-height:560px}}
 .emp201-actions-area{scroll-margin-top:86px}
+
+
+/* Employee 201 assignment history / employment memo patch */
+.emp201-profile-topgrid{grid-template-columns:minmax(0,1fr);gap:11px;align-items:start}
+.emp201-profile-topgrid>.employee201-profile-section{height:auto}
+.employee201-profile-section .rev-facts.employee201-facts{grid-template-columns:repeat(3,minmax(0,1fr));gap:3px 14px!important}
+.employee201-profile-section .rev-facts.employee201-facts>div{padding:8px 6px!important;min-width:0}
+.emp201-employment-facts .emp201-clickable-fact button{display:grid;gap:5px;width:100%;text-align:left;cursor:pointer;border:1px solid #e6eaf0;border-radius:8px;background:#fafbfc;padding:9px 10px;color:#263547}
+.emp201-employment-facts .emp201-clickable-fact button:hover,.emp201-employment-facts .emp201-clickable-fact button:focus-visible{border-color:#d2ad49;background:#fff8e7;outline-offset:2px}
+.emp201-employment-facts .emp201-clickable-fact button b{font-size:12px;line-height:1.4}
+.emp201-employment-facts .emp201-clickable-fact button span{display:flex;align-items:center;gap:4px;color:#7b5f15;font-size:10px;font-weight:700}
+.emp201-history-overlay{position:fixed;z-index:1400;inset:0;background:rgba(18,29,43,.62);display:flex;align-items:center;justify-content:center;padding:18px}
+.emp201-history-modal{background:#fff;color:#283549;border-radius:14px;box-shadow:0 24px 80px #14213855;width:min(900px,100%);max-height:min(88vh,860px);display:flex;flex-direction:column;overflow:hidden}
+.emp201-history-modal header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;border-bottom:1px solid #e6ebf2}
+.emp201-history-modal header h3{font-size:16px;margin:0 0 3px}.emp201-history-modal header p{font-size:11px;color:#788497;margin:0}.emp201-history-modal header button{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.emp201-history-current{display:grid;gap:3px;background:#fffaf0;border:1px solid #f1e6c9;border-radius:8px;margin:12px 18px 6px;padding:10px 13px}.emp201-history-current small{color:#8c794e;font-size:10px}.emp201-history-current b{font-size:13px}
+.emp201-history-scroll{overflow:auto;padding:7px 18px 12px}.emp201-history-scroll table{width:100%;border-collapse:collapse;font-size:12px;min-width:570px}.emp201-history-scroll th{text-align:left;color:#6b7889;background:#f6f8fb;font-size:11px;padding:11px 12px}.emp201-history-scroll td{padding:12px;border-bottom:1px solid #edf0f5;vertical-align:top}.emp201-history-scroll td b,.emp201-history-scroll td small{display:block}.emp201-history-scroll td small{margin-top:5px;color:#7d8796}
+.emp201-memo-link{display:inline-flex;align-items:center;gap:5px;color:#805900;background:#fff8e7;border:1px solid #e8ce87;border-radius:7px;padding:7px 9px;font-size:11px;font-weight:750;cursor:pointer}.emp201-memo-link:hover{background:#ffedbd}.emp201-no-memo{font-size:11px;color:#8895a5}
+.emp201-history-modal footer{padding:10px 18px 14px;color:#798596;font-size:10.5px;border-top:1px solid #edf0f4;line-height:1.5}
+.empdoc-folderbar{grid-template-columns:repeat(5,minmax(0,1fr))}.empdoc-memoattach{display:flex;align-items:center;flex-wrap:wrap;gap:8px;border:1px solid #e9e4d6;background:#fffdf6;border-radius:9px;padding:8px 11px}.empdoc-memoattach label{font-size:11px;font-weight:700;display:flex;align-items:center;gap:8px}.empdoc-memoattach select{border:1px solid #dce2e9;background:#fff;border-radius:7px;padding:6px 8px;font-size:11px}.empdoc-memoattach small{font-size:10px;color:#7d8490}
+/* Portal-based enlarged document viewer: independent of sidebar and page overflow. */
+.empdoc-fullscreen-backdrop{position:fixed;z-index:2500;inset:0;background:rgba(12,23,39,.78);padding:3vh 5vw;display:flex;align-items:stretch;justify-content:center}
+.empdoc-fullscreen-backdrop .empdoc-preview.full{position:relative!important;inset:auto!important;z-index:auto!important;box-shadow:0 20px 70px #0006!important;width:min(1050px,100%);height:100%;border-radius:12px;display:flex;flex-direction:column;overflow:hidden}
+.empdoc-fullscreen-backdrop .empdoc-previewhead{position:relative;z-index:2;padding:12px 16px;background:#fff;flex-shrink:0}
+.empdoc-fullscreen-backdrop .empdoc-previewbody{flex:1!important;min-height:0!important;max-height:none!important;overflow:auto}
+.empdoc-fullscreen-backdrop .empdoc-pageframe{width:min(100%,575px)}
+.empdoc-fullscreen-backdrop .empdoc-pager{background:#fff;flex-shrink:0}
+.empdoc-fullclose{display:flex;align-items:center;gap:6px!important;padding:8px 12px!important;font-size:12px!important;font-weight:800!important;border-radius:8px;border:1px solid #e5cece!important;color:#922727!important;background:#fff4f3!important;cursor:pointer;white-space:nowrap}
+.empdoc-fullclose:hover,.empdoc-fullclose:focus-visible{background:#ffe4e2!important;border-color:#bf7777!important}
+.empdoc-fullclose small{font-size:10px;color:#966868;font-weight:500}
+.empdoc-expandlabel{font-size:10px;margin-left:4px}
+@media(max-width:1000px){.empdoc-folderbar{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:750px){.employee201-profile-section .rev-facts.employee201-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.empdoc-fullscreen-backdrop{padding:8px}.empdoc-fullscreen-backdrop .empdoc-preview.full{width:100%;height:100%}.empdoc-folderbar{grid-template-columns:repeat(2,minmax(0,1fr))}.empdoc-fullclose small{display:none}}
+@media(max-width:480px){.employee201-profile-section .rev-facts.employee201-facts{grid-template-columns:minmax(0,1fr)}.emp201-history-overlay{padding:7px}.emp201-history-modal{max-height:96vh}.emp201-history-modal header{padding:12px}.emp201-history-scroll{padding:8px}.emp201-history-modal footer{padding:10px}.empdoc-expandlabel{display:none}}
