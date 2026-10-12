@@ -5,6 +5,7 @@ import {Laptop,Plus,ArrowLeft,ArrowRight,FileSignature,ClipboardCheck,FileText,I
 import type {Branch,Role} from "../lib/mock";
 import {useHR,type AssetRecord,type AssetStatus} from "../lib/hrState";
 import HelpButton from "./HelpButton";
+import {ModuleAlertButton} from "./ModuleAlerts";
 import {printHRDocument} from "../lib/printDocument";
 
 type Process="assign"|"retrieve"|"inspect";
@@ -34,7 +35,8 @@ export default function AssetWorkspace({branch,role}:{branch:Branch;role:Role}){
  const editable=role==="HR"||role==="Super Admin";
  const setAssets=(change:(prev:AssetRecord[])=>AssetRecord[])=>update(s=>({...s,assets:change(s.assets)}));
  const [search,setSearch]=useState("");
- const [filter,setFilter]=useState<AssetStatus|"All">("Free");
+ const [filter,setFilter]=useState<AssetStatus|"All">("All");
+ const [branchFilter,setBranchFilter]=useState<string>("All");
  const [selected,setSelected]=useState<string|null>(null);
  const [process,setProcess]=useState<Process|null>(null);
  const [stage,setStage]=useState(0);
@@ -54,12 +56,13 @@ export default function AssetWorkspace({branch,role}:{branch:Branch;role:Role}){
  const [outcome,setOutcome]=useState<"Free"|"Maintenance"|"Retired">("Free");
  const [message,setMessage]=useState("");
  const [adding,setAdding]=useState(false);
- const [newDevice,setNewDevice]=useState({name:"",serial:"",condition:"Good",accessories:""});
+ const [newDevice,setNewDevice]=useState({name:"",serial:"",condition:"Good",accessories:"",homeBranch:branch==="All Shops"?"UC Mandaluyong":branch});
  const asset=assets.find(a=>a.id===selected);
  const employee=people.find(p=>p.id===employeeId);
- const visibleAssets=useMemo(()=>assets.filter(a=>(filter==="All"||a.status===filter)&&`${a.id} ${a.name} ${a.serial} ${people.find(p=>p.id===a.employeeId)?.name||""}`.toLowerCase().includes(search.toLowerCase())),[assets,people,filter,search]);
+ const visibleAssets=useMemo(()=>assets.filter(a=>(filter==="All"||a.status===filter)&&(branchFilter==="All"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branchFilter)&&(branch==="All Shops"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branch)&&`${a.id} ${a.name} ${a.serial} ${people.find(p=>p.id===a.employeeId)?.name||""}`.toLowerCase().includes(search.toLowerCase())),[assets,people,filter,search]);
  const employeeMatches=people.filter(p=>(branch==="All Shops"||p.branch===branch)&&`${p.id} ${p.name}`.toLowerCase().includes(employeeSearch.toLowerCase()));
- const count=(status:AssetStatus)=>assets.filter(a=>a.status===status).length;
+ const scopedAssets=assets.filter(a=>branch==="All Shops"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branch);
+ const count=(status:AssetStatus)=>scopedAssets.filter(a=>a.status===status).length;
  const resetProcess=()=>{setProcess(null);setSelected(null);setStage(0);setMessage("")};
  const begin=(id:string,type:Process)=>{
   const a=assets.find(x=>x.id===id);
@@ -75,9 +78,10 @@ export default function AssetWorkspace({branch,role}:{branch:Branch;role:Role}){
  const editSelected=(fields:Partial<AssetRecord>)=>setAssets(prev=>prev.map(x=>x.id===selected?{...x,...fields}:x));
  const addDevice=(e:FormEvent)=>{
   e.preventDefault();if(!editable)return;
+  if(branch!=="All Shops"&&newDevice.homeBranch!==branch){setMessage("Device branch must match your selected authorized branch.");return}
   const serial=newDevice.serial.trim();if(assets.some(a=>a.serial.trim().toLowerCase()===serial.toLowerCase())){setMessage("Serial number already exists. Please enter a unique serial number.");return}
-  setAssets(prev=>[{id:`AST-${1+Math.max(1000,...prev.map(a=>Number(a.id.replace(/\D/g,""))||0))}`,name:newDevice.name.trim(),serial,status:"Free",employeeId:"",condition:newDevice.condition,accessories:newDevice.accessories,notes:"",history:[`${today()}: Device registered`],date:today(),signed:false},...prev]);
-  setNewDevice({name:"",serial:"",condition:"Good",accessories:""});setFilter("Free");setAdding(false);setMessage("Device added to available inventory in this browser.")
+  setAssets(prev=>[{id:`AST-${1+Math.max(1000,...prev.map(a=>Number(a.id.replace(/\D/g,""))||0))}`,name:newDevice.name.trim(),homeBranch:newDevice.homeBranch,serial,status:"Free",employeeId:"",condition:newDevice.condition,accessories:newDevice.accessories,notes:"",history:[`${today()}: Device registered`],date:today(),signed:false},...prev]);
+  setNewDevice({name:"",serial:"",condition:"Good",accessories:"",homeBranch:branch==="All Shops"?"UC Mandaluyong":branch});setFilter("All");setAdding(false);setMessage("Device added to available inventory in this browser.")
  };
  const formFields=():[string,unknown][]=>[
   ["Accountable employee",employee?.name||"Not selected"],["Employee number",employee?.id||""],
@@ -115,20 +119,20 @@ export default function AssetWorkspace({branch,role}:{branch:Branch;role:Role}){
  };
  const canConfirmAssignment=Boolean(employeeId&&officer.trim()&&handedOver&&(signMethod==="onsite"&&signatureDrawn||signMethod==="print"&&signedCopy));
  return <div className="rev-stack">
-  <div className="rev-title"><div><h3>Device Inventory & Accountability</h3><p>Every device is accountable to a specific employee, not a branch.</p></div><div className="rev-actions"><HelpButton topic="asset" label="Asset procedures"/>{editable&&<button className="primary" type="button" onClick={()=>{setAdding(true);resetProcess()}}><Plus size={16}/> Add Device</button>}</div></div>
+  <div className="rev-title mu-section-head"><div><h3>Device Inventory</h3><small className="mu-compact-sub">{assets.length} devices · {assets.filter(a=>a.status==="Pending Turnover").length} pending turnover</small></div><div className="rev-actions"><ModuleAlertButton module="assets" branch={branch} onOpen={a=>setSelected(a.id.replace("asset-",""))}/><HelpButton topic="asset" label="Info"/>{editable&&<button className="primary" type="button" onClick={()=>{setAdding(true);resetProcess()}}><Plus size={16}/> Add Device</button>}</div></div>
   {message&&<div className="rev-note" role="status">{message}</div>}
-  {adding&&<section className="panel"><div className="rev-title"><h3>Add Device</h3><button className="secondary" onClick={()=>setAdding(false)}>Cancel</button></div><form className="rev-form" onSubmit={addDevice}><label>Device name<input required value={newDevice.name} onChange={e=>setNewDevice(x=>({...x,name:e.target.value}))}/></label><label>Unique serial number<input required value={newDevice.serial} onChange={e=>setNewDevice(x=>({...x,serial:e.target.value}))}/></label><label>Initial condition<select value={newDevice.condition} onChange={e=>setNewDevice(x=>({...x,condition:e.target.value}))}>{["New","Good","Used","Damaged"].map(x=><option key={x}>{x}</option>)}</select></label><label>Included accessories<input value={newDevice.accessories} onChange={e=>setNewDevice(x=>({...x,accessories:e.target.value}))}/></label><button className="primary" type="submit">Save Device</button></form></section>}
+  {adding&&<section className="panel"><div className="rev-title"><h3>Add Device</h3><button className="secondary" onClick={()=>setAdding(false)}>Cancel</button></div><form className="rev-form" onSubmit={addDevice}><label>Device name<input required value={newDevice.name} onChange={e=>setNewDevice(x=>({...x,name:e.target.value}))}/></label><label>Unique serial number<input required value={newDevice.serial} onChange={e=>setNewDevice(x=>({...x,serial:e.target.value}))}/></label><label>Registered Branch<select value={newDevice.homeBranch} onChange={e=>setNewDevice(x=>({...x,homeBranch:e.target.value}))}>{(["UC Mandaluyong","UC Las Piñas","UC Quezon City","MM Mandaluyong"] as const).filter(x=>branch==="All Shops"||x===branch).map(x=><option key={x} value={x}>{x}</option>)}</select></label><label>Initial condition<select value={newDevice.condition} onChange={e=>setNewDevice(x=>({...x,condition:e.target.value}))}>{["New","Good","Used","Damaged"].map(x=><option key={x}>{x}</option>)}</select></label><label>Included accessories<input value={newDevice.accessories} onChange={e=>setNewDevice(x=>({...x,accessories:e.target.value}))}/></label><button className="primary" type="submit">Save Device</button></form></section>}
   {!process&&<>
-   <div className="rev-pills">{(["Free","Pending Turnover","Assigned","For Return","Inspection","Maintenance","Retired","All"] as const).map(s=><button type="button" key={s} className={filter===s?"active":""} onClick={()=>{setFilter(s);setSelected(null)}}>{s==="Free"?"Available":s} ({s==="All"?assets.length:count(s)})</button>)}</div>
-   <section className="panel"><div className="rev-filters"><label>Search devices<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Asset name, serial, employee ID or employee name"/></label><div className="rev-hint"><Laptop size={16}/> Available devices appear first; assignments and returns use separate procedures.</div></div>
-    <div className="table-wrap"><table><thead><tr><th>Device / Serial</th><th>Accountable Employee</th><th>Condition</th><th>Status</th><th>Actions</th></tr></thead><tbody>{visibleAssets.map(a=><tr key={a.id}><td><b>{a.name}</b><small className="pay-small">{a.id} · {a.serial}</small></td><td>{a.employeeId?people.find(p=>p.id===a.employeeId)?.name||a.employeeId:"Not assigned"}</td><td>{a.condition}</td><td><span className="tag">{a.status==="Free"?"Available":a.status}</span></td><td><div className="rev-actions">
+   <div className="rev-pills">{(["Free","Pending Turnover","Assigned","For Return","Inspection","Maintenance","Retired","All"] as const).map(s=><button type="button" key={s} className={filter===s?"active":""} onClick={()=>{setFilter(s);setSelected(null)}}>{s==="Free"?"Available":s} ({s==="All"?scopedAssets.length:count(s)})</button>)}</div>
+   <section className="panel"><div className="rev-filters mu-filterbar"><label>Find device<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Device, serial, employee..."/></label><label>Branch<select value={branchFilter} onChange={e=>setBranchFilter(e.target.value)}><option value="All">All Branches</option>{(["UC Mandaluyong","UC Las Piñas","UC Quezon City","MM Mandaluyong"] as const).filter(x=>branch==="All Shops"||x===branch).map(x=><option key={x} value={x}>{x}</option>)}</select></label></div>
+    <div className="table-wrap"><table><thead><tr><th>Device / Serial</th><th>Branch / Location</th><th>Accountable Employee</th><th>Condition</th><th>Status</th><th>Actions</th></tr></thead><tbody>{visibleAssets.map(a=><tr key={a.id}><td><b>{a.name}</b><small className="pay-small">{a.id} · {a.serial}</small></td><td>{a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"Not set"}</td><td>{a.employeeId?people.find(p=>p.id===a.employeeId)?.name||a.employeeId:"Not assigned"}</td><td>{a.condition}</td><td><span className="tag">{a.status==="Free"?"Available":a.status}</span></td><td><div className="rev-actions">
     {a.status==="Free"&&editable&&<button className="primary" type="button" onClick={()=>begin(a.id,"assign")}>Assign</button>}
     {a.status==="Pending Turnover"&&<><button className="secondary" onClick={()=>setSelected(a.id)}>View</button>{editable&&<button className="primary" onClick={()=>begin(a.id,"assign")}>Continue Turnover</button>}</>}
     {a.status==="Assigned"&&<><button className="secondary" onClick={()=>setSelected(a.id)}>View</button>{editable&&<button className="secondary" onClick={()=>begin(a.id,"retrieve")}>Retrieve</button>}</>}
     {a.status==="Inspection"&&editable&&<button className="primary" onClick={()=>begin(a.id,"inspect")}>Inspect</button>}
     {!(["Free","Pending Turnover","Assigned","Inspection"] as string[]).includes(a.status)&&<button className="secondary" onClick={()=>setSelected(a.id)}>View</button>}
     </div></td></tr>)}</tbody></table>{visibleAssets.length===0&&<div className="empty">No devices found. Try another status or search.</div>}</div></section>
-   {asset&&<section className="panel"><div className="rev-title"><h3>{asset.name} · Assignment History</h3><button className="secondary" onClick={()=>setSelected(null)}>Close</button></div><p>Accountable employee: {people.find(x=>x.id===asset.employeeId)?.name||"Unassigned"} · Status: {asset.status} · Signing: {asset.signingMethod?methodName[asset.signingMethod]:"Not recorded"}</p><p className="muted">Acknowledgment records in this frontend are review-only; no signed file is stored.</p>{asset.history.map((h,i)=><div className="rev-row" key={i}>{h}</div>)}</section>}
+   {asset&&<section className="panel"><div className="rev-title"><h3>{asset.name} · Assignment History</h3><button className="secondary" onClick={()=>setSelected(null)}>Close</button></div><p>Registered branch: {asset.homeBranch||people.find(x=>x.id===asset.employeeId)?.branch||"Not set"} · Accountable employee: {people.find(x=>x.id===asset.employeeId)?.name||"Unassigned"} · Status: {asset.status} · Signing: {asset.signingMethod?methodName[asset.signingMethod]:"Not recorded"}</p><p className="muted">Acknowledgment records in this frontend are review-only; no signed file is stored.</p>{asset.history.map((h,i)=><div className="rev-row" key={i}>{h}</div>)}</section>}
   </>}
   {asset&&process&&<section className="panel acc-process"><div className="rev-title"><div><h3>{process==="assign"?"Assign Device":process==="retrieve"?"Retrieve Device":"Inspect Returned Device"}</h3><p>{asset.name} · {asset.id} · {asset.serial}</p></div><HelpButton topic="asset" label="Procedure guide"/></div>
    <div className="rev-steps acc-steps" style={{gridTemplateColumns:`repeat(${processSteps[process].length},minmax(0,1fr))`}}>{processSteps[process].map((t,i)=><span key={t} className={i<=stage?"active":""}>{i+1}. {t}</span>)}</div>

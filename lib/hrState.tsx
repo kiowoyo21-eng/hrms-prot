@@ -11,7 +11,7 @@ export type HRPerson=Person & {
 };
 export type PremiumProfile={ot:number;rdw:number;rdot:number;regular:number;special:number;effective:string;reason:string};
 export type AssetStatus="Free"|"Pending Turnover"|"Assigned"|"For Return"|"Inspection"|"Maintenance"|"Retired";
-export type AssetRecord={id:string;name:string;serial:string;status:AssetStatus;employeeId:string;condition:string;accessories:string;notes?:string;history:string[];signed:boolean;date:string;signingMethod?:"phone"|"onsite"|"print";assignedBy?:string;signatureEvidence?:string;assignmentDate?:string};
+export type AssetRecord={homeBranch?:string;id:string;name:string;serial:string;status:AssetStatus;employeeId:string;condition:string;accessories:string;notes?:string;history:string[];signed:boolean;date:string;signingMethod?:"phone"|"onsite"|"print";assignedBy?:string;signatureEvidence?:string;assignmentDate?:string};
 export type Submission={id:string;employeeId:string;type:string;fileName:string;submittedBy:string;status:"Pending HR Review"|"Approved"|"Rejected";reason:string};
 export type HRState={people:HRPerson[];rates:Record<string,PremiumProfile>;assets:AssetRecord[];submissions:Submission[];earnings:Record<string,{days:number;ot:number;bonus:number;adjustment:number}>;deductions:Record<string,{sss:number;philhealth:number;pagibig:number;tax:number;loan:number}>};
 const requirements=["Resume","Medical Clearance","Employment Contract","NDA / Company Policies","Government IDs"];
@@ -21,10 +21,10 @@ export const initialState:HRState={
  people:samples.map((p,i)=>({...p,email:"",phone:"",probation:p.status==="Probationary"?6:0,sil:5,vil:i%2?5:0,documents:requirements.map((name,j)=>({name,status:j===0?"Verified":j===1?"Missing":"Submitted"})),timeline:[`${p.hire} · Hired at ${p.branch}`]})),
  rates:{"UC-0001":{...defaultRate,ot:200,rdw:200,rdot:260,effective:"2026-10-01",reason:"Approved individual reference profile"}},
  assets:[
- {id:"AST-1001",name:"Mac mini M2",serial:"UC-MAC-1001",status:"Assigned",employeeId:"UC-0001",condition:"Good",accessories:"Keyboard, power cable",history:["2026-10-03 · Assigned to UC-0001"],signed:true,date:"2026-10-03"},
- {id:"AST-1002",name:"Canon EOS R50",serial:"UC-CAM-2002",status:"Free",employeeId:"",condition:"Good",accessories:"Lens, battery, charger",history:["2026-09-20 · Registered"],signed:false,date:"2026-09-20"},
- {id:"AST-1003",name:"Lenovo ThinkPad",serial:"UC-LAP-1003",status:"Free",employeeId:"",condition:"New",accessories:"Charger",history:["2026-09-30 · Registered"],signed:false,date:"2026-09-30"},
- {id:"AST-1004",name:"Samsung Tablet",serial:"MM-TAB-1004",status:"Inspection",employeeId:"MM-0001",condition:"For Inspection",accessories:"Charger",history:["2026-10-10 · Retrieved from MM-0001; awaiting inspection"],signed:true,date:"2026-10-10"}
+ {id:"AST-1001",homeBranch:"UC Mandaluyong",name:"Mac mini M2",serial:"UC-MAC-1001",status:"Assigned",employeeId:"UC-0001",condition:"Good",accessories:"Keyboard, power cable",history:["2026-10-03 · Assigned to UC-0001"],signed:true,date:"2026-10-03"},
+ {id:"AST-1002",homeBranch:"UC Las Piñas",name:"Canon EOS R50",serial:"UC-CAM-2002",status:"Free",employeeId:"",condition:"Good",accessories:"Lens, battery, charger",history:["2026-09-20 · Registered"],signed:false,date:"2026-09-20"},
+ {id:"AST-1003",homeBranch:"UC Quezon City",name:"Lenovo ThinkPad",serial:"UC-LAP-1003",status:"Free",employeeId:"",condition:"New",accessories:"Charger",history:["2026-09-30 · Registered"],signed:false,date:"2026-09-30"},
+ {id:"AST-1004",homeBranch:"MM Mandaluyong",name:"Samsung Tablet",serial:"MM-TAB-1004",status:"Inspection",employeeId:"MM-0001",condition:"For Inspection",accessories:"Charger",history:["2026-10-10 · Retrieved from MM-0001; awaiting inspection"],signed:true,date:"2026-10-10"}
  ],
  submissions:[{id:"SUB-1001",employeeId:"UC-0001",type:"Medical Clearance",fileName:"medical-clearance-sample.pdf",submittedBy:"BM",status:"Pending HR Review",reason:""}],
  earnings:{"UC-0001":{days:6,ot:2,bonus:0,adjustment:0}},

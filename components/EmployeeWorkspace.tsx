@@ -286,8 +286,8 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
     <div><small>Probationary employees</small><strong>{people.filter(p=>p.status==="Probationary").length}</strong></div>
     <div><small>With missing documents</small><strong>{people.filter(p=>missing(p)>0).length}</strong></div>
    </div>
-   <section className="panel"><div className="rev-title"><div><h3>Employee Directory</h3><p>Complete listing of employee assignments, work details and document completion. Open a profile for confidential records.</p></div><span className="tag">{people.length} records</span></div>
-    <div className="employee201-filterhead"><div><h4>Search & Filter Employees</h4><p>Start with quick filters. Open Advanced Filters for payroll, hiring and document checks.</p></div><HelpButton topic="filters" label="How to filter employee records"/></div>
+   <section className="panel"><div className="rev-title"><div><h3>Employee Directory</h3></div><span className="tag">{people.length} records</span></div>
+    <div className="employee201-filterhead"><div><h4>Find Employees</h4></div><HelpButton topic="filters" label="How to filter employee records"/></div>
     <div className="employee201-quick-presets" role="group" aria-label="Quick employee filters">
      {(["All","Probationary","Missing Documents","Pending Verification","New Hires"] as const).map(x=><button key={x} type="button" className={`employee201-preset ${quick===x?"active":""}`} aria-pressed={quick===x} onClick={()=>setFilter(()=>setQuick(x))}>{x}{x==="New Hires"&&<small> (90 days)</small>}</button>)}
     </div>
@@ -303,7 +303,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
      <button type="button" className="secondary" onClick={resetFilters}>Clear All Filters</button>
     </div>
     {advancedOpen&&<div id="employee201-advanced-panel" className="employee201-advanced" role="region" aria-label="Advanced employee filters">
-     <div className="employee201-advanced-title"><Info size={16}/><span>Use these only when you need a specific employee group. Filters work together. Choose a salary type before comparing basic rates.</span></div>
+     <div className="employee201-advanced-title"><Info size={15}/><span>Advanced search · Select salary type before filtering by basic rate.</span></div>
      <div className="employee201-advanced-grid">
       <label>Gender<select value={gender} onChange={e=>setFilter(()=>setGender(e.target.value))}><option>All</option>{genders.map(x=><option key={x}>{x}</option>)}</select></label>
       <label>Job Position<select value={position} onChange={e=>setFilter(()=>setPosition(e.target.value))}><option>All</option>{positions.map(x=><option key={x}>{x}</option>)}</select></label>
@@ -314,7 +314,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
       <label>Minimum Basic Rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={minRate} onChange={e=>setFilter(()=>setMinRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Minimum rate"}/></label>
       <label>Maximum Basic Rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={maxRate} onChange={e=>setFilter(()=>setMaxRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Maximum rate"}/></label>
      </div>
-     <p className="employee201-filterhelp">Example: select <strong>UC Las Piñas</strong> + <strong>Female</strong> + <strong>Monthly</strong> to find monthly-paid female employees in that branch. Rate filters compare <strong>basic rates</strong>, not gross payroll or deductions.</p>
+     
     </div>}
     <div className="employee201-resultbar"><strong>{people.length} matching employee{people.length===1?"":"s"}</strong><span>{activeFilters.length} active filter{activeFilters.length===1?"":"s"}</span></div>
     {activeFilters.length>0&&<div className="employee201-chips" aria-label="Applied employee filters">{activeFilters.map(x=><button key={x.key} type="button" className="employee201-chip" onClick={()=>removeFilter(x.key)} aria-label={`Remove ${x.label} filter`}>{x.label}<X size={13}/></button>)}</div>}
