@@ -29,7 +29,7 @@ function DocumentPreview({item,page}:{item:PreviewItem;page:number}){
  return <div className="empdoc-unavailable"><FileText size={32}/><strong>No document file attached</strong><span>“{item.name}” is an employee checklist record, not an uploaded file. Upload a PDF or image to preview it.</span></div>;
 }
 
-export default function EmployeeDocumentLibrary({person,releases,submissions,uploads,onUpload,requestedMemo,onMemoHandled}:{person:HRPerson;releases:PayrollRelease[];submissions:Submission[];uploads:LocalEmployeeFile[];onUpload:(folder:FolderName,file:File,memoId?:string)=>string;requestedMemo?:string|null;onMemoHandled?:()=>void}){
+export default function EmployeeDocumentLibrary({person,releases,submissions,uploads,onUpload,requestedMemo,onMemoHandled,requestedFolder,onFolderHandled}:{person:HRPerson;releases:PayrollRelease[];submissions:Submission[];uploads:LocalEmployeeFile[];onUpload:(folder:FolderName,file:File,memoId?:string)=>string;requestedMemo?:string|null;onMemoHandled?:()=>void;requestedFolder?:"Onboarding Files"|"Payslips"|null;onFolderHandled?:()=>void}){
  const [folder,setFolder]=useState<FolderName>("Onboarding Files"),[selectedKey,setSelectedKey]=useState(""),[page,setPage]=useState(1),[full,setFull]=useState(false),[error,setError]=useState("");
  const [uploadFolder,setUploadFolder]=useState<FolderName>("Onboarding Files");
  const [paperSize,setPaperSize]=useState<"A4"|"Letter">("A4");
@@ -38,6 +38,7 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
  const fullCloseRef=useRef<HTMLButtonElement>(null);
  const memoRefs=[...new Set((person.assignmentHistory||[]).map(h=>h.memoId).filter((m):m is string=>Boolean(m)))];
  useEffect(()=>{if(!requestedMemo)return;setFolder("Employment Memos");setUploadFolder("Employment Memos");setSelectedKey(`memo-${requestedMemo}`);setUploadMemoId(requestedMemo);setPage(1);setFull(false);onMemoHandled?.()},[requestedMemo,onMemoHandled]);
+ useEffect(()=>{if(!requestedFolder)return;setFolder(requestedFolder);setUploadFolder(requestedFolder);setSelectedKey("");setPage(1);setFull(false);onFolderHandled?.()},[requestedFolder,onFolderHandled]);
  useEffect(()=>{if(!full)return;const before=document.body.style.overflow;document.body.style.overflow="hidden";fullCloseRef.current?.focus();const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setFull(false)};window.addEventListener("keydown",onKey);return ()=>{document.body.style.overflow=before;window.removeEventListener("keydown",onKey)}},[full]);
  const allItems=useMemo(()=>{
   const files:Record<FolderName,PreviewItem[]>={"Onboarding Files":[],"Compliance & Other Forms":[],"NOV / NTE":[],"Employment Memos":[],"Payslips":[]};

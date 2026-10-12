@@ -71,6 +71,9 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const [employmentDraft,setEmploymentDraft]=useState<{probation:number;sil:number;vil:number}|null>(null);
  const [historyKind,setHistoryKind]=useState<"branch"|"role"|null>(null);
  const [requestedMemo,setRequestedMemo]=useState<string|null>(null);
+ const [requestedFolder,setRequestedFolder]=useState<"Onboarding Files"|"Payslips"|null>(null);
+ const [detailKind,setDetailKind]=useState<"employee"|"employment"|"salary"|"reviews"|"history"|"assets"|null>(null);
+ useEffect(()=>{if(!detailKind)return;const close=(e:KeyboardEvent)=>{if(e.key==="Escape")setDetailKind(null)};window.addEventListener("keydown",close);return ()=>window.removeEventListener("keydown",close)},[detailKind]);
  const [add,setAdd]=useState(false);
  const [form,setForm]=useState({...emptyForm});
  const [editing,setEditing]=useState(false);
@@ -156,6 +159,9 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const assignmentHistory:EmployeeAssignment[]=person?(person.assignmentHistory?.length?person.assignmentHistory:[{id:`legacy-current-${person.id}`,effectiveDate:"",kind:"Initial Assignment",branch:person.branch,department:person.department,position:person.position}]):[];
  const assignedAssets=person?data.assets.filter(a=>a.employeeId===person.id&&["Assigned","For Return","Inspection"].includes(a.status)):[];
  const draft=personal;
+ const evaluations=person?person.timeline.filter(t=>/evaluat|assessment/i.test(t)):[];
+ const documentSubmissions=person?data.submissions.filter(s=>s.employeeId===person.id):[];
+ const goToDocuments=(folder:"Onboarding Files"|"Payslips")=>{setDetailKind(null);setHistoryKind(null);setTab("Documents");setRequestedFolder(folder)};
 
  const updatePerson=(fn:(p:HRPerson)=>HRPerson)=>{
   if(!person)return;
@@ -165,11 +171,11 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   const target=data.people.find(p=>p.id===id);
   setSelected(id);setTab("Profile");setAction(null);setEditing(edit);setPersonal(edit&&target?toPersonalDraft(target):null);
   setEmploymentDraft(edit&&target?{probation:target.probation,sil:target.sil,vil:target.vil}:null);
-  setHistoryKind(null);setRequestedMemo(null);
+  setHistoryKind(null);setRequestedMemo(null);setRequestedFolder(null);setDetailKind(null);
   setMessage("");setAdd(false);
  };
  const backToDirectory=()=>{
-  setSelected(null);setHistoryKind(null);setRequestedMemo(null);setAction(null);setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("");setAdd(false);
+  setSelected(null);setHistoryKind(null);setRequestedMemo(null);setRequestedFolder(null);setDetailKind(null);setAction(null);setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("");setAdd(false);
  };
  const setFilter=(fn:()=>void)=>{fn();setPage(1)};
  const resetFilters=()=>{
@@ -381,86 +387,87 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      <nav className="rev-tabs employee201-profiletabs" aria-label="Employee 201 tabs">{profileSections.map(({id,label})=><button type="button" key={id} className={tab===id?"active":""} aria-current={tab===id?"page":undefined} onClick={()=>{setTab(id);setMessage("")}}>{label}</button>)}</nav>
      {tab==="Profile"&&<nav className="emp201-jumplinks" aria-label="Jump to employee profile section">{[["Employee Details","personal"],["Employment","employment"],["Salary & Benefits","compensation"],["Reviews","evaluations"],["History","history"],["Clearance & Assets","clearance"],["Employee Actions","actions"]].map(([label,id])=><a key={id} href={`#emp201-${id}`}>{label}</a>)}</nav>}
      <div className="rev-detail employee201-detail">
-      {tab==="Profile"&&<div className="emp201-profile-topgrid">
-      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-personal">
-       <h4>Employee Details</h4>
-       {!editing&&<div className="rev-facts employee201-facts">
-        <div><small>Gender</small><b>{person.gender}</b></div>
-        <div><small>Birth date</small><b>{formatDate(person.birthDate)}</b></div><div><small>Civil status</small><b>{empty(person.civilStatus)}</b></div>
-        <div><small>Contact number</small><b>{empty(person.phone)}</b></div><div><small>Email address</small><b>{empty(person.email)}</b></div>
-        <div className="employee201-wide"><small>Address</small><b>{empty(person.address)}</b></div>
-        <div><small>Emergency contact</small><b>{empty(person.emergencyName)}</b></div><div><small>Relationship</small><b>{empty(person.emergencyRelationship)}</b></div><div><small>Emergency phone</small><b>{empty(person.emergencyPhone)}</b></div>
-       </div>}
-       {editing&&draft&&<form onSubmit={savePersonal} className="rev-form">
-        <label>Full name *<input required value={draft.name} onChange={e=>setPersonal(p=>p?{...p,name:e.target.value}:p)}/></label>
-        <label>Gender<select value={draft.gender} onChange={e=>setPersonal(p=>p?{...p,gender:e.target.value}:p)}>{["Male","Female","Prefer not to say"].map(x=><option key={x}>{x}</option>)}</select></label>
-        <label>Birth date<input type="date" value={draft.birthDate||""} onChange={e=>setPersonal(p=>p?{...p,birthDate:e.target.value}:p)}/></label>
-        <label>Civil status<select value={draft.civilStatus||""} onChange={e=>setPersonal(p=>p?{...p,civilStatus:e.target.value}:p)}><option value="">Select status</option>{["Single","Married","Widowed","Separated","Other"].map(x=><option key={x}>{x}</option>)}</select></label>
-        <label>Contact number<input type="tel" value={draft.phone} onChange={e=>setPersonal(p=>p?{...p,phone:e.target.value}:p)}/></label>
-        <label>Email address<input type="email" value={draft.email} onChange={e=>setPersonal(p=>p?{...p,email:e.target.value}:p)}/></label>
-        <label className="employee201-wide">Residential address<textarea rows={2} value={draft.address||""} onChange={e=>setPersonal(p=>p?{...p,address:e.target.value}:p)}/></label>
-        <label>Emergency contact name<input value={draft.emergencyName||""} onChange={e=>setPersonal(p=>p?{...p,emergencyName:e.target.value}:p)}/></label>
-        <label>Relationship<input value={draft.emergencyRelationship||""} onChange={e=>setPersonal(p=>p?{...p,emergencyRelationship:e.target.value}:p)}/></label>
-        <label>Emergency phone<input type="tel" value={draft.emergencyPhone||""} onChange={e=>setPersonal(p=>p?{...p,emergencyPhone:e.target.value}:p)}/></label>
-        
-       </form>}
-      </section>}
-      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-employment">
-       <div className="rev-title"><h4>Employment Details</h4></div>
-       {editing&&employmentDraft&&<div className="rev-form emp201-edit-inline"><label>Probation Months<input type="number" min="0" max="12" value={employmentDraft.probation} onChange={e=>setEmploymentDraft(v=>v?{...v,probation:Number(e.target.value)}:v)}/></label><label>SIL Allocation (days)<input type="number" min="0" value={employmentDraft.sil} onChange={e=>setEmploymentDraft(v=>v?{...v,sil:Number(e.target.value)}:v)}/></label><label>VIL Allocation (days)<input type="number" min="0" value={employmentDraft.vil} onChange={e=>setEmploymentDraft(v=>v?{...v,vil:Number(e.target.value)}:v)}/></label></div>}
-       <div className="rev-facts employee201-facts emp201-employment-facts">
-        <div><small>Employee ID</small><b>{person.id}</b></div>
-        <div className="emp201-clickable-fact"><small>Branch</small><button type="button" onClick={()=>setHistoryKind("branch")} title="View branch assignment and transfer history"><b>{person.branch}</b><span>View branch history <ArrowRight size={12}/></span></button></div>
-        <div className="emp201-clickable-fact"><small>Department & Position</small><button type="button" onClick={()=>setHistoryKind("role")} title="View department, position, promotion and reassignment history"><b>{person.department} — {person.position}</b><span>View assignment history <ArrowRight size={12}/></span></button></div>
-        <div><small>Status</small><b>{person.status}</b></div>
-        <div className="emp201-date-fact"><small>Hire Date <span title="Set during hiring/onboarding. Locked after employee registration." className="emp201-lock-mark"><ShieldCheck size={12}/></span></small><b>{formatDate(person.hire)}</b></div>
-        <div><small>Probation</small><b>{person.probation?`${person.probation} months`:"Not applicable"}</b></div>
-       </div>
-       
-      </section>}
+      {tab==="Profile"&&<div className="emp201-card-grid">
+       <section className="employee201-profile-section emp201-summary-card" id="emp201-personal">
+        <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("employee")} aria-label="Open full employee details and document logs"><span><UserRound size={17}/> Employee Details</span><span>View Details <ArrowRight size={14}/></span></button>
+        {editing&&draft?<form onSubmit={savePersonal} className="rev-form emp201-summary-edit">
+         <label>Full name *<input required value={draft.name} onChange={e=>setPersonal(p=>p?{...p,name:e.target.value}:p)}/></label>
+         <label>Gender<select value={draft.gender} onChange={e=>setPersonal(p=>p?{...p,gender:e.target.value}:p)}>{["Male","Female","Prefer not to say"].map(x=><option key={x}>{x}</option>)}</select></label>
+         <label>Birth date<input type="date" value={draft.birthDate||""} onChange={e=>setPersonal(p=>p?{...p,birthDate:e.target.value}:p)}/></label>
+         <label>Civil status<select value={draft.civilStatus||""} onChange={e=>setPersonal(p=>p?{...p,civilStatus:e.target.value}:p)}><option value="">Select status</option>{["Single","Married","Widowed","Separated","Other"].map(x=><option key={x}>{x}</option>)}</select></label>
+         <label>Contact number<input type="tel" value={draft.phone} onChange={e=>setPersonal(p=>p?{...p,phone:e.target.value}:p)}/></label>
+         <label>Email address<input type="email" value={draft.email} onChange={e=>setPersonal(p=>p?{...p,email:e.target.value}:p)}/></label>
+         <label className="employee201-wide">Residential address<textarea rows={2} value={draft.address||""} onChange={e=>setPersonal(p=>p?{...p,address:e.target.value}:p)}/></label>
+         <label>Emergency contact name<input value={draft.emergencyName||""} onChange={e=>setPersonal(p=>p?{...p,emergencyName:e.target.value}:p)}/></label>
+         <label>Relationship<input value={draft.emergencyRelationship||""} onChange={e=>setPersonal(p=>p?{...p,emergencyRelationship:e.target.value}:p)}/></label>
+         <label>Emergency phone<input type="tel" value={draft.emergencyPhone||""} onChange={e=>setPersonal(p=>p?{...p,emergencyPhone:e.target.value}:p)}/></label>
+        </form>:<button type="button" className="emp201-cardbody" onClick={()=>setDetailKind("employee")} aria-label="View employee personal, contact and document records"><span className="emp201-card-fact"><small>Gender</small><b>{person.gender}</b></span><span className="emp201-card-fact"><small>Birth Date</small><b>{formatDate(person.birthDate)}</b></span><span className="emp201-card-fact"><small>Phone</small><b>{empty(person.phone)}</b></span><span className="emp201-card-fact"><small>Email</small><b>{empty(person.email)}</b></span></button>}
+       </section>
+       <section className="employee201-profile-section emp201-summary-card" id="emp201-employment">
+        <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("employment")} aria-label="Open full employment details and assignment history"><span><BriefcaseBusiness size={17}/> Employment Details</span><span>View History <ArrowRight size={14}/></span></button>
+        <div className="emp201-cardbody emp201-cardbody-static">
+         <div className="emp201-card-fact"><small>Branch</small><button type="button" className="emp201-inline-link" onClick={()=>setHistoryKind("branch")}>{person.branch}<ArrowRight size={12}/></button></div>
+         <div className="emp201-card-fact"><small>Department & Position</small><button type="button" className="emp201-inline-link" onClick={()=>setHistoryKind("role")}>{person.department} — {person.position}<ArrowRight size={12}/></button></div>
+         <div className="emp201-card-fact"><small>Hire Date <ShieldCheck size={11}/></small><b>{formatDate(person.hire)}</b></div>
+         <div className="emp201-card-fact"><small>Employment Status</small><b>{person.status}</b></div>
+        </div>
+        {editing&&employmentDraft&&<div className="rev-form emp201-edit-inline"><label>Probation Months<input type="number" min="0" max="12" value={employmentDraft.probation} onChange={e=>setEmploymentDraft(v=>v?{...v,probation:Number(e.target.value)}:v)}/></label><label>SIL Days<input type="number" min="0" value={employmentDraft.sil} onChange={e=>setEmploymentDraft(v=>v?{...v,sil:Number(e.target.value)}:v)}/></label><label>VIL Days<input type="number" min="0" value={employmentDraft.vil} onChange={e=>setEmploymentDraft(v=>v?{...v,vil:Number(e.target.value)}:v)}/></label></div>}
+       </section>
+       <section className="employee201-profile-section emp201-summary-card" id="emp201-compensation">
+        <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("salary")} aria-label="Open salary, pay rate and benefits history"><span><Wallet size={17}/> Salary & Benefits</span><span>View Details <ArrowRight size={14}/></span></button>
+        <button type="button" className="emp201-cardbody" onClick={()=>setDetailKind("salary")} aria-label="View full salary and benefits details">
+         <span className="emp201-card-fact"><small>Basic Rate</small><b>{salaryAmount(person)}</b></span>
+         <span className="emp201-card-fact"><small>Salary Type</small><b>{person.salaryType}</b></span>
+         <span className="emp201-card-fact"><small>SIL</small><b>{person.sil} days</b></span>
+         <span className="emp201-card-fact"><small>VIL</small><b>{person.vil} days</b></span>
+        </button>
+        <button type="button" className="emp201-salary-summary" onClick={()=>setDetailKind("salary")}><span><small>Total Salary Received · {salaryPeriod==="all"?"All Time":salaryPeriod==="month"?"This Month":"This Year"}</small><b>{money(totals.net)}</b></span><span>View History <ArrowRight size={14}/></span></button>
+       </section>
+       <section className="employee201-profile-section emp201-summary-card" id="emp201-evaluations">
+        <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("reviews")}><span><ClipboardList size={17}/> Performance Reviews <i className="emp201-heading-count">{evaluations.length}</i></span><span>View Details <ArrowRight size={14}/></span></button>
+        <button type="button" className="emp201-card-excerpt" onClick={()=>setDetailKind("reviews")}><small>{evaluations.length?"Latest assessment":"Assessment status"}</small><b>{evaluations[0]||"No performance reviews recorded"}</b></button>
+       </section>
+       <section className="employee201-profile-section emp201-summary-card" id="emp201-history">
+        <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("history")}><span><BriefcaseBusiness size={17}/> Employment History <i className="emp201-heading-count">{person.timeline.length}</i></span><span>View Timeline <ArrowRight size={14}/></span></button>
+        <button type="button" className="emp201-card-excerpt" onClick={()=>setDetailKind("history")}><small>Latest activity</small><b>{person.timeline[0]||"No history records"}</b></button>
+       </section>
+       <section className="employee201-profile-section emp201-summary-card" id="emp201-clearance">
+        <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("assets")}><span><Laptop size={17}/> Clearance & Assigned Assets <i className="emp201-heading-count">{assignedAssets.length}</i></span><span>View Assets <ArrowRight size={14}/></span></button>
+        <button type="button" className="emp201-card-excerpt" onClick={()=>setDetailKind("assets")}><small>Employee status · {person.status}</small><b>{assignedAssets.length} outstanding device{assignedAssets.length===1?"":"s"}{assignedAssets.length>0?` · ${assignedAssets[0].name}`:""}</b></button>
+       </section>
       </div>}
-      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-compensation">
-       <h4>Salary & Benefits</h4>
-       <div className="rev-facts employee201-facts emp201-benefits"><div><small>Basic Rate</small><b>{salaryAmount(person)}</b></div><div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>SIL</small><b>{person.sil} days</b></div><div><small>VIL</small><b>{person.vil} days</b></div></div>
-       <div className="emp201-salary-total"><div className="emp201-total-head"><div><span>Total Salary Received</span><strong>{money(totals.net)}</strong><small>Net salary from {paidSalary.length} released payroll record{paidSalary.length===1?"":"s"} · Sample browser ledger</small></div><label>Period<select value={salaryPeriod} onChange={e=>setSalaryPeriod(e.target.value as "month"|"year"|"all")}><option value="month">This Month</option><option value="year">This Year</option><option value="all">All Time</option></select></label></div><div className="emp201-total-breakdown"><div><small>Gross Earnings</small><b>{money(totals.gross)}</b></div><div><small>Total Deductions</small><b>{money(totals.deductions)}</b></div><div><small>Releases</small><b>{paidSalary.length}</b></div></div></div>
-       <details className="emp201-salary-history"><summary>View Salary History ({paidSalary.length})</summary><div className="table-wrap"><table><thead><tr><th>Period</th><th>Paid On</th><th>Gross</th><th>Deductions</th><th>Net</th></tr></thead><tbody>{[...paidSalary].sort((a,b)=>b.paidAt.localeCompare(a.paidAt)).map(r=><tr key={r.id}><td>{r.periodStart} – {r.periodEnd}</td><td>{r.paidAt}</td><td>{money(r.gross)}</td><td>{money(r.deductions)}</td><td><b>{money(r.net)}</b></td></tr>)}</tbody></table></div>{paidSalary.length===0&&<p className="muted">No released salary records for this period.</p>}</details>
-       
-       <h5 className="emp201-subheading">Premium Pay Rates</h5>
-       <div className="rev-facts employee201-facts">
-        <div><small>Regular overtime</small><b>{effectiveRate(person,data.rates).ot}%</b></div><div><small>Rest-day work</small><b>{effectiveRate(person,data.rates).rdw}%</b></div><div><small>Rest-day overtime</small><b>{effectiveRate(person,data.rates).rdot}%</b></div><div><small>Regular holiday</small><b>{effectiveRate(person,data.rates).regular}%</b></div><div><small>Special day</small><b>{effectiveRate(person,data.rates).special}%</b></div>
-       </div>
-      </section>}
-      {tab==="Documents"&&<EmployeeDocumentLibrary person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} onUpload={(folder,file,memoId)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId}]}));return id}}/>}
-      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-evaluations">
-       <h4>Performance Reviews <span className="emp201-heading-count">{person.timeline.filter(t=>t.includes("Evaluate")).length}</span></h4>
-       {person.timeline.filter(t=>t.includes("Evaluate")).map((t,i)=><div className="rev-row" key={i}><ClipboardList size={17}/><span>{t}</span></div>)}
-       {!person.timeline.some(t=>t.includes("Evaluate"))&&<p className="muted">No assessments recorded yet.</p>}
-      </section>}
-      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-history">
-       <h4>Employment History <span className="emp201-heading-count">{person.timeline.length}</span></h4>
-       {person.timeline.map((x,i)=><div className="rev-row" key={i}><BriefcaseBusiness size={17}/><span>{x}</span></div>)}
-      </section>}
-      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-clearance">
-       <div className="rev-title"><h4>Clearance & Assigned Assets <span className="emp201-heading-count">{assignedAssets.length}</span></h4></div>
-       <div className="emp201-asset-summary"><span>Status <b>{person.status}</b></span><span>Devices <b>{assignedAssets.length}</b></span></div>
-       {assignedAssets.map(a=><div className="rev-row" key={a.id}><BriefcaseBusiness size={17}/><span>{a.name} ({a.id})</span><span className="tag">{a.status}</span></div>)}
-       {assignedAssets.length>0&&<p className="emp201-smallnote">Complete device retrieval and inspection before clearance.</p>}
-      </section>}
+      {tab==="Documents"&&<EmployeeDocumentLibrary person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} requestedFolder={requestedFolder} onFolderHandled={()=>setRequestedFolder(null)} onUpload={(folder,file,memoId)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId}]}));return id}}/>}
      </div>
      {tab==="Profile"&&editing&&<div className="emp201-savebar"><span>Editing employee information · Save changes before leaving this profile</span><div className="rev-actions"><button type="button" className="secondary" onClick={()=>{setEditing(false);setPersonal(null);setEmploymentDraft(null)}}>Cancel</button><button type="button" className="primary" onClick={persistProfile}>Save Profile Changes</button></div></div>}
-     {tab==="Profile"&&<div className="emp201-actions-area" id="emp201-actions">
-      <div className="emp201-actions-header"><div><h4>Employee Actions</h4></div><HelpButton topic="workflow" label="About employee actions"/></div>
-      <div className="emp201-action-grid">
-       <button type="button" className="emp201-action-button" onClick={()=>startAction("Evaluate")} disabled={person.status==="Clearance Pending"}><ClipboardList size={18}/><span><b>Record Assessment</b><small>Performance evaluation</small></span><ArrowRight size={15}/></button>
-       {person.status==="Probationary"&&<button type="button" className="emp201-action-button" onClick={()=>startAction("Regularize")}><ShieldCheck size={18}/><span><b>Regularize</b><small>Employment status</small></span><ArrowRight size={15}/></button>}
-       <button type="button" className="emp201-action-button" onClick={()=>startAction("Promote")} disabled={person.status==="Clearance Pending"}><BriefcaseBusiness size={18}/><span><b>Promote</b><small>Position & compensation</small></span><ArrowRight size={15}/></button>
-       <button type="button" className="emp201-action-button" onClick={()=>startAction("Transfer")} disabled={person.status==="Clearance Pending"}><ArrowRight size={18}/><span><b>Transfer</b><small>Branch reassignment</small></span><ArrowRight size={15}/></button>
-       {onOpenPayroll&&<button type="button" className="emp201-action-button" onClick={openPayRates} disabled={person.status==="Clearance Pending"}><Wallet size={18}/><span><b>Adjust Pay Rate</b><small>Payroll rate review</small></span><ArrowRight size={15}/></button>}
-       {onAssignDevice&&<button type="button" className="emp201-action-button" onClick={openAssetsForPerson} disabled={person.status==="Clearance Pending"}><Laptop size={18}/><span><b>Assign Device</b><small>Accountability & turnover</small></span><ArrowRight size={15}/></button>}
-      </div>
-      <div className="emp201-offboarding"><div><h5>End Employment</h5><span>Resignation, termination, or contract completion</span></div><button type="button" className="emp201-offboard-button" disabled={person.status==="Clearance Pending"} onClick={()=>startAction("Offboard")}>Process Offboarding <ArrowRight size={15}/></button></div>
-     </div>}
     </>}
+    {detailKind&&createPortal(<div className="emp201-history-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setDetailKind(null)}}>
+     <section className="emp201-detail-modal" role="dialog" aria-modal="true" aria-labelledby="emp201-detail-dialog-title">
+      <header><div><h3 id="emp201-detail-dialog-title">{{employee:"Employee Details",employment:"Employment Details",salary:"Salary & Benefits",reviews:"Performance Reviews",history:"Employment History",assets:"Clearance & Assigned Assets"}[detailKind]}</h3><p>{person.name} · {person.id}</p></div><button className="secondary" type="button" onClick={()=>setDetailKind(null)}><X size={16}/> Close</button></header>
+      <div className="emp201-detail-modalbody">
+       {detailKind==="employee"&&<>
+        <h4>Personal & Contact Information</h4><div className="emp201-dialog-facts">{[["Full Name",person.name],["Employee ID",person.id],["Gender",person.gender],["Birth Date",formatDate(person.birthDate)],["Civil Status",empty(person.civilStatus)],["Phone",empty(person.phone)],["Email",empty(person.email)],["Address",empty(person.address)],["Emergency Contact",empty(person.emergencyName)],["Relationship",empty(person.emergencyRelationship)],["Emergency Phone",empty(person.emergencyPhone)]].map(([label,value])=><div key={label}><small>{label}</small><b>{value}</b></div>)}</div>
+        <div className="emp201-dialog-subhead"><h4>Document Logs</h4><button type="button" className="secondary" onClick={()=>goToDocuments("Onboarding Files")}><FileText size={14}/> Open Documents</button></div>
+        {person.documents.length===0&&documentSubmissions.length===0?<p className="muted">No document records available.</p>:<div className="emp201-log-list">{person.documents.map((d,i)=><div key={`req-${i}`}><span><FileText size={15}/> {d.name}</span><span className="tag">{d.status}</span></div>)}{documentSubmissions.map(s=><div key={s.id}><span><FileText size={15}/> {s.type} · {s.fileName}</span><span className="tag">{s.status}</span></div>)}</div>}
+       </>}
+       {detailKind==="employment"&&<>
+        <h4>Current Employment</h4><div className="emp201-dialog-facts"><div><small>Branch</small><b>{person.branch}</b></div><div><small>Department & Position</small><b>{person.department} — {person.position}</b></div><div><small>Employment Status</small><b>{person.status}</b></div><div><small>Hire Date (locked)</small><b>{formatDate(person.hire)}</b></div><div><small>Probation Period</small><b>{person.probation} months</b></div></div>
+        <div className="emp201-dialog-subhead"><h4>Assignment History</h4><div className="rev-actions"><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("branch")}}>Branch History</button><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("role")}}>Position History</button></div></div>
+        <div className="emp201-dialog-timeline">{[...assignmentHistory].sort((a,b)=>b.effectiveDate.localeCompare(a.effectiveDate)).map((h,i)=><div key={h.id||i}><small>{formatDate(h.effectiveDate)} · {h.kind}</small><b>{h.branch} · {h.department} — {h.position}</b>{h.memoId?<button type="button" className="emp201-memo-link" onClick={()=>{setDetailKind(null);setTab("Documents");setRequestedMemo(h.memoId||null)}}><FileText size={13}/>{h.memoId}</button>:<small>No memo attached</small>}</div>)}</div>
+       </>}
+       {detailKind==="salary"&&<>
+        <div className="emp201-dialog-facts"><div><small>Basic Rate</small><b>{salaryAmount(person)}</b></div><div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>SIL</small><b>{person.sil} days</b></div><div><small>VIL</small><b>{person.vil} days</b></div></div>
+        <div className="emp201-dialog-subhead"><h4>Salary Received & Releases</h4><label className="emp201-period-select">Period <select value={salaryPeriod} onChange={e=>setSalaryPeriod(e.target.value as "month"|"year"|"all")}><option value="month">This Month</option><option value="year">This Year</option><option value="all">All Time</option></select></label></div>
+        <div className="emp201-dialog-totals"><div><small>Net Salary Received</small><strong>{money(totals.net)}</strong></div><div><small>Gross Earnings</small><b>{money(totals.gross)}</b></div><div><small>Total Deductions</small><b>{money(totals.deductions)}</b></div></div>
+        <div className="emp201-dialog-subhead"><h4>Released Payroll History ({paidSalary.length})</h4><div className="rev-actions"><button type="button" className="secondary" onClick={()=>goToDocuments("Payslips")}><FileText size={14}/> View Payslips</button>{onOpenPayroll&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openPayRates()}}>View Pay Rates <ArrowRight size={14}/></button>}</div></div>
+        {paidSalary.length?<div className="table-wrap"><table><thead><tr><th>Payroll Period</th><th>Paid On</th><th>Gross</th><th>Deductions</th><th>Net</th></tr></thead><tbody>{[...paidSalary].sort((a,b)=>b.paidAt.localeCompare(a.paidAt)).map(r=><tr key={r.id}><td>{formatDate(r.periodStart)} – {formatDate(r.periodEnd)}</td><td>{formatDate(r.paidAt)}</td><td>{money(r.gross)}</td><td>{money(r.deductions)}</td><td><b>{money(r.net)}</b></td></tr>)}</tbody></table></div>:<p className="muted">No released salary records for this period.</p>}
+        <h4>Premium Pay Rates</h4><div className="emp201-dialog-facts">{[["Overtime",effectiveRate(person,data.rates).ot],["Rest Day",effectiveRate(person,data.rates).rdw],["Rest-Day OT",effectiveRate(person,data.rates).rdot],["Regular Holiday",effectiveRate(person,data.rates).regular],["Special Day",effectiveRate(person,data.rates).special]].map(([n,v])=><div key={n}><small>{n}</small><b>{v}%</b></div>)}</div><p className="muted">Sample browser payroll records only. Actual pay history and government deductions require backend integration.</p>
+       </>}
+       {detailKind==="reviews"&&<><h4>Performance Assessments</h4>{evaluations.length?evaluations.map((t,i)=><div className="emp201-dialog-entry" key={i}><ClipboardList size={16}/><span>{t}</span></div>):<p className="muted">No assessments recorded yet. Use Employee Actions → Record Assessment to add one.</p>}</>}
+       {detailKind==="history"&&<><h4>Employment Timeline</h4>{person.timeline.map((t,i)=><div className="emp201-dialog-entry" key={i}><BriefcaseBusiness size={16}/><span>{t}</span></div>)}<div className="emp201-dialog-subhead"><h4>Assignment Memos</h4><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("role")}}>Open Assignment History <ArrowRight size={14}/></button></div></>}
+       {detailKind==="assets"&&<><div className="emp201-dialog-facts"><div><small>Employment Status</small><b>{person.status}</b></div><div><small>Outstanding Devices</small><b>{assignedAssets.length}</b></div></div><h4>Assigned Asset Records</h4>{assignedAssets.length?assignedAssets.map(a=><div className="emp201-dialog-entry" key={a.id}><Laptop size={16}/><span><b>{a.name}</b><small>{a.id} · {a.status}</small></span></div>):<p className="muted">No outstanding assigned devices.</p>}{assignedAssets.length>0&&<p className="muted">Outstanding devices require retrieval and inspection before final clearance.</p>}{onAssignDevice&&person.status!=="Clearance Pending"&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openAssetsForPerson()}}>Assign Device <ArrowRight size={14}/></button>}</>}
+      </div>
+     </section>
+    </div>,document.body)}
     {historyKind&&createPortal(<div className="emp201-history-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setHistoryKind(null)}}>
       <section className="emp201-history-modal" role="dialog" aria-modal="true" aria-labelledby="emp201-history-title">
        <header><div><h3 id="emp201-history-title">{historyKind==="branch"?"Branch History":"Department & Position History"}</h3><p>{person.name} · {person.id}</p></div><button type="button" className="secondary" aria-label="Close assignment history" onClick={()=>setHistoryKind(null)}><X size={16}/> Close</button></header>
@@ -488,6 +495,21 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      <div className="rev-actions"><button className="secondary" onClick={()=>step===0?setAction(null):setStep(s=>s-1)}>Back</button><button className="primary" onClick={step===2?record:next}>{step===2?"Record Decision":"Continue"} <ArrowRight size={15}/></button></div>
     </div>}
    </section>
+   {!action&&tab==="Profile"&&<section className="panel emp201-actions-surface">
+     <div className="emp201-actions-area" id="emp201-actions">
+      <div className="emp201-actions-header"><div><h4>Employee Actions</h4></div><HelpButton topic="workflow" label="About employee actions"/></div>
+      <div className="emp201-action-grid">
+       <button type="button" className="emp201-action-button" onClick={()=>startAction("Evaluate")} disabled={person.status==="Clearance Pending"}><ClipboardList size={18}/><span><b>Record Assessment</b><small>Performance evaluation</small></span><ArrowRight size={15}/></button>
+       {person.status==="Probationary"&&<button type="button" className="emp201-action-button" onClick={()=>startAction("Regularize")}><ShieldCheck size={18}/><span><b>Regularize</b><small>Employment status</small></span><ArrowRight size={15}/></button>}
+       <button type="button" className="emp201-action-button" onClick={()=>startAction("Promote")} disabled={person.status==="Clearance Pending"}><BriefcaseBusiness size={18}/><span><b>Promote</b><small>Position & compensation</small></span><ArrowRight size={15}/></button>
+       <button type="button" className="emp201-action-button" onClick={()=>startAction("Transfer")} disabled={person.status==="Clearance Pending"}><ArrowRight size={18}/><span><b>Transfer</b><small>Branch reassignment</small></span><ArrowRight size={15}/></button>
+       {onOpenPayroll&&<button type="button" className="emp201-action-button" onClick={openPayRates} disabled={person.status==="Clearance Pending"}><Wallet size={18}/><span><b>Adjust Pay Rate</b><small>Payroll rate review</small></span><ArrowRight size={15}/></button>}
+       {onAssignDevice&&<button type="button" className="emp201-action-button" onClick={openAssetsForPerson} disabled={person.status==="Clearance Pending"}><Laptop size={18}/><span><b>Assign Device</b><small>Accountability & turnover</small></span><ArrowRight size={15}/></button>}
+      </div>
+      <div className="emp201-offboarding"><div><h5>End Employment</h5><span>Resignation, termination, or contract completion</span></div><button type="button" className="emp201-offboard-button" disabled={person.status==="Clearance Pending"} onClick={()=>startAction("Offboard")}>Process Offboarding <ArrowRight size={15}/></button></div>
+     </div>
+
+   </section>}
   </>}
  </div>;
 }
