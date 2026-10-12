@@ -2,13 +2,15 @@
 
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {createPortal} from "react-dom";
-import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet} from "lucide-react";
+import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,FolderOpen,SlidersHorizontal,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
 import HelpButton from "./HelpButton";
 import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
 import {basicRateOnDate,type PayRateChange} from "../lib/payrollConfig";
+import {useLocalRecords} from "../lib/useLocalRecords";
+import {seedIncidents,getClosedCasesForEmployee,incidentRoleFor,incidentDocuments,type IncidentCase} from "../lib/incidentRecords";
 
 type Action="Evaluate"|"Regularize"|"Promote"|"Transfer"|"Offboard";
 type PersonalDraft=Pick<HRPerson,"name"|"gender"|"email"|"phone"|"birthDate"|"civilStatus"|"address"|"emergencyName"|"emergencyRelationship"|"emergencyPhone">;
@@ -48,6 +50,7 @@ const salaryAmount=(p:HRPerson,changes:PayRateChange[]=[])=>`${compactMoney(basi
 
 export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayroll}:{branch:Branch;role:Role;onAssignDevice?:(employeeId:string)=>void;onOpenPayroll?:(employeeId:string)=>void}){
  const {data,update}=useHR();
+ const [incidentCases]=useLocalRecords<IncidentCase[]>("incident",seedIncidents);
  const [search,setSearch]=useState("");
  const [status,setStatus]=useState("All");
  const [department,setDepartment]=useState("All");
@@ -72,8 +75,8 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const [employmentDraft,setEmploymentDraft]=useState<{probation:number;sil:number;vil:number}|null>(null);
  const [historyKind,setHistoryKind]=useState<"branch"|"role"|null>(null);
  const [requestedMemo,setRequestedMemo]=useState<string|null>(null);
- const [requestedFolder,setRequestedFolder]=useState<"Onboarding Files"|"Payslips"|null>(null);
- const [detailKind,setDetailKind]=useState<"employee"|"employment"|"salary"|"reviews"|"history"|"assets"|null>(null);
+ const [requestedFolder,setRequestedFolder]=useState<"Onboarding Files"|"Payslips"|"Incident Case Records"|null>(null);
+ const [detailKind,setDetailKind]=useState<"employee"|"employment"|"salary"|"reviews"|"history"|"assets"|"incidents"|null>(null);
  useEffect(()=>{if(!detailKind)return;const close=(e:KeyboardEvent)=>{if(e.key==="Escape")setDetailKind(null)};window.addEventListener("keydown",close);return ()=>window.removeEventListener("keydown",close)},[detailKind]);
  const [add,setAdd]=useState(false);
  const [form,setForm]=useState({...emptyForm});
@@ -162,7 +165,8 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const draft=personal;
  const evaluations=person?person.timeline.filter(t=>/evaluat|assessment/i.test(t)):[];
  const documentSubmissions=person?data.submissions.filter(s=>s.employeeId===person.id):[];
- const goToDocuments=(folder:"Onboarding Files"|"Payslips")=>{setDetailKind(null);setHistoryKind(null);setTab("Documents");setRequestedFolder(folder)};
+ const linkedIncidents=person?getClosedCasesForEmployee(incidentCases,person.id):[];
+ const goToDocuments=(folder:"Onboarding Files"|"Payslips"|"Incident Case Records")=>{setDetailKind(null);setHistoryKind(null);setTab("Documents");setRequestedFolder(folder)};
 
  const updatePerson=(fn:(p:HRPerson)=>HRPerson)=>{
   if(!person)return;
@@ -386,7 +390,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
     <div className="rev-title employee201-profiletitle"><div><h3><UserRound size={19}/> {person.name}</h3><p>{person.id} · {person.department} / {person.position} · {person.branch}</p></div><div className="rev-actions"><span className="tag">{person.status}</span><button type="button" className="secondary" onClick={()=>{setEditing(false);setPersonal(null);setEmploymentDraft(null);setAction(null)}}><Eye size={15}/> View</button><button type="button" className={editing?"primary":"secondary"} onClick={startEdit}><Pencil size={15}/> Edit</button></div></div>
     {!action&&<>
      <nav className="rev-tabs employee201-profiletabs" aria-label="Employee 201 tabs">{profileSections.map(({id,label})=><button type="button" key={id} className={tab===id?"active":""} aria-current={tab===id?"page":undefined} onClick={()=>{setTab(id);setMessage("")}}>{label}</button>)}</nav>
-     {tab==="Profile"&&<nav className="emp201-jumplinks" aria-label="Jump to employee profile section">{[["Employee Details","personal"],["Employment","employment"],["Salary & Benefits","compensation"],["Reviews","evaluations"],["History","history"],["Clearance & Assets","clearance"],["Employee Actions","actions"]].map(([label,id])=><a key={id} href={`#emp201-${id}`}>{label}</a>)}</nav>}
+     {tab==="Profile"&&<nav className="emp201-jumplinks" aria-label="Jump to employee profile section">{[["Employee Details","personal"],["Employment","employment"],["Salary & Benefits","compensation"],["Reviews","evaluations"],["History","history"],["Assets","clearance"],["Incident Records","incidents"],["Employee Actions","actions"]].map(([label,id])=><a key={id} href={`#emp201-${id}`}>{label}</a>)}</nav>}
      <div className="rev-detail employee201-detail">
       {tab==="Profile"&&<div className="emp201-card-grid">
        <section className="employee201-profile-section emp201-summary-card" id="emp201-personal">
@@ -436,14 +440,18 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("assets")}><span><Laptop size={17}/> Clearance & Assigned Assets <i className="emp201-heading-count">{assignedAssets.length}</i></span><span>View Assets <ArrowRight size={14}/></span></button>
         <button type="button" className="emp201-card-excerpt" onClick={()=>setDetailKind("assets")}><small>Employee status · {person.status}</small><b>{assignedAssets.length} outstanding device{assignedAssets.length===1?"":"s"}{assignedAssets.length>0?` · ${assignedAssets[0].name}`:""}</b></button>
        </section>
+       <section className="employee201-profile-section emp201-summary-card emp201-incident-card" id="emp201-incidents">
+        <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("incidents")}><span><FileText size={17}/> Incident Involvement <i className="emp201-heading-count">{linkedIncidents.length}</i></span><span>View Records <ArrowRight size={14}/></span></button>
+        <button type="button" className="emp201-card-excerpt" onClick={()=>setDetailKind("incidents")}><small>Closed case records linked to this employee</small><b>{linkedIncidents.length?`${linkedIncidents.length} closed case${linkedIncidents.length===1?"":"s"} · ${incidentRoleFor(linkedIncidents[0],person.id).join(" / ")}`:"No linked closed cases"}</b></button>
+       </section>
       </div>}
-      {tab==="Documents"&&<EmployeeDocumentLibrary person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} requestedFolder={requestedFolder} onFolderHandled={()=>setRequestedFolder(null)} onUpload={(folder,file,memoId)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId}]}));return id}}/>}
+      {tab==="Documents"&&<EmployeeDocumentLibrary person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} incidentCases={linkedIncidents} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} requestedFolder={requestedFolder} onFolderHandled={()=>setRequestedFolder(null)} onUpload={(folder,file,memoId)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId}]}));return id}}/>}
      </div>
      {tab==="Profile"&&editing&&<div className="emp201-savebar"><span>Editing employee information · Save changes before leaving this profile</span><div className="rev-actions"><button type="button" className="secondary" onClick={()=>{setEditing(false);setPersonal(null);setEmploymentDraft(null)}}>Cancel</button><button type="button" className="primary" onClick={persistProfile}>Save Profile Changes</button></div></div>}
     </>}
     {detailKind&&createPortal(<div className="emp201-history-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setDetailKind(null)}}>
      <section className="emp201-detail-modal" role="dialog" aria-modal="true" aria-labelledby="emp201-detail-dialog-title">
-      <header><div><h3 id="emp201-detail-dialog-title">{{employee:"Employee Details",employment:"Employment Details",salary:"Salary & Benefits",reviews:"Performance Reviews",history:"Employment History",assets:"Clearance & Assigned Assets"}[detailKind]}</h3><p>{person.name} · {person.id}</p></div><button className="secondary" type="button" onClick={()=>setDetailKind(null)}><X size={16}/> Close</button></header>
+      <header><div><h3 id="emp201-detail-dialog-title">{{employee:"Employee Details",employment:"Employment Details",salary:"Salary & Benefits",reviews:"Performance Reviews",history:"Employment History",assets:"Clearance & Assigned Assets",incidents:"Incident Involvement"}[detailKind]}</h3><p>{person.name} · {person.id}</p></div><button className="secondary" type="button" onClick={()=>setDetailKind(null)}><X size={16}/> Close</button></header>
       <div className="emp201-detail-modalbody">
        {detailKind==="employee"&&<>
         <h4>Personal & Contact Information</h4><div className="emp201-dialog-facts">{[["Full Name",person.name],["Employee ID",person.id],["Gender",person.gender],["Birth Date",formatDate(person.birthDate)],["Civil Status",empty(person.civilStatus)],["Phone",empty(person.phone)],["Email",empty(person.email)],["Address",empty(person.address)],["Emergency Contact",empty(person.emergencyName)],["Relationship",empty(person.emergencyRelationship)],["Emergency Phone",empty(person.emergencyPhone)]].map(([label,value])=><div key={label}><small>{label}</small><b>{value}</b></div>)}</div>
@@ -465,6 +473,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
        </>}
        {detailKind==="reviews"&&<><h4>Performance Assessments</h4>{evaluations.length?evaluations.map((t,i)=><div className="emp201-dialog-entry" key={i}><ClipboardList size={16}/><span>{t}</span></div>):<p className="muted">No assessments recorded yet. Use Employee Actions → Record Assessment to add one.</p>}</>}
        {detailKind==="history"&&<><h4>Employment Timeline</h4>{person.timeline.map((t,i)=><div className="emp201-dialog-entry" key={i}><BriefcaseBusiness size={16}/><span>{t}</span></div>)}<div className="emp201-dialog-subhead"><h4>Assignment Memos</h4><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("role")}}>Open Assignment History <ArrowRight size={14}/></button></div></>}
+       {detailKind==="incidents"&&<><div className="emp201-dialog-subhead"><h4>Linked Closed Incidents ({linkedIncidents.length})</h4><button className="secondary" type="button" onClick={()=>goToDocuments("Incident Case Records")}><FolderOpen size={14}/> Open Incident Case Records</button></div><p className="muted">Involvement is not a disciplinary finding. Case access is restricted to authorized HR/Super Admin personnel. Original case records remain in IR History.</p>{linkedIncidents.length?linkedIncidents.map(c=><div className="emp201-incident-entry" key={c.id}><div><b>{c.id} · {c.summary}</b><small>{c.branch} · {c.closedAt||"Closed"} · Involvement: {incidentRoleFor(c,person.id).join(" & ")}</small><small>Outcome: {c.outcome||"Not classified"}</small></div><button className="secondary" type="button" onClick={()=>goToDocuments("Incident Case Records")}>View Case Files <ArrowRight size={13}/></button><div className="emp201-incident-doclist">{incidentDocuments(c).map((doc,i)=><span key={i}><FileText size={12}/>{doc.category}: {doc.title}</span>)}{(c.attachments||[]).map(a=><span key={a.id}><FileText size={12}/>{a.category}: {a.name} (metadata)</span>)}</div></div>):<p className="muted">No closed incident records linked by a verified employee ID.</p>}</>}
        {detailKind==="assets"&&<><div className="emp201-dialog-facts"><div><small>Employment Status</small><b>{person.status}</b></div><div><small>Outstanding Devices</small><b>{assignedAssets.length}</b></div></div><h4>Assigned Asset Records</h4>{assignedAssets.length?assignedAssets.map(a=><div className="emp201-dialog-entry" key={a.id}><Laptop size={16}/><span><b>{a.name}</b><small>{a.id} · {a.status}</small></span></div>):<p className="muted">No outstanding assigned devices.</p>}{assignedAssets.length>0&&<p className="muted">Outstanding devices require retrieval and inspection before final clearance.</p>}{onAssignDevice&&person.status!=="Clearance Pending"&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openAssetsForPerson()}}>Assign Device <ArrowRight size={14}/></button>}</>}
       </div>
      </section>
