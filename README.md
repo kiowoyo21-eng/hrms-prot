@@ -38,3 +38,16 @@ Upload the ZIP contents directly into the existing GitHub repository root and co
 **This is not a real HR database or legally verified payroll system.** Fictional credentials and records are accessible in browser source. Role restrictions are only for review, and localStorage is not suitable for actual employee records. No secure signing links, official contribution tables or real payments are connected. A production-ready system will need Supabase/Auth/RLS, confidential storage, legal rate validation, approval workflows, audit controls and testing.
 
 Full production build could not be run locally because dependencies could not be downloaded from the npm registry in this environment. Do not enter real personal data, upload confidential documents, or process real payroll on this site.
+
+
+## Employee 201 Salary Display Adjustment (Oct 2026)
+
+- The Employee Directory **Basic Salary** cell stacks the pay basis (**Daily** or **Monthly**) above the corresponding rate (for example, **₱700/day** or **₱25,000/month**).
+- The Employee Profile **Overview** uses the same stacked format.
+- Rates are read from the shared `data.people` employee state used by the Payroll workspace, rather than a hardcoded display value.
+- Existing 10/20/50 pagination, confidentiality restrictions, and all public forms are preserved.
+- Frontend-only review data; no production payroll system or Supabase integration.
+
+## Final Employee 201 Salary Column Presentation
+
+Employee Directory header: **Salary Type / Salary**. Every cell follows the same stacked hierarchy as Employee / ID: **Daily** or **Monthly** on top in bold, and **₱700/day** or **₱25,000/month** beneath it in muted secondary text. The Employee 201 Overview uses the same two-line presentation. The amount remains linked to the shared employee record, and pagination remains 10 / 20 / 50.

@@ -37,6 +37,8 @@ const formatDate=(v?:string)=>{
  return Number.isNaN(d.getTime())?v:d.toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"numeric"});
 };
 const money=(v:number)=>new Intl.NumberFormat("en-PH",{style:"currency",currency:"PHP",maximumFractionDigits:2}).format(v);
+const compactMoney=(v:number)=>new Intl.NumberFormat("en-PH",{style:"currency",currency:"PHP",minimumFractionDigits:0,maximumFractionDigits:2}).format(v);
+const salaryAmount=(p:HRPerson)=>`${compactMoney(p.rate)}/${p.salaryType==="Daily"?"day":"month"}`;
 
 export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role}){
  const {data,update}=useHR();
@@ -218,7 +220,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
     </div>
     <p className="employee201-tablehint">Scroll horizontally to view every directory column on smaller screens.</p>
     <div className="table-wrap employee201-tablewrap"><table className="employee201-table"><thead><tr>
-     <th>Employee / ID</th><th>Branch</th><th>Department & Position</th><th>Gender</th><th>Employment Status</th><th>Date Hired</th><th>Salary Type</th><th>Document Progress</th><th>Actions</th>
+     <th>Employee / ID</th><th>Branch</th><th>Department & Position</th><th>Gender</th><th>Employment Status</th><th>Date Hired</th><th>Salary / Type</th><th>Document Progress</th><th>Actions</th>
     </tr></thead><tbody>{shown.map(p=><tr key={p.id}>
      <td><strong>{p.name}</strong><small className="pay-small">{p.id}</small></td>
      <td>{p.branch}</td>
@@ -226,7 +228,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
      <td>{p.gender}</td>
      <td><span className="tag">{p.status}</span></td>
      <td>{formatDate(p.hire)}</td>
-     <td>{p.salaryType}</td>
+     <td><div className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(p)}</strong><small className="employee201-salary-type">{p.salaryType}</small></div></td>
      <td><div className="employee201-docprogress"><strong>{verified(p)}/{p.documents.length} verified</strong><small>{missing(p)>0?`${missing(p)} missing`:"No missing documents"}</small></div></td>
      <td><button className="secondary" onClick={()=>openProfile(p.id)}>View 201 <ArrowRight size={15}/></button></td>
     </tr>)}</tbody></table>
@@ -252,7 +254,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
       {tab==="Overview"&&<>
        <h4>Employee Summary</h4><div className="rev-facts employee201-facts">
         <div><small>Employee ID</small><b>{person.id}</b></div><div><small>Branch</small><b>{person.branch}</b></div><div><small>Department</small><b>{person.department}</b></div><div><small>Position</small><b>{person.position}</b></div>
-        <div><small>Employment status</small><b>{person.status}</b></div><div><small>Date hired</small><b>{formatDate(person.hire)}</b></div><div><small>Gender</small><b>{person.gender}</b></div><div><small>Salary type</small><b>{person.salaryType}</b></div>
+        <div><small>Employment status</small><b>{person.status}</b></div><div><small>Date hired</small><b>{formatDate(person.hire)}</b></div><div><small>Gender</small><b>{person.gender}</b></div><div><small>Basic Salary</small><span className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(person)}</strong><small className="employee201-salary-type">{person.salaryType}</small></span></div>
         <div><small>Phone number</small><b>{empty(person.phone)}</b></div><div><small>Email address</small><b>{empty(person.email)}</b></div><div><small>Required documents</small><b>{verified(person)} of {person.documents.length} verified</b></div><div><small>Assigned equipment</small><b>{assignedAssets.length} item(s)</b></div>
        </div>
        <div className="employee201-overviewnotes"><div><ClipboardList size={18}/><span>{missing(person)} missing required document(s)</span></div><div><ShieldCheck size={18}/><span>Employment actions must be recorded through the Actions section below.</span></div></div>

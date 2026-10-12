@@ -207,3 +207,11 @@
 .employee201-doclist .rev-row>span.tag{flex:0 0 auto}
 .employee201 .rev-title>div:first-child{min-width:0}
 @media(max-width:680px){.employee201-registration .rev-form,.employee201-detail .rev-form{grid-template-columns:1fr}.employee201-filters>label{min-width:0}}
+
+/* Employee 201: compact, vertically stacked salary type and amount. */
+/* Employee/ID-style two-line salary cell: type first, rate second. */
+.employee201-salary{display:flex;flex-direction:column;align-items:flex-start;gap:2px;line-height:1.35;min-width:110px}
+.employee201-salary .employee201-salary-amount{display:block;font-size:13px;font-weight:700;color:#26354b;white-space:nowrap}
+.employee201-salary .employee201-salary-type{font-size:12px;font-weight:500;color:var(--muted,#64748b)}
+.employee201-facts .employee201-salary .employee201-salary-amount{font-size:14px}
+.employee201-facts .employee201-salary .employee201-salary-type{font-size:13px}
