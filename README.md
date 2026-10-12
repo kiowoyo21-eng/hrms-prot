@@ -84,3 +84,11 @@ The standalone HR Tasks module and duplicate Dashboard task listing have been re
 ## October 12 — Asset branch TypeScript build fix
 
 Fixed Vercel TypeScript error in `components/AssetWorkspace.tsx` Add Device branch selection. Also fixed a stale memo dependency for the inventory branch filter. See `docs/VERCEL-ASSET-BRANCH-TYPE-FIX.md`.
+
+## Employee 201 / Payroll / Recruitment revisions (2026-10-12)
+
+This release retains the previous Vercel Asset type fix and system-wide module UI/UX changes. Employee 201 now has **View/Edit**, **one-scroll Employee Profile** and separate **folder-based Documents**, including sample Payslips and a compact PDF/image preview. A shared fictional released payroll ledger powers the **Total Salary Received** figure. Payroll uses tab-based **Employee Pay Rates**, **Government Deductions**, **Payroll Processing**, **13th-Month Pay**, **Funding & Release**, and **Remittances**. Hiring has a direct **Shortlist** action and controlled stage progression.
+
+See [full changes, testing checklist and backend limitations](docs/EMPLOYEE201-PAYROLL-HIRING-REVISION-2026-10-12.md).
+
+**Important:** Sample payroll releases, salaries, manual deductions and payslip previews are fictional browser-only data. The application does not store real files, issue official payslips, perform real government deductions or make payments. Secure backend still required for production.

@@ -1,6 +1,6 @@
 "use client";
 
-import {useMemo,useRef,useState,type FormEvent,type PointerEvent} from "react";
+import {useEffect,useMemo,useRef,useState,type FormEvent,type PointerEvent} from "react";
 import {Laptop,Plus,ArrowLeft,ArrowRight,FileSignature,ClipboardCheck,FileText,Info,RotateCcw} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
 import {useHR,type AssetRecord,type AssetStatus} from "../lib/hrState";
@@ -29,7 +29,7 @@ function SignaturePad({onChange}:{onChange:(signed:boolean)=>void}){
  return <div className="acc-signature"><canvas ref={canvas} width={800} height={190} aria-label="Employee signature drawing area" onPointerDown={down} onPointerMove={move} onPointerUp={end} onPointerCancel={end}/><div className="acc-signature-footer"><small>Employee signature — frontend review capture only; not a verified electronic signature.</small><button type="button" className="secondary" onClick={()=>{const c=canvas.current;c?.getContext("2d")?.clearRect(0,0,c.width,c.height);onChange(false)}}><RotateCcw size={13}/> Clear</button></div></div>
 }
 
-export default function AssetWorkspace({branch,role}:{branch:Branch;role:Role}){
+export default function AssetWorkspace({branch,role,prefillEmployeeId}:{branch:Branch;role:Role;prefillEmployeeId?:string}){
  const {data,update}=useHR();
  const assets=data.assets,people=data.people;
  const editable=role==="HR"||role==="Super Admin";
@@ -57,6 +57,7 @@ export default function AssetWorkspace({branch,role}:{branch:Branch;role:Role}){
  const [message,setMessage]=useState("");
  const [adding,setAdding]=useState(false);
  const [newDevice,setNewDevice]=useState<{name:string;serial:string;condition:string;accessories:string;homeBranch:string}>({name:"",serial:"",condition:"Good",accessories:"",homeBranch:branch==="All Shops"?"UC Mandaluyong":branch});
+ useEffect(()=>{if(!prefillEmployeeId||!editable)return;const found=people.find(p=>p.id===prefillEmployeeId);if(!found)return;setEmployeeId(found.id);setProcess(null);setSelected(null);setAdding(false);setFilter("Free");setSearch("");setBranchFilter(found.branch);setMessage(`Assign Device · ${found.name} preselected. Choose an available device from the list.`)},[prefillEmployeeId,editable]);
  const asset=assets.find(a=>a.id===selected);
  const employee=people.find(p=>p.id===employeeId);
  const visibleAssets=useMemo(()=>assets.filter(a=>(filter==="All"||a.status===filter)&&(branchFilter==="All"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branchFilter)&&(branch==="All Shops"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branch)&&`${a.id} ${a.name} ${a.serial} ${people.find(p=>p.id===a.employeeId)?.name||""}`.toLowerCase().includes(search.toLowerCase())),[assets,people,filter,search,branchFilter,branch]);
@@ -71,7 +72,7 @@ export default function AssetWorkspace({branch,role}:{branch:Branch;role:Role}){
   if(type==="retrieve"&&a.status!=="Assigned")return;
   if(type==="inspect"&&a.status!=="Inspection")return;
   setSelected(id);setProcess(type);setStage(a.status==="Pending Turnover"&&type==="assign"?1:0);
-  setEmployeeId(a.employeeId||"");setEmployeeSearch("");setCondition(a.condition);setAccessories(a.accessories);
+  setEmployeeId(a.employeeId||prefillEmployeeId||"");setEmployeeSearch("");setCondition(a.condition);setAccessories(a.accessories);
   setNotes(a.notes||"");setAssignmentDate(a.assignmentDate||today());setSignMethod(a.signingMethod||"phone");
   setDocumentPreview(false);setSignatureDrawn(false);setSignedCopy(null);setOfficer(a.assignedBy||"");setHandedOver(false);setReviewed(false);setMessage("");
  };

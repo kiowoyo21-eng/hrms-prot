@@ -1,11 +1,12 @@
 "use client";
 
 import {useMemo,useState,type FormEvent} from "react";
-import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,ChevronDown,ChevronUp,X,Info} from "lucide-react";
+import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson} from "../lib/hrState";
 import HelpButton from "./HelpButton";
+import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
 
 type Action="Evaluate"|"Regularize"|"Promote"|"Transfer"|"Offboard";
 type PersonalDraft=Pick<HRPerson,"name"|"gender"|"email"|"phone"|"birthDate"|"civilStatus"|"address"|"emergencyName"|"emergencyRelationship"|"emergencyPhone">;
@@ -18,16 +19,7 @@ const stages:Record<Action,string[]>={
  Offboard:["Record separation reason","Device returns and obligations","Clearance & final-pay preparation"]
 };
 // Keep stable section IDs for existing state and workflows. Only user-facing labels change.
-const profileSections = [
- {id:"Overview",label:"Overview"},
- {id:"Personal",label:"Employee Details"},
- {id:"Employment",label:"Employment Details"},
- {id:"Compensation",label:"Salary & Benefits"},
- {id:"Documents",label:"Documents"},
- {id:"Evaluations",label:"Performance Reviews"},
- {id:"History",label:"Employment History"},
- {id:"Clearance",label:"Clearance & Assets"}
-] as const;
+const profileSections = [{id:"Profile",label:"Employee Profile"},{id:"Documents",label:"Documents"}] as const;
 const actionLabels:Record<Action,string> = {Evaluate:"Record Evaluation",Regularize:"Regularize Employment",Promote:"Promote Employee",Transfer:"Transfer Employee",Offboard:"Process Offboarding"};
 const employmentStatuses=["Probationary","Regular","Fixed-Term","Project-Based","Clearance Pending"];
 const departments=["Operations","Service","Administration","Marketing"];
@@ -52,7 +44,7 @@ const money=(v:number)=>new Intl.NumberFormat("en-PH",{style:"currency",currency
 const compactMoney=(v:number)=>new Intl.NumberFormat("en-PH",{style:"currency",currency:"PHP",minimumFractionDigits:0,maximumFractionDigits:2}).format(v);
 const salaryAmount=(p:HRPerson)=>`${compactMoney(p.rate)}/${p.salaryType==="Daily"?"day":"month"}`;
 
-export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role}){
+export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayroll}:{branch:Branch;role:Role;onAssignDevice?:(employeeId:string)=>void;onOpenPayroll?:(employeeId:string)=>void}){
  const {data,update}=useHR();
  const [search,setSearch]=useState("");
  const [status,setStatus]=useState("All");
@@ -72,7 +64,10 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
  const [page,setPage]=useState(1);
  const [rows,setRows]=useState<10|20|50>(10);
  const [selected,setSelected]=useState<string|null>(null);
- const [tab,setTab]=useState("Overview");
+ const [tab,setTab]=useState("Profile");
+ const [salaryPeriod,setSalaryPeriod]=useState<"month"|"year"|"all">("year");
+ const [uploads,setUploads]=useState<Record<string,LocalEmployeeFile[]>>({});
+ const [employmentDraft,setEmploymentDraft]=useState<{department:string;hire:string;probation:number;sil:number;vil:number}|null>(null);
  const [add,setAdd]=useState(false);
  const [form,setForm]=useState({...emptyForm});
  const [editing,setEditing]=useState(false);
@@ -147,6 +142,10 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
  const person=data.people.find(p=>p.id===selected);
  const verified=(p:HRPerson)=>p.documents.filter(x=>x.status==="Verified").length;
  const missing=(p:HRPerson)=>p.documents.filter(x=>x.status==="Missing").length;
+ const paidSalary=person?(data.payrollReleases||[]).filter(r=>r.employeeId===person.id&&r.status==="Released"&&r.kind==="Salary"&&(
+  salaryPeriod==="all"||(salaryPeriod==="year"&&r.paidAt.startsWith(String(new Date().getFullYear())))||(salaryPeriod==="month"&&r.paidAt.startsWith(new Date().toISOString().slice(0,7)))
+ )):[];
+ const totals=paidSalary.reduce((t,r)=>({gross:t.gross+r.gross,deductions:t.deductions+r.deductions,net:t.net+r.net}),{gross:0,deductions:0,net:0});
  const assignedAssets=person?data.assets.filter(a=>a.employeeId===person.id&&["Assigned","For Return","Inspection"].includes(a.status)):[];
  const draft=personal;
 
@@ -154,11 +153,14 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
   if(!person)return;
   update(s=>({...s,people:s.people.map(p=>p.id===person.id?fn(p):p)}));
  };
- const openProfile=(id:string)=>{
-  setSelected(id);setTab("Overview");setAction(null);setEditing(false);setPersonal(null);setMessage("");setAdd(false);
+ const openProfile=(id:string,edit=false)=>{
+  const target=data.people.find(p=>p.id===id);
+  setSelected(id);setTab("Profile");setAction(null);setEditing(edit);setPersonal(edit&&target?toPersonalDraft(target):null);
+  setEmploymentDraft(edit&&target?{department:target.department,hire:target.hire,probation:target.probation,sil:target.sil,vil:target.vil}:null);
+  setMessage("");setAdd(false);
  };
  const backToDirectory=()=>{
-  setSelected(null);setAction(null);setEditing(false);setPersonal(null);setMessage("");setAdd(false);
+  setSelected(null);setAction(null);setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("");setAdd(false);
  };
  const setFilter=(fn:()=>void)=>{fn();setPage(1)};
  const resetFilters=()=>{
@@ -175,14 +177,20 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
   if(key==="hiredFrom")setHiredFrom("");if(key==="hiredTo")setHiredTo("");
   if(key==="documents")setDocumentFilter("All");if(key==="quick")setQuick("All");
  });
- const startEdit=()=>{if(!person)return;setPersonal(toPersonalDraft(person));setEditing(true);setMessage("")};
- const savePersonal=(e:FormEvent)=>{
-  e.preventDefault();if(!draft||!draft.name.trim()){setMessage("Employee full name is required.");return}
-  updatePerson(p=>({...p,...draft,name:draft.name.trim(),timeline:[`${new Date().toISOString().slice(0,10)} · Personal details updated`,...p.timeline]}));
-  setEditing(false);setPersonal(null);setMessage("Employee details saved to this browser.");
+ const startEdit=()=>{if(!person)return;setTab("Profile");setPersonal(toPersonalDraft(person));setEmploymentDraft({department:person.department,hire:person.hire,probation:person.probation,sil:person.sil,vil:person.vil});setEditing(true);setMessage("")};
+ const persistProfile=()=>{
+  if(!draft||!draft.name.trim()){setMessage("Employee full name is required.");return}
+  updatePerson(p=>({...p,...draft,...(employmentDraft||{}),name:draft.name.trim(),timeline:[`${new Date().toISOString().slice(0,10)} · Personal details updated`,...p.timeline]}));
+  setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("Employee details saved to this browser.");
  };
+ const savePersonal=(e:FormEvent)=>{e.preventDefault();persistProfile()};
+ const hasUnsavedEdit=()=>Boolean(person&&editing&&((personal&&JSON.stringify(personal)!==JSON.stringify(toPersonalDraft(person)))||(employmentDraft&&JSON.stringify(employmentDraft)!==JSON.stringify({department:person.department,hire:person.hire,probation:person.probation,sil:person.sil,vil:person.vil}))));
+ const confirmLeavingEdits=()=>!hasUnsavedEdit()||window.confirm("You have unsaved employee changes. Discard them and continue?");
+ const openAssetsForPerson=()=>{if(person&&onAssignDevice&&confirmLeavingEdits())onAssignDevice(person.id)};
+ const openPayRates=()=>{if(person&&onOpenPayroll&&confirmLeavingEdits())onOpenPayroll(person.id)};
  const startAction=(a:Action)=>{
-  if(!person)return;
+  if(!person||!confirmLeavingEdits())return;
+  setEditing(false);setPersonal(null);setEmploymentDraft(null);
   setAction(a);setStep(0);setReason("");setDecision("Approved");setEffective("2026-10-12");
   setDest(person.branch);setNewPosition(person.position);setNewRate(String(person.rate));setMessage("");
  };
@@ -237,12 +245,12 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
  if(role==="BM")return <section className="panel">Employee 201 is restricted to authorized HR personnel. Use Employee Document Submission instead.</section>;
 
  return <div className="rev-stack employee201">
-  <div className="rev-title">
-   <div><h3>Employee 201 Files</h3><p>Employee master records, complete HR profile details, documentation and authorized employment actions.</p></div>
+  {!person&&<div className="rev-title">
+   <div><h3>Employee 201 Files</h3></div>
    <div className="rev-actions"><HelpButton topic="employee" label="Employee 201 Guide"/>
     {!person&&!add&&<button className="primary" onClick={()=>{setAdd(true);setMessage("")}}><Plus size={16}/> Add Employee</button>}
    </div>
-  </div>
+  </div>}
   {message&&<div className="rev-note" role="status">{message}</div>}
 
   {add&&<section className="panel">
@@ -287,7 +295,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
     <div><small>With missing documents</small><strong>{people.filter(p=>missing(p)>0).length}</strong></div>
    </div>
    <section className="panel"><div className="rev-title"><div><h3>Employee Directory</h3></div><span className="tag">{people.length} records</span></div>
-    <div className="employee201-filterhead"><div><h4>Find Employees</h4></div><HelpButton topic="filters" label="How to filter employee records"/></div>
+    <div className="employee201-filterhead"><HelpButton topic="filters" label="Filter help"/></div>
     <div className="employee201-quick-presets" role="group" aria-label="Quick employee filters">
      {(["All","Probationary","Missing Documents","Pending Verification","New Hires"] as const).map(x=><button key={x} type="button" className={`employee201-preset ${quick===x?"active":""}`} aria-pressed={quick===x} onClick={()=>setFilter(()=>setQuick(x))}>{x}{x==="New Hires"&&<small> (90 days)</small>}</button>)}
     </div>
@@ -332,7 +340,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
      <td>{formatDate(p.hire)}</td>
      <td><div className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(p)}</strong><small className="employee201-salary-type">{p.salaryType}</small></div></td>
      <td><div className="employee201-docprogress"><strong>{verified(p)}/{p.documents.length} verified</strong><small>{missing(p)>0?`${missing(p)} missing`:"No missing documents"}</small></div></td>
-     <td><button className="secondary" onClick={()=>openProfile(p.id)}>View Profile <ArrowRight size={15}/></button></td>
+     <td><div className="rev-actions emp201-rowactions"><button type="button" className="secondary" onClick={()=>openProfile(p.id)}><Eye size={15}/> View</button><button type="button" className="secondary" onClick={()=>openProfile(p.id,true)}><Pencil size={15}/> Edit</button></div></td>
     </tr>)}</tbody></table>
     {shown.length===0&&<div className="empty"><strong>No employees match these filters.</strong><p>Try another branch or status, remove a filter chip above, or use Clear All Filters.</p><button type="button" className="secondary" onClick={resetFilters}>Show All Employees</button></div>}
     </div>
@@ -349,20 +357,13 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
   {person&&!add&&<>
    <button className="rev-back" onClick={backToDirectory}><ArrowLeft size={16}/> Back to Employee Directory</button>
    <section className="panel">
-    <div className="rev-title employee201-profiletitle"><div><h3><UserRound size={19}/> {person.name}</h3><p>{person.id} · {person.department} / {person.position} · {person.branch}</p></div><span className="tag">{person.status}</span></div>
+    <div className="rev-title employee201-profiletitle"><div><h3><UserRound size={19}/> {person.name}</h3><p>{person.id} · {person.department} / {person.position} · {person.branch}</p></div><div className="rev-actions"><span className="tag">{person.status}</span><button type="button" className="secondary" onClick={()=>{setEditing(false);setPersonal(null);setEmploymentDraft(null);setAction(null)}}><Eye size={15}/> View</button><button type="button" className={editing?"primary":"secondary"} onClick={startEdit}><Pencil size={15}/> Edit</button></div></div>
     {!action&&<>
-     <nav className="rev-tabs employee201-profiletabs" aria-label="Employee 201 profile sections">{profileSections.map(({id,label})=><button type="button" key={id} className={tab===id?"active":""} aria-current={tab===id?"page":undefined} onClick={()=>{setTab(id);setEditing(false);setPersonal(null);setMessage("")}}>{label}</button>)}</nav>
+     <nav className="rev-tabs employee201-profiletabs" aria-label="Employee 201 tabs">{profileSections.map(({id,label})=><button type="button" key={id} className={tab===id?"active":""} aria-current={tab===id?"page":undefined} onClick={()=>{setTab(id);setMessage("")}}>{label}</button>)}</nav>
+     {tab==="Profile"&&<nav className="emp201-jumplinks" aria-label="Jump to employee profile section">{[["Employee Details","personal"],["Employment","employment"],["Salary & Benefits","compensation"],["Reviews","evaluations"],["History","history"],["Clearance & Assets","clearance"]].map(([label,id])=><a key={id} href={`#emp201-${id}`}>{label}</a>)}</nav>}
      <div className="rev-detail employee201-detail">
-      {tab==="Overview"&&<>
-       <h4>Employee Summary</h4><div className="rev-facts employee201-facts">
-        <div><small>Employee ID</small><b>{person.id}</b></div><div><small>Branch</small><b>{person.branch}</b></div><div><small>Department</small><b>{person.department}</b></div><div><small>Position</small><b>{person.position}</b></div>
-        <div><small>Employment status</small><b>{person.status}</b></div><div><small>Date hired</small><b>{formatDate(person.hire)}</b></div><div><small>Gender</small><b>{person.gender}</b></div><div><small>Basic salary/rate</small><span className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(person)}</strong><small className="employee201-salary-type">{person.salaryType}</small></span></div>
-        <div><small>Phone number</small><b>{empty(person.phone)}</b></div><div><small>Email address</small><b>{empty(person.email)}</b></div><div><small>Required documents</small><b>{verified(person)} of {person.documents.length} verified</b></div><div><small>Assigned equipment</small><b>{assignedAssets.length} item(s)</b></div>
-       </div>
-       <div className="employee201-overviewnotes"><div><ClipboardList size={18}/><span>{missing(person)} missing required document(s)</span></div><div><ShieldCheck size={18}/><span>Use Employment Actions below to record employment changes.</span></div></div>
-      </>}
-      {tab==="Personal"&&<>
-       <div className="rev-title"><div><h4>Employee & Contact Details</h4><p>Personal information, contact details, and emergency contacts. Restricted to authorized HR users.</p></div>{!editing&&<button className="secondary" onClick={startEdit}>Edit Employee Details</button>}</div>
+      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-personal">
+       <h4>Employee Details</h4>
        {!editing&&<div className="rev-facts employee201-facts">
         <div><small>Full name</small><b>{person.name}</b></div><div><small>Gender</small><b>{person.gender}</b></div>
         <div><small>Birth date</small><b>{formatDate(person.birthDate)}</b></div><div><small>Civil status</small><b>{empty(person.civilStatus)}</b></div>
@@ -381,47 +382,46 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
         <label>Emergency contact name<input value={draft.emergencyName||""} onChange={e=>setPersonal(p=>p?{...p,emergencyName:e.target.value}:p)}/></label>
         <label>Relationship<input value={draft.emergencyRelationship||""} onChange={e=>setPersonal(p=>p?{...p,emergencyRelationship:e.target.value}:p)}/></label>
         <label>Emergency phone<input type="tel" value={draft.emergencyPhone||""} onChange={e=>setPersonal(p=>p?{...p,emergencyPhone:e.target.value}:p)}/></label>
-        <div className="rev-actions employee201-wide"><button type="submit" className="primary">Save Changes</button><button type="button" className="secondary" onClick={()=>{setEditing(false);setPersonal(null)}}>Cancel</button></div>
+        
        </form>}
-      </>}
-      {tab==="Employment"&&<>
-       <h4>Employment Details & Branch Assignment</h4>
+      </section>}
+      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-employment">
+       <div className="rev-title"><h4>Employment Details</h4>{editing&&<div className="rev-actions"><button type="button" className="secondary" onClick={()=>startAction("Transfer")}>Transfer Branch</button><button type="button" className="secondary" onClick={()=>startAction("Promote")}>Promote</button></div>}</div>
+       {editing&&employmentDraft&&<div className="rev-form emp201-edit-inline"><label>Department<select value={employmentDraft.department} onChange={e=>setEmploymentDraft(v=>v?{...v,department:e.target.value}:v)}>{departments.map(x=><option key={x}>{x}</option>)}</select></label><label>Hire Date<input type="date" value={employmentDraft.hire} onChange={e=>setEmploymentDraft(v=>v?{...v,hire:e.target.value}:v)}/></label><label>Probation Months<input type="number" min="0" max="12" value={employmentDraft.probation} onChange={e=>setEmploymentDraft(v=>v?{...v,probation:Number(e.target.value)}:v)}/></label><label>SIL Allocation (days)<input type="number" min="0" value={employmentDraft.sil} onChange={e=>setEmploymentDraft(v=>v?{...v,sil:Number(e.target.value)}:v)}/></label><label>VIL Allocation (days)<input type="number" min="0" value={employmentDraft.vil} onChange={e=>setEmploymentDraft(v=>v?{...v,vil:Number(e.target.value)}:v)}/></label></div>}
        <div className="rev-facts employee201-facts"><div><small>Employee number</small><b>{person.id}</b></div><div><small>Company branch</small><b>{person.branch}</b></div><div><small>Department</small><b>{person.department}</b></div><div><small>Position / Job title</small><b>{person.position}</b></div><div><small>Employment status</small><b>{person.status}</b></div><div><small>Date hired</small><b>{formatDate(person.hire)}</b></div><div><small>Probation duration</small><b>{person.probation?`${person.probation} months`:"Not applicable"}</b></div><div><small>Salary type</small><b>{person.salaryType} rate</b></div></div>
-       <p className="employee201-hint">Use Employment Actions for transfers, promotions and regularization so each change is recorded in the employee history.</p>
-      </>}
-      {tab==="Compensation"&&<>
+       
+      </section>}
+      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-compensation">
        <h4>Salary & Benefits</h4>
        <div className="rev-facts employee201-facts"><div><small>Salary type</small><b>{person.salaryType}-paid</b></div><div><small>Current basic salary/rate</small><b>{money(person.rate)} / {person.salaryType==="Daily"?"day":"month"}</b></div><div><small>SIL allocation</small><b>{person.sil} days</b></div><div><small>VIL allocation</small><b>{person.vil} days</b></div></div>
+       <div className="emp201-salary-total"><div className="emp201-total-head"><div><span>Total Salary Received</span><strong>{money(totals.net)}</strong><small>Net salary from {paidSalary.length} released payroll record{paidSalary.length===1?"":"s"} · Sample browser ledger</small></div><label>Period<select value={salaryPeriod} onChange={e=>setSalaryPeriod(e.target.value as "month"|"year"|"all")}><option value="month">This Month</option><option value="year">This Year</option><option value="all">All Time</option></select></label></div><div className="emp201-total-breakdown"><div><small>Gross Earnings</small><b>{money(totals.gross)}</b></div><div><small>Total Deductions</small><b>{money(totals.deductions)}</b></div><div><small>Releases</small><b>{paidSalary.length}</b></div></div></div>
+       <details className="emp201-salary-history"><summary>View Salary History ({paidSalary.length})</summary><div className="table-wrap"><table><thead><tr><th>Period</th><th>Paid On</th><th>Gross</th><th>Deductions</th><th>Net</th></tr></thead><tbody>{[...paidSalary].sort((a,b)=>b.paidAt.localeCompare(a.paidAt)).map(r=><tr key={r.id}><td>{r.periodStart} – {r.periodEnd}</td><td>{r.paidAt}</td><td>{money(r.gross)}</td><td>{money(r.deductions)}</td><td><b>{money(r.net)}</b></td></tr>)}</tbody></table></div>{paidSalary.length===0&&<p className="muted">No released salary records for this period.</p>}</details>
+       {editing&&onOpenPayroll&&<button className="secondary" type="button" onClick={openPayRates}><Wallet size={15}/> Edit Pay Rates in Payroll</button>}
        <h4>Employee Premium Pay Rates</h4>
        <div className="rev-facts employee201-facts">
         <div><small>Regular overtime</small><b>{effectiveRate(person,data.rates).ot}%</b></div><div><small>Rest-day work</small><b>{effectiveRate(person,data.rates).rdw}%</b></div><div><small>Rest-day overtime</small><b>{effectiveRate(person,data.rates).rdot}%</b></div><div><small>Regular holiday</small><b>{effectiveRate(person,data.rates).regular}%</b></div><div><small>Special day</small><b>{effectiveRate(person,data.rates).special}%</b></div>
-       </div><p className="employee201-hint">Premium rate changes are managed in Payroll → Employee Rate Management. This tab displays the shared employee profile.</p>
-      </>}
-      {tab==="Documents"&&<>
-       <h4>Required Employee Documents</h4><p className="muted">BM-submitted documents must be verified by HR before they count as complete. Do not store actual government ID numbers in this unsecured browser prototype.</p>
-       <div className="employee201-doclist">{person.documents.map((d,i)=><div className="rev-row" key={`${d.name}-${i}`}><FileText size={17}/><div className="employee201-docitem"><strong>{d.name}</strong><small>{d.status==="Verified"?"Verified and included":d.status==="Submitted"?"For verification":"Required — not yet received"}</small></div><span className="tag">{d.status}</span></div>)}</div>
-       <h4>Documents Awaiting HR Verification</h4>
-       {data.submissions.filter(s=>s.employeeId===person.id&&s.status==="Pending HR Review").map(s=><div className="rev-row" key={s.id}><FileText size={17}/><div className="employee201-docitem"><strong>{s.type}</strong><small>{s.fileName} · {s.submittedBy}</small></div><span className="tag">Pending HR Review</span></div>)}
-       {!data.submissions.some(s=>s.employeeId===person.id&&s.status==="Pending HR Review")&&<p className="muted">No pending uploads for this employee.</p>}
-      </>}
-      {tab==="Evaluations"&&<>
+       </div><p className="muted">Change pay rates in Payroll Management; all adjustments should have an effective date and approval history.</p>
+      </section>}
+      {tab==="Documents"&&<EmployeeDocumentLibrary person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} onUpload={(folder,file)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file}]}));return id}}/>}
+      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-evaluations">
        <h4>Performance Reviews</h4>
        {person.timeline.filter(t=>t.includes("Evaluate")).map((t,i)=><div className="rev-row" key={i}><ClipboardList size={17}/><span>{t}</span></div>)}
        {!person.timeline.some(t=>t.includes("Evaluate"))&&<p className="muted">No performance review has been recorded. Use Employee Actions → Record Evaluation to add one.</p>}
-      </>}
-      {tab==="History"&&<>
+      </section>}
+      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-history">
        <h4>Employment History</h4>
        {person.timeline.map((x,i)=><div className="rev-row" key={i}><BriefcaseBusiness size={17}/><span>{x}</span></div>)}
-      </>}
-      {tab==="Clearance"&&<>
-       <h4>Clearance & Assigned Assets</h4>
+      </section>}
+      {tab==="Profile"&&<section className="employee201-profile-section" id="emp201-clearance">
+       <div className="rev-title"><h4>Clearance & Assigned Assets</h4>{editing&&onAssignDevice&&<button className="secondary" type="button" onClick={openAssetsForPerson}><Laptop size={15}/> Assign Device</button>}</div>
        <div className="rev-facts employee201-facts"><div><small>Employment status</small><b>{person.status}</b></div><div><small>Outstanding assigned equipment</small><b>{assignedAssets.length} item(s)</b></div></div>
        {assignedAssets.map(a=><div className="rev-row" key={a.id}><BriefcaseBusiness size={17}/><span>{a.name} ({a.id})</span><span className="tag">{a.status}</span></div>)}
-       <p className="employee201-hint">Clearance requires device retrieval/inspection and HR validation of obligations before completion. Use Employment Actions → Process Offboarding for the exit procedure.</p>
-      </>}
+       <p className="muted">Outstanding assets must be retrieved and inspected before final clearance.</p>
+      </section>}
      </div>
-     <div className="rev-title employee201-actions-title"><h4>Employment Actions</h4><HelpButton topic="workflow" label="About employment actions"/></div>
-     <div className="rev-actions rev-wrap">{(["Evaluate","Regularize","Promote","Transfer","Offboard"] as Action[]).filter(a=>a!=="Regularize"||person.status==="Probationary").map(a=><button key={a} className="secondary" onClick={()=>startAction(a)}>{actionLabels[a]}</button>)}</div>
+     {tab==="Profile"&&editing&&<div className="emp201-savebar"><span>Editing employee information · Save changes before leaving this profile</span><div className="rev-actions"><button type="button" className="secondary" onClick={()=>{setEditing(false);setPersonal(null);setEmploymentDraft(null)}}>Cancel</button><button type="button" className="primary" onClick={persistProfile}>Save Profile Changes</button></div></div>}
+     {tab==="Profile"&&editing&&<><div className="rev-title employee201-actions-title"><h4>Employment Actions</h4><HelpButton topic="workflow" label="About employment actions"/></div>
+     <div className="rev-actions rev-wrap">{onAssignDevice&&<button className="secondary" onClick={openAssetsForPerson}><Laptop size={15}/> Assign Device</button>}{(["Evaluate","Regularize","Promote","Transfer","Offboard"] as Action[]).filter(a=>a!=="Regularize"||person.status==="Probationary").map(a=><button key={a} className="secondary" onClick={()=>startAction(a)}>{actionLabels[a]}</button>)}</div></>}
     </>}
     {action&&<div className="rev-process">
      <div className="rev-title"><h3>{actionLabels[action]} — {person.name}</h3><button className="secondary" onClick={()=>setAction(null)}>Cancel</button></div>
