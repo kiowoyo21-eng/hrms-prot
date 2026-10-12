@@ -8,10 +8,11 @@ export type HiringForm = {
   education:string;
   qualifications:string[];
   questions:string[];
+  onboardingDocuments?:string[];
   createdAt:string;
 };
 export type ApplicantStage = "New Applicant" | "Shortlisted" | "Phone Interview" | "Initial Interview" | "Final Interview" | "Passed" | "Hired" | "Rejected" | "On Hold";
-export type ApplicantRequirement = {name:string;status:"Missing"|"Submitted"|"Verified";fileName?:string};
+export type ApplicantRequirement = {name:string;status:"Missing"|"Submitted"|"Verified";fileName?:string;required?:boolean;custom?:boolean};
 export type HiringInterview = {id:string;round:string;at:string;interviewer:string;result:"Pending"|"Passed"|"Failed"|"Needs Follow-up"|"Did Not Attend";notes:string};
 export type ApplicantRecord = {
   id:string; name:string;email:string;phone:string;role:string;branch:string;submitted:string;
@@ -30,16 +31,23 @@ export type ApplicantRecord = {
 export const RECRUITMENT_KEY="recruitment";
 export const HIRING_FORMS_KEY="hiring-forms";
 export const BRANCHES=["UC Mandaluyong","UC Las Piñas","UC Quezon City","MM Mandaluyong"] as const;
+export const DEFAULT_ONBOARDING_DOCUMENTS=["Resume / CV","Medical Clearance","Employment Contract"];
+/** Example options for HR configuration, not legal certification requirements. */
+export function positionDocumentSuggestions(position:string):string[]{
+  if(/automotive|technician|mechanic/i.test(position))return ["Automotive NC II / relevant certification","Technical training certificates","Certificate of Employment / related experience","Driver's license (if role requires driving)"];
+  if(/advisor/i.test(position))return ["Customer service training certificate","Certificate of Employment / relevant experience"];
+  return ["Relevant training certificates","Certificate of Employment / related experience"];
+}
 export const DEFAULT_HIRING_FORMS:HiringForm[]=[
-  {id:"automotive-technician",position:"Automotive Technician",status:"Published",minimumYears:2,education:"Technical/vocational training preferred",qualifications:["Automotive diagnostics","Preventive maintenance","Engine or transmission repair"],questions:["Which vehicle systems have you worked on?","Do you have any automotive certificates?"],createdAt:"2026-10-01"},
-  {id:"service-advisor",position:"Service Advisor",status:"Published",minimumYears:1,education:"High school, vocational or college graduate",qualifications:["Customer service","Vehicle service knowledge","Job orders and estimates"],questions:["Describe your experience explaining repairs to customers."],createdAt:"2026-10-01"},
-  {id:"hr-assistant",position:"HR Assistant",status:"Published",minimumYears:0,education:"Relevant HR/business education preferred",qualifications:["Records management","Scheduling","Office software"],questions:["Which HR tools or systems have you used?"],createdAt:"2026-10-01"},
-  {id:"branch-supervisor",position:"Branch Supervisor",status:"Published",minimumYears:3,education:"Relevant management or operational experience",qualifications:["Team supervision","Branch operations","Customer issue resolution"],questions:["How would you handle a customer complaint?"],createdAt:"2026-10-01"},
+  {id:"automotive-technician",position:"Automotive Technician",status:"Published",minimumYears:2,education:"Technical/vocational training preferred",qualifications:["Automotive diagnostics","Preventive maintenance","Engine or transmission repair"],questions:["Which vehicle systems have you worked on?","Do you have any automotive certificates?"],onboardingDocuments:[...DEFAULT_ONBOARDING_DOCUMENTS,"Automotive NC II / relevant certification","Technical training certificates"],createdAt:"2026-10-01"},
+  {id:"service-advisor",position:"Service Advisor",status:"Published",minimumYears:1,education:"High school, vocational or college graduate",qualifications:["Customer service","Vehicle service knowledge","Job orders and estimates"],questions:["Describe your experience explaining repairs to customers."],onboardingDocuments:[...DEFAULT_ONBOARDING_DOCUMENTS],createdAt:"2026-10-01"},
+  {id:"hr-assistant",position:"HR Assistant",status:"Published",minimumYears:0,education:"Relevant HR/business education preferred",qualifications:["Records management","Scheduling","Office software"],questions:["Which HR tools or systems have you used?"],onboardingDocuments:[...DEFAULT_ONBOARDING_DOCUMENTS],createdAt:"2026-10-01"},
+  {id:"branch-supervisor",position:"Branch Supervisor",status:"Published",minimumYears:3,education:"Relevant management or operational experience",qualifications:["Team supervision","Branch operations","Customer issue resolution"],questions:["How would you handle a customer complaint?"],onboardingDocuments:[...DEFAULT_ONBOARDING_DOCUMENTS],createdAt:"2026-10-01"},
 ];
 export const makeFormId=(position:string)=>position.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-export const candidateRequirements=(_form?:HiringForm):ApplicantRequirement[]=>[
-  {name:"Resume / CV",status:"Missing"},{name:"Medical Clearance",status:"Missing"},{name:"Employment Contract",status:"Missing"}
-];
+export const candidateRequirements=(form?:HiringForm):ApplicantRequirement[]=>
+  [...new Set((form?.onboardingDocuments?.length?form.onboardingDocuments:DEFAULT_ONBOARDING_DOCUMENTS).map(x=>x.trim()).filter(Boolean))]
+   .map(name=>({name,status:"Missing" as const,required:true}));
 export const initialApplicants:ApplicantRecord[]=[
  {id:"APP-1001",name:"Rafael Mendoza",email:"rafael@example.com",phone:"09•• ••• 1001",role:"Automotive Technician",branch:"UC Mandaluyong",submitted:"2026-10-08",stage:"New Applicant",notes:"Sample application for layout review",relevantYears:5,totalYears:6,education:"Automotive servicing NC II",qualifications:{"Automotive diagnostics":"Yes","Preventive maintenance":"Yes","Engine or transmission repair":"Yes"},resumeName:"rafael_resume.pdf",requirements:[{name:"Resume / CV",status:"Submitted"},{name:"Medical Clearance",status:"Missing"},{name:"Employment Contract",status:"Missing"}]},
  {id:"APP-1002",name:"Kyla Ramos",email:"kyla@example.com",phone:"09•• ••• 1002",role:"Service Advisor",branch:"MM Mandaluyong",submitted:"2026-10-09",stage:"Shortlisted",notes:"Sample candidate awaiting interview schedule",relevantYears:2,totalYears:4,education:"College undergraduate",qualifications:{"Customer service":"Yes","Vehicle service knowledge":"Yes","Job orders and estimates":"No"},resumeName:"kyla_cv.pdf",requirements:[{name:"Resume / CV",status:"Verified"},{name:"Medical Clearance",status:"Missing"},{name:"Employment Contract",status:"Missing"}]},

@@ -448,3 +448,43 @@
 @media(max-width:550px){.hire-position-grid,.hire-editor-grid,.hire-facts{grid-template-columns:1fr}.hire-position-card{padding:12px}.hire-list-filters>.search-box{min-width:100%}.hire-list-filters>select{flex:1;min-width:0}.hire-workspace-card{grid-template-columns:80px minmax(0,1fr)}.hire-card-art{min-height:125px}.hire-home-kpis button,.hire-home-kpis>span{padding:10px}.hire-qualification-editor label{align-items:flex-start;flex-direction:column}.hire-qualification-editor select{max-width:100%}.hire-modal{padding:15px}}
 .hire-onboard-requirement{grid-template-columns:auto minmax(100px,1fr) 118px auto;flex-wrap:wrap}.hire-doc-upload{position:relative;display:inline-flex;justify-content:center;align-items:center;border:1px dashed #d1d9e2;border-radius:7px;padding:8px 9px;font-size:11px;color:#4d617b;cursor:pointer}.hire-doc-upload input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}.hire-doc-name{grid-column:2/-1;word-break:break-word;font-size:10px;color:#718095}.hire-onboard-requirement>span{overflow-wrap:anywhere}
 @media(max-width:580px){.hire-onboard-requirement{grid-template-columns:22px minmax(80px,1fr) 108px}.hire-doc-upload{grid-column:2/-1}.hire-doc-name{grid-column:2/-1}}
+
+/* Recruitment workflow: form management stays separate from position-based intake. */
+.hire-form-management{cursor:default;align-content:start;min-height:165px}
+.hire-form-management>small{font-size:11px;line-height:1.55;color:#78879a;min-height:32px}
+.hire-form-card-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border-top:1px solid #eef1f5;padding-top:11px}
+.hire-form-card-actions .secondary{display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:7px 9px!important;border-radius:7px;text-decoration:none;white-space:nowrap}
+.hire-compact-tip{display:flex;align-items:center;gap:5px;flex-wrap:wrap;border:1px solid #e8edf3;background:#f8fafc;color:#69798d;border-radius:9px;margin:0;padding:10px 13px;font-size:11px;line-height:1.5}
+.hire-compact-tip button{display:inline-flex;align-items:center;gap:4px;border:0;background:none;color:#80600d;font:inherit;font-weight:750;cursor:pointer;padding:0;text-decoration:underline}
+.hire-cycle-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hire-cycle-summary>span{display:flex;align-items:center;gap:7px;border:1px solid #e9edf2;border-radius:9px;background:#f9fafc;padding:11px 13px;font-size:11px;color:#718094}
+.hire-cycle-summary b{font-size:17px;color:#28364a}
+.hire-cycle-tabs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border-bottom:1px solid #e7eaf0;padding-bottom:9px}
+.hire-cycle-tabs button{display:inline-flex;align-items:center;gap:7px;border:1px solid #e0e6ed;border-radius:8px;padding:9px 12px;background:#fff;color:#657187;font-size:12px;font-weight:750;cursor:pointer}
+.hire-cycle-tabs button:hover{border-color:#e9bd4d;background:#fffdf5}
+.hire-cycle-tabs button.selected{border-color:#efbe2b;background:#fff4d5;color:#805900}
+.hire-cycle-tabs button>span{background:#f0f2f5;padding:3px 6px;border-radius:6px;font-size:10px;color:#57667c}
+.hire-cycle-tabs button.selected>span{background:#f7e1a0;color:#765000}
+.hire-candidate-actionbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#f9fafc;border:1px solid #e7ebf2;border-radius:9px;padding:10px 12px;position:sticky;top:6px;z-index:5}
+.hire-candidate-actionbar>.tag{margin-right:auto}
+.hire-candidate-actionbar button{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;font-size:11px}
+@media(max-width:800px){.hire-cycle-summary{grid-template-columns:1fr 1fr}.hire-cycle-tabs button{font-size:11px;padding:8px 9px}}
+@media(max-width:550px){.hire-cycle-summary{grid-template-columns:1fr}.hire-cycle-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.hire-cycle-tabs button{justify-content:space-between}.hire-candidate-actionbar{top:0}}
+
+/* Hiring Cycle: per-candidate, position-specific onboarding requirements */
+.hire-onboarding-docs-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.hire-onboarding-docs-head button{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:7px 10px}
+.hire-onboard-add{display:grid;gap:9px;background:#fffaf0;border:1px solid #eddeb0;border-radius:9px;padding:12px}
+.hire-onboard-add label:not(.hire-check){display:grid;gap:5px;font-size:11px;font-weight:750}
+.hire-onboard-add input[type=text],.hire-onboard-add input:not([type]){width:100%;min-width:0;border:1px solid #dbe0e8;border-radius:7px;padding:9px;font-size:12px}
+.hire-onboard-add .hire-check{display:flex;align-items:center;gap:7px;font-size:11px;color:#526071}
+.hire-onboard-add .primary{justify-self:start;padding:8px 11px;font-size:11px}
+.hire-requirement-suggestions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.hire-requirement-suggestions small{flex-basis:100%;font-size:10px;color:#77736a}
+.hire-requirement-suggestions button{border:1px solid #e4d7b0;border-radius:7px;background:#fff;padding:6px 8px;color:#6c560f;font-size:10px;cursor:pointer}
+.hire-req-optional{font-size:9px;color:#7d8795;display:block;margin-top:3px}
+.hire-onboard-requirement .hire-remove-requirement{padding:5px 7px;font-size:10px}
+
+.hire-onboard-requirement{grid-template-columns:auto minmax(140px,1fr) minmax(110px,140px);row-gap:7px}
+.hire-onboard-requirement .hire-doc-upload,.hire-onboard-requirement .hire-doc-name,.hire-onboard-requirement .hire-remove-requirement{grid-column:2/-1;justify-self:start}
+@media(max-width:620px){.hire-onboard-requirement{grid-template-columns:auto minmax(0,1fr)}.hire-onboard-requirement select{grid-column:2}.hire-onboard-requirement .hire-doc-upload,.hire-onboard-requirement .hire-doc-name,.hire-onboard-requirement .hire-remove-requirement{grid-column:2}}

@@ -47,7 +47,7 @@ export default function PublicJobApplication(){
    const number=records.reduce((n,r)=>Math.max(n,Number(r.id.replace("APP-",""))||1000),1000)+1;
    const record:ApplicantRecord={id:`APP-${number}`,name:form.fullName.trim(),email:form.email.trim().toLowerCase(),phone:form.phone.trim(),role:selected.position,branch:form.preferredBranch,submitted:new Date().toLocaleDateString("en-CA"),stage:"New Applicant",notes:form.introduction.trim(),history:[`${new Date().toLocaleString("en-PH")} · Test application added in this browser`],relevantYears:Number(form.experienceYears),totalYears:form.totalYears===""?null:Number(form.totalYears),education:form.education.trim(),qualifications:skills,answers,requirements:candidateRequirements(selected),resumeName:resume.name};
    window.localStorage.setItem(key,JSON.stringify([record,...records]));
-   setSaved(`Test application ${record.id} saved in this browser. Open Recruitment & Hiring → Hiring Forms → ${selected.position} in the same browser to review it. No actual submission or file upload occurred.`);
+   setSaved(`Test application ${record.id} saved in this browser. Open Recruitment & Hiring → Hiring Cycle → ${selected.position} in the same browser to review it. No actual submission or file upload occurred.`);
    setForm(BLANK);setAnswers({});setSkills({});setResume(null);
   }catch{setErrors(["Could not save local test application. Browser storage may be disabled or full."])}
  }
