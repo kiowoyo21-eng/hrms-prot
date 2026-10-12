@@ -8,6 +8,7 @@ import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
 import HelpButton from "./HelpButton";
 import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
+import {basicRateOnDate,type PayRateChange} from "../lib/payrollConfig";
 
 type Action="Evaluate"|"Regularize"|"Promote"|"Transfer"|"Offboard";
 type PersonalDraft=Pick<HRPerson,"name"|"gender"|"email"|"phone"|"birthDate"|"civilStatus"|"address"|"emergencyName"|"emergencyRelationship"|"emergencyPhone">;
@@ -43,7 +44,7 @@ const formatDate=(v?:string)=>{
 };
 const money=(v:number)=>new Intl.NumberFormat("en-PH",{style:"currency",currency:"PHP",maximumFractionDigits:2}).format(v);
 const compactMoney=(v:number)=>new Intl.NumberFormat("en-PH",{style:"currency",currency:"PHP",minimumFractionDigits:0,maximumFractionDigits:2}).format(v);
-const salaryAmount=(p:HRPerson)=>`${compactMoney(p.rate)}/${p.salaryType==="Daily"?"day":"month"}`;
+const salaryAmount=(p:HRPerson,changes:PayRateChange[]=[])=>`${compactMoney(basicRateOnDate(p.id,p.rate,new Date().toISOString().slice(0,10),changes))}/${p.salaryType==="Daily"?"day":"month"}`;
 
 export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayroll}:{branch:Branch;role:Role;onAssignDevice?:(employeeId:string)=>void;onOpenPayroll?:(employeeId:string)=>void}){
  const {data,update}=useHR();
@@ -118,8 +119,8 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
     (gender==="All"||p.gender===gender)&&
     (position==="All"||p.position===position)&&
     (salaryType==="All"||p.salaryType===salaryType)&&
-    (salaryType==="All"||minRate===""||p.rate>=Number(minRate))&&
-    (salaryType==="All"||maxRate===""||p.rate<=Number(maxRate))&&
+    (salaryType==="All"||minRate===""||basicRateOnDate(p.id,p.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[])>=Number(minRate))&&
+    (salaryType==="All"||maxRate===""||basicRateOnDate(p.id,p.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[])<=Number(maxRate))&&
     (!hiredFrom||p.hire>=hiredFrom)&&(!hiredTo||p.hire<=hiredTo)&&
     documentMatch&&quickMatch&&
     `${p.name} ${p.id} ${p.position} ${p.department} ${p.branch} ${p.email} ${p.status}`.toLocaleLowerCase().includes(q);
@@ -127,10 +128,10 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   return result.sort((a,b)=>order==="latest"?b.hire.localeCompare(a.hire):
    order==="oldest"?a.hire.localeCompare(b.hire):
    order==="missing"?a.documents.filter(d=>d.status==="Verified").length/Math.max(a.documents.length,1)-b.documents.filter(d=>d.status==="Verified").length/Math.max(b.documents.length,1):
-   order==="salary-high"&&salaryType!=="All"?b.rate-a.rate:
-   order==="salary-low"&&salaryType!=="All"?a.rate-b.rate:
+   order==="salary-high"&&salaryType!=="All"?basicRateOnDate(b.id,b.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[])-basicRateOnDate(a.id,a.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[]):
+   order==="salary-low"&&salaryType!=="All"?basicRateOnDate(a.id,a.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[])-basicRateOnDate(b.id,b.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[]):
    a.name.localeCompare(b.name));
- },[data.people,branch,localBranch,status,department,gender,position,salaryType,minRate,maxRate,hiredFrom,hiredTo,documentFilter,quick,search,order]);
+ },[data.people,data.payrollConfig,branch,localBranch,status,department,gender,position,salaryType,minRate,maxRate,hiredFrom,hiredTo,documentFilter,quick,search,order]);
  const activeFilters=[
   ...(search.trim()?[{key:"search",label:`Search: ${search.trim()}`}]:[]),
   ...(localBranch!=="All"?[{key:"branch",label:`Branch: ${localBranch}`}]:[]),
@@ -363,7 +364,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      <td>{p.gender}</td>
      <td><span className="tag">{p.status}</span></td>
      <td>{formatDate(p.hire)}</td>
-     <td><div className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(p)}</strong><small className="employee201-salary-type">{p.salaryType}</small></div></td>
+     <td><div className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(p,data.payrollConfig?.rateChanges||[])}</strong><small className="employee201-salary-type">{p.salaryType}</small></div></td>
      <td><div className="employee201-docprogress"><strong>{verified(p)}/{p.documents.length} verified</strong><small>{missing(p)>0?`${missing(p)} missing`:"No missing documents"}</small></div></td>
      <td><div className="rev-actions emp201-rowactions"><button type="button" className="secondary" onClick={()=>openProfile(p.id)}><Eye size={15}/> View</button><button type="button" className="secondary" onClick={()=>openProfile(p.id,true)}><Pencil size={15}/> Edit</button></div></td>
     </tr>)}</tbody></table>
@@ -416,7 +417,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
        <section className="employee201-profile-section emp201-summary-card" id="emp201-compensation">
         <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("salary")} aria-label="Open salary, pay rate and benefits history"><span><Wallet size={17}/> Salary & Benefits</span><span>View Details <ArrowRight size={14}/></span></button>
         <button type="button" className="emp201-cardbody" onClick={()=>setDetailKind("salary")} aria-label="View full salary and benefits details">
-         <span className="emp201-card-fact"><small>Basic Rate</small><b>{salaryAmount(person)}</b></span>
+         <span className="emp201-card-fact"><small>Basic Rate</small><b>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</b></span>
          <span className="emp201-card-fact"><small>Salary Type</small><b>{person.salaryType}</b></span>
          <span className="emp201-card-fact"><small>SIL</small><b>{person.sil} days</b></span>
          <span className="emp201-card-fact"><small>VIL</small><b>{person.vil} days</b></span>
@@ -455,7 +456,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         <div className="emp201-dialog-timeline">{[...assignmentHistory].sort((a,b)=>b.effectiveDate.localeCompare(a.effectiveDate)).map((h,i)=><div key={h.id||i}><small>{formatDate(h.effectiveDate)} · {h.kind}</small><b>{h.branch} · {h.department} — {h.position}</b>{h.memoId?<button type="button" className="emp201-memo-link" onClick={()=>{setDetailKind(null);setTab("Documents");setRequestedMemo(h.memoId||null)}}><FileText size={13}/>{h.memoId}</button>:<small>No memo attached</small>}</div>)}</div>
        </>}
        {detailKind==="salary"&&<>
-        <div className="emp201-dialog-facts"><div><small>Basic Rate</small><b>{salaryAmount(person)}</b></div><div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>SIL</small><b>{person.sil} days</b></div><div><small>VIL</small><b>{person.vil} days</b></div></div>
+        <div className="emp201-dialog-facts"><div><small>Basic Rate</small><b>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</b></div><div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>SIL</small><b>{person.sil} days</b></div><div><small>VIL</small><b>{person.vil} days</b></div></div>
         <div className="emp201-dialog-subhead"><h4>Salary Received & Releases</h4><label className="emp201-period-select">Period <select value={salaryPeriod} onChange={e=>setSalaryPeriod(e.target.value as "month"|"year"|"all")}><option value="month">This Month</option><option value="year">This Year</option><option value="all">All Time</option></select></label></div>
         <div className="emp201-dialog-totals"><div><small>Net Salary Received</small><strong>{money(totals.net)}</strong></div><div><small>Gross Earnings</small><b>{money(totals.gross)}</b></div><div><small>Total Deductions</small><b>{money(totals.deductions)}</b></div></div>
         <div className="emp201-dialog-subhead"><h4>Released Payroll History ({paidSalary.length})</h4><div className="rev-actions"><button type="button" className="secondary" onClick={()=>goToDocuments("Payslips")}><FileText size={14}/> View Payslips</button>{onOpenPayroll&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openPayRates()}}>View Pay Rates <ArrowRight size={14}/></button>}</div></div>
