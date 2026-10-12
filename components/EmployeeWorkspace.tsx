@@ -17,6 +17,18 @@ const stages:Record<Action,string[]>={
  Transfer:["Select receiving branch","Review device and obligation clearance","Confirm transfer"],
  Offboard:["Record separation reason","Device returns and obligations","Clearance & final-pay preparation"]
 };
+// Keep stable section IDs for existing state and workflows. Only user-facing labels change.
+const profileSections = [
+ {id:"Overview",label:"Overview"},
+ {id:"Personal",label:"Employee Details"},
+ {id:"Employment",label:"Employment Details"},
+ {id:"Compensation",label:"Salary & Benefits"},
+ {id:"Documents",label:"Documents"},
+ {id:"Evaluations",label:"Performance Reviews"},
+ {id:"History",label:"Employment History"},
+ {id:"Clearance",label:"Clearance & Assets"}
+] as const;
+const actionLabels:Record<Action,string> = {Evaluate:"Record Evaluation",Regularize:"Regularize Employment",Promote:"Promote Employee",Transfer:"Transfer Employee",Offboard:"Process Offboarding"};
 const employmentStatuses=["Probationary","Regular","Fixed-Term","Project-Based","Clearance Pending"];
 const departments=["Operations","Service","Administration","Marketing"];
 const emptyForm={
@@ -167,7 +179,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
  const savePersonal=(e:FormEvent)=>{
   e.preventDefault();if(!draft||!draft.name.trim()){setMessage("Employee full name is required.");return}
   updatePerson(p=>({...p,...draft,name:draft.name.trim(),timeline:[`${new Date().toISOString().slice(0,10)} · Personal details updated`,...p.timeline]}));
-  setEditing(false);setPersonal(null);setMessage("Personal details saved to the browser review records.");
+  setEditing(false);setPersonal(null);setMessage("Employee details saved to this browser.");
  };
  const startAction=(a:Action)=>{
   if(!person)return;
@@ -195,7 +207,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
   };
   update(s=>({...s,people:[p,...s.people]}));
   setForm({...emptyForm});setAdd(false);openProfile(id);
-  setMessage("Employee created. Review the Personal, Employment and Documents tabs.");
+  setMessage("Employee record created. Review Employee Details, Employment Details, and Documents.");
  }
  function record(){
   if(!person||!action||!reason.trim()){
@@ -249,10 +261,10 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
      <label>Assigned branch *<select required value={form.branch} onChange={e=>setForm(s=>({...s,branch:e.target.value as Shop}))}><option value="">Select a branch</option>{shopNames.map(x=><option key={x}>{x}</option>)}</select></label>
      <label>Department<select value={form.department} onChange={e=>setForm(s=>({...s,department:e.target.value}))}>{departments.map(x=><option key={x}>{x}</option>)}</select></label>
      <label>Position *<input required value={form.position} onChange={e=>setForm(s=>({...s,position:e.target.value}))}/></label>
-     <label>Employment status<select value={form.status} onChange={e=>setForm(s=>({...s,status:e.target.value}))}>{employmentStatuses.filter(x=>x!=="Clearance Pending").map(x=><option key={x}>{x}</option>)}</select></label>
+     <label>Employment Status<select value={form.status} onChange={e=>setForm(s=>({...s,status:e.target.value}))}>{employmentStatuses.filter(x=>x!=="Clearance Pending").map(x=><option key={x}>{x}</option>)}</select></label>
      <label>Hire date *<input required type="date" value={form.hire} onChange={e=>setForm(s=>({...s,hire:e.target.value}))}/></label>
      {form.status==="Probationary"&&<label>Probation period (months)<input type="number" min="1" max="12" value={form.probation} onChange={e=>setForm(s=>({...s,probation:e.target.value}))}/></label>}
-     <label>Salary type<select value={form.salaryType} onChange={e=>setForm(s=>({...s,salaryType:e.target.value as "Daily"|"Monthly"}))}><option>Daily</option><option>Monthly</option></select></label>
+     <label>Salary Type<select value={form.salaryType} onChange={e=>setForm(s=>({...s,salaryType:e.target.value as "Daily"|"Monthly"}))}><option>Daily</option><option>Monthly</option></select></label>
      <label>Basic rate ({form.salaryType==="Daily"?"per day":"per month"}) *<input required type="number" min="1" value={form.rate} onChange={e=>setForm(s=>({...s,rate:e.target.value}))}/></label>
      <label>SIL allocation (days)<input type="number" min="0" value={form.sil} onChange={e=>setForm(s=>({...s,sil:e.target.value}))}/></label>
      <label>VIL allocation (days)<input type="number" min="0" value={form.vil} onChange={e=>setForm(s=>({...s,vil:e.target.value}))}/></label>
@@ -275,32 +287,32 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
     <div><small>With missing documents</small><strong>{people.filter(p=>missing(p)>0).length}</strong></div>
    </div>
    <section className="panel"><div className="rev-title"><div><h3>Employee Directory</h3><p>Complete listing of employee assignments, work details and document completion. Open a profile for confidential records.</p></div><span className="tag">{people.length} records</span></div>
-    <div className="employee201-filterhead"><div><h4>Find Employees</h4><p>Start with quick filters. Open Advanced Filters for payroll, hiring and document checks.</p></div><HelpButton topic="filters" label="How to filter employee records"/></div>
+    <div className="employee201-filterhead"><div><h4>Search & Filter Employees</h4><p>Start with quick filters. Open Advanced Filters for payroll, hiring and document checks.</p></div><HelpButton topic="filters" label="How to filter employee records"/></div>
     <div className="employee201-quick-presets" role="group" aria-label="Quick employee filters">
      {(["All","Probationary","Missing Documents","Pending Verification","New Hires"] as const).map(x=><button key={x} type="button" className={`employee201-preset ${quick===x?"active":""}`} aria-pressed={quick===x} onClick={()=>setFilter(()=>setQuick(x))}>{x}{x==="New Hires"&&<small> (90 days)</small>}</button>)}
     </div>
     <div className="rev-filters employee201-filters employee201-quickfilters">
      <label>Search by name / ID / position<input value={search} onChange={e=>setFilter(()=>setSearch(e.target.value))} placeholder="Employee name, ID, position..."/></label>
      <label>Branch<select value={localBranch} onChange={e=>setFilter(()=>setLocalBranch(e.target.value))}><option value="All">{branch==="All Shops"?"All branches":"Current branch"}</option>{(branch==="All Shops"?shopNames:[branch]).map(x=><option key={x}>{x}</option>)}</select></label>
-     <label>Employment status<select value={status} onChange={e=>setFilter(()=>setStatus(e.target.value))}><option>All</option>{employmentStatuses.map(x=><option key={x}>{x}</option>)}</select></label>
+     <label>Employment Status<select value={status} onChange={e=>setFilter(()=>setStatus(e.target.value))}><option>All</option>{employmentStatuses.map(x=><option key={x}>{x}</option>)}</select></label>
      <label>Department<select value={department} onChange={e=>setFilter(()=>setDepartment(e.target.value))}><option>All</option>{departments.map(x=><option key={x}>{x}</option>)}</select></label>
     </div>
     <div className="employee201-filteractions">
      <button type="button" className="secondary" aria-expanded={advancedOpen} aria-controls="employee201-advanced-panel" onClick={()=>setAdvancedOpen(v=>!v)}><SlidersHorizontal size={15}/> {advancedOpen?"Hide Advanced Filters":"Advanced Filters"} {advancedOpen?<ChevronUp size={15}/>:<ChevronDown size={15}/>}</button>
-     <label className="employee201-sort">Sort by<select value={order} onChange={e=>setFilter(()=>setOrder(e.target.value))}><option value="name">Name A–Z</option><option value="latest">Newest hires</option><option value="oldest">Earliest hires</option><option value="missing">Least documents verified</option>{salaryType!=="All"&&<><option value="salary-high">Highest basic rate</option><option value="salary-low">Lowest basic rate</option></>}</select></label>
+     <label className="employee201-sort">Sort By<select value={order} onChange={e=>setFilter(()=>setOrder(e.target.value))}><option value="name">Name A–Z</option><option value="latest">Newest hires</option><option value="oldest">Earliest hires</option><option value="missing">Least documents verified</option>{salaryType!=="All"&&<><option value="salary-high">Highest basic rate</option><option value="salary-low">Lowest basic rate</option></>}</select></label>
      <button type="button" className="secondary" onClick={resetFilters}>Clear All Filters</button>
     </div>
     {advancedOpen&&<div id="employee201-advanced-panel" className="employee201-advanced" role="region" aria-label="Advanced employee filters">
      <div className="employee201-advanced-title"><Info size={16}/><span>Use these only when you need a specific employee group. Filters work together. Choose a salary type before comparing basic rates.</span></div>
      <div className="employee201-advanced-grid">
       <label>Gender<select value={gender} onChange={e=>setFilter(()=>setGender(e.target.value))}><option>All</option>{genders.map(x=><option key={x}>{x}</option>)}</select></label>
-      <label>Position<select value={position} onChange={e=>setFilter(()=>setPosition(e.target.value))}><option>All</option>{positions.map(x=><option key={x}>{x}</option>)}</select></label>
-      <label>Salary type<select value={salaryType} onChange={e=>setFilter(()=>{setSalaryType(e.target.value);setMinRate("");setMaxRate("");if(order.startsWith("salary"))setOrder("name")})}><option>All</option><option>Daily</option><option>Monthly</option></select></label>
-      <label>Document status<select value={documentFilter} onChange={e=>setFilter(()=>setDocumentFilter(e.target.value))}><option>All</option><option>Missing</option><option>Pending Verification</option><option>Complete</option></select></label>
-      <label>Hired from<input type="date" value={hiredFrom} max={hiredTo||undefined} onChange={e=>setFilter(()=>setHiredFrom(e.target.value))}/></label>
-      <label>Hired to<input type="date" value={hiredTo} min={hiredFrom||undefined} onChange={e=>setFilter(()=>setHiredTo(e.target.value))}/></label>
-      <label>Min basic rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={minRate} onChange={e=>setFilter(()=>setMinRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Minimum rate"}/></label>
-      <label>Max basic rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={maxRate} onChange={e=>setFilter(()=>setMaxRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Maximum rate"}/></label>
+      <label>Job Position<select value={position} onChange={e=>setFilter(()=>setPosition(e.target.value))}><option>All</option>{positions.map(x=><option key={x}>{x}</option>)}</select></label>
+      <label>Salary Type<select value={salaryType} onChange={e=>setFilter(()=>{setSalaryType(e.target.value);setMinRate("");setMaxRate("");if(order.startsWith("salary"))setOrder("name")})}><option>All</option><option>Daily</option><option>Monthly</option></select></label>
+      <label>Document Status<select value={documentFilter} onChange={e=>setFilter(()=>setDocumentFilter(e.target.value))}><option>All</option><option>Missing</option><option>Pending Verification</option><option>Complete</option></select></label>
+      <label>Hired From<input type="date" value={hiredFrom} max={hiredTo||undefined} onChange={e=>setFilter(()=>setHiredFrom(e.target.value))}/></label>
+      <label>Hired To<input type="date" value={hiredTo} min={hiredFrom||undefined} onChange={e=>setFilter(()=>setHiredTo(e.target.value))}/></label>
+      <label>Minimum Basic Rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={minRate} onChange={e=>setFilter(()=>setMinRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Minimum rate"}/></label>
+      <label>Maximum Basic Rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={maxRate} onChange={e=>setFilter(()=>setMaxRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Maximum rate"}/></label>
      </div>
      <p className="employee201-filterhelp">Example: select <strong>UC Las Piñas</strong> + <strong>Female</strong> + <strong>Monthly</strong> to find monthly-paid female employees in that branch. Rate filters compare <strong>basic rates</strong>, not gross payroll or deductions.</p>
     </div>}
@@ -310,7 +322,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
     {salaryType!=="All"&&minRate!==""&&maxRate!==""&&Number(minRate)>Number(maxRate)&&<p className="employee201-filterwarning" role="alert">Minimum basic rate is greater than the maximum.</p>}
     <p className="employee201-tablehint">Scroll horizontally to view every directory column on smaller screens.</p>
     <div className="table-wrap employee201-tablewrap"><table className="employee201-table"><thead><tr>
-     <th>Employee / ID</th><th>Branch</th><th>Department & Position</th><th>Gender</th><th>Employment Status</th><th>Date Hired</th><th>Salary / Type</th><th>Document Progress</th><th>Actions</th>
+     <th>Employee / ID</th><th>Branch</th><th>Department & Position</th><th>Gender</th><th>Employment Status</th><th>Date Hired</th><th>Salary / Type</th><th>Document Status</th><th>Actions</th>
     </tr></thead><tbody>{shown.map(p=><tr key={p.id}>
      <td><strong>{p.name}</strong><small className="pay-small">{p.id}</small></td>
      <td>{p.branch}</td>
@@ -320,13 +332,13 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
      <td>{formatDate(p.hire)}</td>
      <td><div className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(p)}</strong><small className="employee201-salary-type">{p.salaryType}</small></div></td>
      <td><div className="employee201-docprogress"><strong>{verified(p)}/{p.documents.length} verified</strong><small>{missing(p)>0?`${missing(p)} missing`:"No missing documents"}</small></div></td>
-     <td><button className="secondary" onClick={()=>openProfile(p.id)}>View 201 <ArrowRight size={15}/></button></td>
+     <td><button className="secondary" onClick={()=>openProfile(p.id)}>View Profile <ArrowRight size={15}/></button></td>
     </tr>)}</tbody></table>
     {shown.length===0&&<div className="empty"><strong>No employees match these filters.</strong><p>Try another branch or status, remove a filter chip above, or use Clear All Filters.</p><button type="button" className="secondary" onClick={resetFilters}>Show All Employees</button></div>}
     </div>
     <div className="rev-pagination employee201-pages" aria-label="Employee directory pagination">
      <span>Showing {people.length?(current-1)*rows+1:0}–{Math.min(current*rows,people.length)} of {people.length}</span>
-     <label>Rows per page <select value={rows} onChange={e=>{setRows(Number(e.target.value) as 10|20|50);setPage(1)}}>{[10,20,50].map(x=><option key={x} value={x}>{x}</option>)}</select></label>
+     <label>Rows Per Page <select value={rows} onChange={e=>{setRows(Number(e.target.value) as 10|20|50);setPage(1)}}>{[10,20,50].map(x=><option key={x} value={x}>{x}</option>)}</select></label>
      <button className="secondary" disabled={current<=1} onClick={()=>setPage(p=>Math.max(1,p-1))}>Previous</button>
      <span>Page {current} of {pageCount}</span>
      <button className="secondary" disabled={current>=pageCount} onClick={()=>setPage(p=>Math.min(pageCount,p+1))}>Next</button>
@@ -339,18 +351,18 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
    <section className="panel">
     <div className="rev-title employee201-profiletitle"><div><h3><UserRound size={19}/> {person.name}</h3><p>{person.id} · {person.department} / {person.position} · {person.branch}</p></div><span className="tag">{person.status}</span></div>
     {!action&&<>
-     <nav className="rev-tabs" aria-label="Employee 201 sections">{["Overview","Personal","Employment","Compensation","Documents","Evaluations","History","Clearance"].map(x=><button key={x} className={tab===x?"active":""} onClick={()=>{setTab(x);setEditing(false);setPersonal(null);setMessage("")}}>{x}</button>)}</nav>
+     <nav className="rev-tabs employee201-profiletabs" aria-label="Employee 201 profile sections">{profileSections.map(({id,label})=><button type="button" key={id} className={tab===id?"active":""} aria-current={tab===id?"page":undefined} onClick={()=>{setTab(id);setEditing(false);setPersonal(null);setMessage("")}}>{label}</button>)}</nav>
      <div className="rev-detail employee201-detail">
       {tab==="Overview"&&<>
        <h4>Employee Summary</h4><div className="rev-facts employee201-facts">
         <div><small>Employee ID</small><b>{person.id}</b></div><div><small>Branch</small><b>{person.branch}</b></div><div><small>Department</small><b>{person.department}</b></div><div><small>Position</small><b>{person.position}</b></div>
-        <div><small>Employment status</small><b>{person.status}</b></div><div><small>Date hired</small><b>{formatDate(person.hire)}</b></div><div><small>Gender</small><b>{person.gender}</b></div><div><small>Basic Salary</small><span className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(person)}</strong><small className="employee201-salary-type">{person.salaryType}</small></span></div>
+        <div><small>Employment status</small><b>{person.status}</b></div><div><small>Date hired</small><b>{formatDate(person.hire)}</b></div><div><small>Gender</small><b>{person.gender}</b></div><div><small>Basic salary/rate</small><span className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(person)}</strong><small className="employee201-salary-type">{person.salaryType}</small></span></div>
         <div><small>Phone number</small><b>{empty(person.phone)}</b></div><div><small>Email address</small><b>{empty(person.email)}</b></div><div><small>Required documents</small><b>{verified(person)} of {person.documents.length} verified</b></div><div><small>Assigned equipment</small><b>{assignedAssets.length} item(s)</b></div>
        </div>
-       <div className="employee201-overviewnotes"><div><ClipboardList size={18}/><span>{missing(person)} missing required document(s)</span></div><div><ShieldCheck size={18}/><span>Employment actions must be recorded through the Actions section below.</span></div></div>
+       <div className="employee201-overviewnotes"><div><ClipboardList size={18}/><span>{missing(person)} missing required document(s)</span></div><div><ShieldCheck size={18}/><span>Use Employment Actions below to record employment changes.</span></div></div>
       </>}
       {tab==="Personal"&&<>
-       <div className="rev-title"><div><h4>Personal & Emergency Information</h4><p>Contact information and basic personal details; confidential to authorized HR users.</p></div>{!editing&&<button className="secondary" onClick={startEdit}>Edit Details</button>}</div>
+       <div className="rev-title"><div><h4>Employee & Contact Details</h4><p>Personal information, contact details, and emergency contacts. Restricted to authorized HR users.</p></div>{!editing&&<button className="secondary" onClick={startEdit}>Edit Employee Details</button>}</div>
        {!editing&&<div className="rev-facts employee201-facts">
         <div><small>Full name</small><b>{person.name}</b></div><div><small>Gender</small><b>{person.gender}</b></div>
         <div><small>Birth date</small><b>{formatDate(person.birthDate)}</b></div><div><small>Civil status</small><b>{empty(person.civilStatus)}</b></div>
@@ -373,46 +385,46 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
        </form>}
       </>}
       {tab==="Employment"&&<>
-       <h4>Employment & Assignment</h4>
-       <div className="rev-facts employee201-facts"><div><small>Employee number</small><b>{person.id}</b></div><div><small>Company branch</small><b>{person.branch}</b></div><div><small>Department</small><b>{person.department}</b></div><div><small>Position / Job title</small><b>{person.position}</b></div><div><small>Employment status</small><b>{person.status}</b></div><div><small>Date hired</small><b>{formatDate(person.hire)}</b></div><div><small>Probation duration</small><b>{person.probation?`${person.probation} months`:"Not applicable"}</b></div><div><small>Pay basis</small><b>{person.salaryType} rate</b></div></div>
-       <p className="employee201-hint">Employment changes such as transfer, promotion and regularization are handled through Employee Actions to maintain history.</p>
+       <h4>Employment Details & Branch Assignment</h4>
+       <div className="rev-facts employee201-facts"><div><small>Employee number</small><b>{person.id}</b></div><div><small>Company branch</small><b>{person.branch}</b></div><div><small>Department</small><b>{person.department}</b></div><div><small>Position / Job title</small><b>{person.position}</b></div><div><small>Employment status</small><b>{person.status}</b></div><div><small>Date hired</small><b>{formatDate(person.hire)}</b></div><div><small>Probation duration</small><b>{person.probation?`${person.probation} months`:"Not applicable"}</b></div><div><small>Salary type</small><b>{person.salaryType} rate</b></div></div>
+       <p className="employee201-hint">Use Employment Actions for transfers, promotions and regularization so each change is recorded in the employee history.</p>
       </>}
       {tab==="Compensation"&&<>
-       <h4>Compensation & Benefits</h4>
-       <div className="rev-facts employee201-facts"><div><small>Salary basis</small><b>{person.salaryType}-paid</b></div><div><small>Current basic rate</small><b>{money(person.rate)} / {person.salaryType==="Daily"?"day":"month"}</b></div><div><small>SIL allocation</small><b>{person.sil} days</b></div><div><small>VIL allocation</small><b>{person.vil} days</b></div></div>
-       <h4>Applicable Premium Rate Profile</h4>
+       <h4>Salary & Benefits</h4>
+       <div className="rev-facts employee201-facts"><div><small>Salary type</small><b>{person.salaryType}-paid</b></div><div><small>Current basic salary/rate</small><b>{money(person.rate)} / {person.salaryType==="Daily"?"day":"month"}</b></div><div><small>SIL allocation</small><b>{person.sil} days</b></div><div><small>VIL allocation</small><b>{person.vil} days</b></div></div>
+       <h4>Employee Premium Pay Rates</h4>
        <div className="rev-facts employee201-facts">
         <div><small>Regular overtime</small><b>{effectiveRate(person,data.rates).ot}%</b></div><div><small>Rest-day work</small><b>{effectiveRate(person,data.rates).rdw}%</b></div><div><small>Rest-day overtime</small><b>{effectiveRate(person,data.rates).rdot}%</b></div><div><small>Regular holiday</small><b>{effectiveRate(person,data.rates).regular}%</b></div><div><small>Special day</small><b>{effectiveRate(person,data.rates).special}%</b></div>
        </div><p className="employee201-hint">Premium rate changes are managed in Payroll → Employee Rate Management. This tab displays the shared employee profile.</p>
       </>}
       {tab==="Documents"&&<>
-       <h4>Employee Document Checklist</h4><p className="muted">BM-submitted documents must be verified by HR before they count as complete. Do not store actual government ID numbers in this unsecured browser prototype.</p>
+       <h4>Required Employee Documents</h4><p className="muted">BM-submitted documents must be verified by HR before they count as complete. Do not store actual government ID numbers in this unsecured browser prototype.</p>
        <div className="employee201-doclist">{person.documents.map((d,i)=><div className="rev-row" key={`${d.name}-${i}`}><FileText size={17}/><div className="employee201-docitem"><strong>{d.name}</strong><small>{d.status==="Verified"?"Verified and included":d.status==="Submitted"?"For verification":"Required — not yet received"}</small></div><span className="tag">{d.status}</span></div>)}</div>
-       <h4>Pending HR Document Submissions</h4>
+       <h4>Documents Awaiting HR Verification</h4>
        {data.submissions.filter(s=>s.employeeId===person.id&&s.status==="Pending HR Review").map(s=><div className="rev-row" key={s.id}><FileText size={17}/><div className="employee201-docitem"><strong>{s.type}</strong><small>{s.fileName} · {s.submittedBy}</small></div><span className="tag">Pending HR Review</span></div>)}
        {!data.submissions.some(s=>s.employeeId===person.id&&s.status==="Pending HR Review")&&<p className="muted">No pending uploads for this employee.</p>}
       </>}
       {tab==="Evaluations"&&<>
-       <h4>Employee Evaluations</h4>
+       <h4>Performance Reviews</h4>
        {person.timeline.filter(t=>t.includes("Evaluate")).map((t,i)=><div className="rev-row" key={i}><ClipboardList size={17}/><span>{t}</span></div>)}
-       {!person.timeline.some(t=>t.includes("Evaluate"))&&<p className="muted">No recorded evaluation. Use Employee Actions → Evaluate to add one.</p>}
+       {!person.timeline.some(t=>t.includes("Evaluate"))&&<p className="muted">No performance review has been recorded. Use Employee Actions → Record Evaluation to add one.</p>}
       </>}
       {tab==="History"&&<>
-       <h4>Employment Record History</h4>
+       <h4>Employment History</h4>
        {person.timeline.map((x,i)=><div className="rev-row" key={i}><BriefcaseBusiness size={17}/><span>{x}</span></div>)}
       </>}
       {tab==="Clearance"&&<>
-       <h4>Employee Clearance & Accountability</h4>
+       <h4>Clearance & Assigned Assets</h4>
        <div className="rev-facts employee201-facts"><div><small>Employment status</small><b>{person.status}</b></div><div><small>Outstanding assigned equipment</small><b>{assignedAssets.length} item(s)</b></div></div>
        {assignedAssets.map(a=><div className="rev-row" key={a.id}><BriefcaseBusiness size={17}/><span>{a.name} ({a.id})</span><span className="tag">{a.status}</span></div>)}
-       <p className="employee201-hint">Clearance requires device retrieval/inspection and HR validation of obligations before completion. Use Employee Actions → Offboard for the employment procedure.</p>
+       <p className="employee201-hint">Clearance requires device retrieval/inspection and HR validation of obligations before completion. Use Employment Actions → Process Offboarding for the exit procedure.</p>
       </>}
      </div>
-     <div className="rev-title employee201-actions-title"><h4>Employee Actions</h4><HelpButton topic="workflow" label="About employment actions"/></div>
-     <div className="rev-actions rev-wrap">{(["Evaluate","Regularize","Promote","Transfer","Offboard"] as Action[]).filter(a=>a!=="Regularize"||person.status==="Probationary").map(a=><button key={a} className="secondary" onClick={()=>startAction(a)}>{a}</button>)}</div>
+     <div className="rev-title employee201-actions-title"><h4>Employment Actions</h4><HelpButton topic="workflow" label="About employment actions"/></div>
+     <div className="rev-actions rev-wrap">{(["Evaluate","Regularize","Promote","Transfer","Offboard"] as Action[]).filter(a=>a!=="Regularize"||person.status==="Probationary").map(a=><button key={a} className="secondary" onClick={()=>startAction(a)}>{actionLabels[a]}</button>)}</div>
     </>}
     {action&&<div className="rev-process">
-     <div className="rev-title"><h3>{action} — {person.name}</h3><button className="secondary" onClick={()=>setAction(null)}>Cancel</button></div>
+     <div className="rev-title"><h3>{actionLabels[action]} — {person.name}</h3><button className="secondary" onClick={()=>setAction(null)}>Cancel</button></div>
      <div className="rev-steps">{stages[action].map((x,i)=><span key={x} className={i<=step?"active":""}>{i+1}. {x}</span>)}</div>
      <p><strong>Step {step+1}:</strong> {stages[action][step]}</p>
      {action==="Transfer"&&<label>Receiving branch<select value={dest} onChange={e=>setDest(e.target.value as Shop)}>{shopNames.map(x=><option key={x}>{x}</option>)}</select></label>}

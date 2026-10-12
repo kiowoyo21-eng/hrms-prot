@@ -1,3 +1,13 @@
+## Latest update: Assets & Devices — Accountability / Turnover (frontend-only)
+
+- **Assign Device** uses three steps: Assignment Details, Accountability Form, Turnover Confirmation.
+- Step 2 displays auto-filled employee/device details, an inline document preview and a separate A4 print/PDF document.
+- Select Phone/QR (future integration), Sign on This Device (temporary drawing pad), or Print for Physical Signature.
+- Step 3 supports a signed physical form file selection and officer/physical handover confirmation. A local preview can mark a device Assigned if those frontend checks pass, but **signature identity is not verified and file contents are not saved**.
+- Phone/QR cannot complete a handover without backend; use Pending Turnover to reserve the device. Pending items are not available for reassignment.
+- Explicit UI warning and project documentation: no confidential or real employee data should be entered in this prototype.
+- Existing Employee 201, Payroll, Documents, /report, /apply, and other screens retained.
+
 # Employee 201 Directory & Profile Update
 
 Expanded Employee 201 display and added **10 / 20 / 50** rows per page. See `docs/EMPLOYEE-201-DISPLAY-AND-PAGINATION-PATCH.md` for complete details and remaining limitations. The full project, including public reporting and hiring forms, is retained.
@@ -58,3 +68,7 @@ Employee Directory header: **Salary Type / Salary**. Every cell follows the same
 The directory keeps the Salary / Type compact two-line display (amount first, pay basis second) and 10/20/50 pagination, defaulting to 10. Search, Branch, Employment Status, Department, and Sort remain visible. The advanced panel has Gender, Position, Salary Type, Basic Rate min/max (within a selected Daily or Monthly basis), Hire Date range, and Document Status. One-click presets include Probationary, Missing Documents, Pending Verification, and New Hires (past 90 days). Selected filters show as removable chips, with result counts, clear-all and empty-state guidance.
 
 The filter data is read from the shared frontend HR record store. It is not yet backed by secure storage or authorization. No real employee data should be entered.
+
+
+## UI terminology update
+See `docs/UI-LABEL-TERMINOLOGY-AUDIT.md` for module and Employee 201 label updates. This update preserves the underlying record schema, filtering, payroll state and role permissions.

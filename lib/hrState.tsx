@@ -10,8 +10,8 @@ export type HRPerson=Person & {
  emergencyName?:string;emergencyRelationship?:string;emergencyPhone?:string;
 };
 export type PremiumProfile={ot:number;rdw:number;rdot:number;regular:number;special:number;effective:string;reason:string};
-export type AssetStatus="Free"|"Assigned"|"For Return"|"Inspection"|"Maintenance"|"Retired";
-export type AssetRecord={id:string;name:string;serial:string;status:AssetStatus;employeeId:string;condition:string;accessories:string;notes?:string;history:string[];signed:boolean;date:string};
+export type AssetStatus="Free"|"Pending Turnover"|"Assigned"|"For Return"|"Inspection"|"Maintenance"|"Retired";
+export type AssetRecord={id:string;name:string;serial:string;status:AssetStatus;employeeId:string;condition:string;accessories:string;notes?:string;history:string[];signed:boolean;date:string;signingMethod?:"phone"|"onsite"|"print";assignedBy?:string;signatureEvidence?:string;assignmentDate?:string};
 export type Submission={id:string;employeeId:string;type:string;fileName:string;submittedBy:string;status:"Pending HR Review"|"Approved"|"Rejected";reason:string};
 export type HRState={people:HRPerson[];rates:Record<string,PremiumProfile>;assets:AssetRecord[];submissions:Submission[];earnings:Record<string,{days:number;ot:number;bonus:number;adjustment:number}>;deductions:Record<string,{sss:number;philhealth:number;pagibig:number;tax:number;loan:number}>};
 const requirements=["Resume","Medical Clearance","Employment Contract","NDA / Company Policies","Government IDs"];

@@ -4,19 +4,19 @@ export const branches: Branch[] = ["All Shops","UC Mandaluyong","UC Las Piñas",
 export const modules = [
  {id:"dashboard",name:"Dashboard",icon:"LayoutDashboard",count:0},
  {id:"employees",name:"Employee 201 Files",icon:"FolderOpen",count:8},
- {id:"submissions",name:"Employee Document Submission",icon:"FileUp",count:0},
+ {id:"submissions",name:"Submit Employee Documents",icon:"FileUp",count:0},
  {id:"lifecycle",name:"Recruitment & Hiring",icon:"Workflow",count:5},
- {id:"payroll",name:"Payroll",icon:"Wallet",count:3},
+ {id:"payroll",name:"Payroll Management",icon:"Wallet",count:3},
  {id:"leave",name:"Leave Management",icon:"CalendarCheck",count:2},
- {id:"loans",name:"Loans & Advances",icon:"HandCoins",count:2},
+ {id:"loans",name:"Loans & Cash Advances",icon:"HandCoins",count:2},
  {id:"ir",name:"Incident Reports",icon:"FileWarning",count:4},
  {id:"assets",name:"Assets & Devices",icon:"Laptop",count:2},
  {id:"compliance",name:"Government Compliance",icon:"Landmark",count:7},
  {id:"tasks",name:"HR Tasks",icon:"ListTodo",count:6},
  {id:"documents",name:"Documents & Templates",icon:"Files",count:0},
- {id:"filters",name:"Custom Filters & Reports",icon:"SlidersHorizontal",count:0},
- {id:"audit",name:"Grouped Audit Logs",icon:"ScrollText",count:2},
- {id:"settings",name:"Account Settings",icon:"Settings",count:0}
+ {id:"filters",name:"Reports & Analytics",icon:"SlidersHorizontal",count:0},
+ {id:"audit",name:"Audit Logs",icon:"ScrollText",count:2},
+ {id:"settings",name:"Settings",icon:"Settings",count:0}
 ] as const;
 export type ModuleId = typeof modules[number]["id"];
 export const permissions: Record<Role, ModuleId[]> = {
