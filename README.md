@@ -51,3 +51,10 @@ Full production build could not be run locally because dependencies could not be
 ## Final Employee 201 Salary Column Presentation
 
 Employee Directory header: **Salary Type / Salary**. Every cell follows the same stacked hierarchy as Employee / ID: **Daily** or **Monthly** on top in bold, and **₱700/day** or **₱25,000/month** beneath it in muted secondary text. The Employee 201 Overview uses the same two-line presentation. The amount remains linked to the shared employee record, and pagination remains 10 / 20 / 50.
+
+
+## Employee 201 directory filters restored / expanded
+
+The directory keeps the Salary / Type compact two-line display (amount first, pay basis second) and 10/20/50 pagination, defaulting to 10. Search, Branch, Employment Status, Department, and Sort remain visible. The advanced panel has Gender, Position, Salary Type, Basic Rate min/max (within a selected Daily or Monthly basis), Hire Date range, and Document Status. One-click presets include Probationary, Missing Documents, Pending Verification, and New Hires (past 90 days). Selected filters show as removable chips, with result counts, clear-all and empty-state guidance.
+
+The filter data is read from the shared frontend HR record store. It is not yet backed by secure storage or authorization. No real employee data should be entered.

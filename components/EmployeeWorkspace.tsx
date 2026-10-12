@@ -1,7 +1,7 @@
 "use client";
 
 import {useMemo,useState,type FormEvent} from "react";
-import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList} from "lucide-react";
+import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,ChevronDown,ChevronUp,X,Info} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson} from "../lib/hrState";
@@ -46,6 +46,16 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
  const [status,setStatus]=useState("All");
  const [department,setDepartment]=useState("All");
  const [localBranch,setLocalBranch]=useState("All");
+ const [gender,setGender]=useState("All");
+ const [position,setPosition]=useState("All");
+ const [salaryType,setSalaryType]=useState("All");
+ const [minRate,setMinRate]=useState("");
+ const [maxRate,setMaxRate]=useState("");
+ const [hiredFrom,setHiredFrom]=useState("");
+ const [hiredTo,setHiredTo]=useState("");
+ const [documentFilter,setDocumentFilter]=useState("All");
+ const [quick,setQuick]=useState("All");
+ const [advancedOpen,setAdvancedOpen]=useState(false);
  const [order,setOrder]=useState("name");
  const [page,setPage]=useState(1);
  const [rows,setRows]=useState<10|20|50>(10);
@@ -65,19 +75,60 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
  const [decision,setDecision]=useState("Approved");
  const [message,setMessage]=useState("");
 
+ const positions=useMemo(()=>[...new Set(data.people.filter(p=>branch==="All Shops"||p.branch===branch).map(p=>p.position))].sort(),[data.people,branch]);
+ const genders=useMemo(()=>[...new Set(data.people.filter(p=>branch==="All Shops"||p.branch===branch).map(p=>p.gender))].sort(),[data.people,branch]);
  const people=useMemo(()=>{
-  const result=data.people.filter(p=>
-   (branch==="All Shops"||p.branch===branch)&&
-   (localBranch==="All"||p.branch===localBranch)&&
-   (status==="All"||p.status===status)&&
-   (department==="All"||p.department===department)&&
-   `${p.name} ${p.id} ${p.position} ${p.department} ${p.branch}`.toLowerCase().includes(search.toLowerCase())
-  );
+  const cutoff=new Date();cutoff.setHours(0,0,0,0);cutoff.setDate(cutoff.getDate()-90);
+  const recentSince=`${cutoff.getFullYear()}-${String(cutoff.getMonth()+1).padStart(2,"0")}-${String(cutoff.getDate()).padStart(2,"0")}`;
+  const q=search.trim().toLocaleLowerCase();
+  const result=data.people.filter(p=>{
+   const verifiedCount=p.documents.filter(d=>d.status==="Verified").length;
+   const hasMissing=p.documents.some(d=>d.status==="Missing");
+   const hasPending=p.documents.some(d=>d.status==="Submitted");
+   const documentMatch=documentFilter==="All"||
+    (documentFilter==="Missing"&&hasMissing)||
+    (documentFilter==="Pending Verification"&&hasPending)||
+    (documentFilter==="Complete"&&p.documents.length>0&&verifiedCount===p.documents.length);
+   const quickMatch=quick==="All"||
+    (quick==="Missing Documents"&&hasMissing)||
+    (quick==="Pending Verification"&&hasPending)||
+    (quick==="Probationary"&&p.status==="Probationary")||
+    (quick==="New Hires"&&p.hire>=recentSince);
+   return (branch==="All Shops"||p.branch===branch)&&
+    (localBranch==="All"||p.branch===localBranch)&&
+    (status==="All"||p.status===status)&&
+    (department==="All"||p.department===department)&&
+    (gender==="All"||p.gender===gender)&&
+    (position==="All"||p.position===position)&&
+    (salaryType==="All"||p.salaryType===salaryType)&&
+    (salaryType==="All"||minRate===""||p.rate>=Number(minRate))&&
+    (salaryType==="All"||maxRate===""||p.rate<=Number(maxRate))&&
+    (!hiredFrom||p.hire>=hiredFrom)&&(!hiredTo||p.hire<=hiredTo)&&
+    documentMatch&&quickMatch&&
+    `${p.name} ${p.id} ${p.position} ${p.department} ${p.branch} ${p.email} ${p.status}`.toLocaleLowerCase().includes(q);
+  });
   return result.sort((a,b)=>order==="latest"?b.hire.localeCompare(a.hire):
    order==="oldest"?a.hire.localeCompare(b.hire):
    order==="missing"?a.documents.filter(d=>d.status==="Verified").length/Math.max(a.documents.length,1)-b.documents.filter(d=>d.status==="Verified").length/Math.max(b.documents.length,1):
+   order==="salary-high"&&salaryType!=="All"?b.rate-a.rate:
+   order==="salary-low"&&salaryType!=="All"?a.rate-b.rate:
    a.name.localeCompare(b.name));
- },[data.people,branch,localBranch,status,department,search,order]);
+ },[data.people,branch,localBranch,status,department,gender,position,salaryType,minRate,maxRate,hiredFrom,hiredTo,documentFilter,quick,search,order]);
+ const activeFilters=[
+  ...(search.trim()?[{key:"search",label:`Search: ${search.trim()}`}]:[]),
+  ...(localBranch!=="All"?[{key:"branch",label:`Branch: ${localBranch}`}]:[]),
+  ...(status!=="All"?[{key:"status",label:`Status: ${status}`}]:[]),
+  ...(department!=="All"?[{key:"department",label:`Department: ${department}`}]:[]),
+  ...(gender!=="All"?[{key:"gender",label:`Gender: ${gender}`}]:[]),
+  ...(position!=="All"?[{key:"position",label:`Position: ${position}`}]:[]),
+  ...(salaryType!=="All"?[{key:"salary",label:`Pay type: ${salaryType}`}]:[]),
+  ...(minRate!==""&&salaryType!=="All"?[{key:"minRate",label:`Min rate: ${compactMoney(Number(minRate))}`}]:[]),
+  ...(maxRate!==""&&salaryType!=="All"?[{key:"maxRate",label:`Max rate: ${compactMoney(Number(maxRate))}`}]:[]),
+  ...(hiredFrom?[{key:"hiredFrom",label:`Hired from: ${hiredFrom}`}]:[]),
+  ...(hiredTo?[{key:"hiredTo",label:`Hired to: ${hiredTo}`}]:[]),
+  ...(documentFilter!=="All"?[{key:"documents",label:`Documents: ${documentFilter}`}]:[]),
+  ...(quick!=="All"?[{key:"quick",label:`Quick: ${quick}`}]:[])
+ ];
  const pageCount=Math.max(1,Math.ceil(people.length/rows));
  const current=Math.min(page,pageCount);
  const shown=people.slice((current-1)*rows,current*rows);
@@ -98,6 +149,20 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
   setSelected(null);setAction(null);setEditing(false);setPersonal(null);setMessage("");setAdd(false);
  };
  const setFilter=(fn:()=>void)=>{fn();setPage(1)};
+ const resetFilters=()=>{
+  setSearch("");setLocalBranch("All");setStatus("All");setDepartment("All");
+  setGender("All");setPosition("All");setSalaryType("All");setMinRate("");setMaxRate("");
+  setHiredFrom("");setHiredTo("");setDocumentFilter("All");setQuick("All");setOrder("name");setPage(1);
+ };
+ const removeFilter=(key:string)=>setFilter(()=>{
+  if(key==="search")setSearch("");if(key==="branch")setLocalBranch("All");
+  if(key==="status")setStatus("All");if(key==="department")setDepartment("All");
+  if(key==="gender")setGender("All");if(key==="position")setPosition("All");
+  if(key==="salary"){setSalaryType("All");setMinRate("");setMaxRate("");}
+  if(key==="minRate")setMinRate("");if(key==="maxRate")setMaxRate("");
+  if(key==="hiredFrom")setHiredFrom("");if(key==="hiredTo")setHiredTo("");
+  if(key==="documents")setDocumentFilter("All");if(key==="quick")setQuick("All");
+ });
  const startEdit=()=>{if(!person)return;setPersonal(toPersonalDraft(person));setEditing(true);setMessage("")};
  const savePersonal=(e:FormEvent)=>{
   e.preventDefault();if(!draft||!draft.name.trim()){setMessage("Employee full name is required.");return}
@@ -210,14 +275,39 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
     <div><small>With missing documents</small><strong>{people.filter(p=>missing(p)>0).length}</strong></div>
    </div>
    <section className="panel"><div className="rev-title"><div><h3>Employee Directory</h3><p>Complete listing of employee assignments, work details and document completion. Open a profile for confidential records.</p></div><span className="tag">{people.length} records</span></div>
-    <div className="rev-filters employee201-filters">
-     <label>Search<input value={search} onChange={e=>setFilter(()=>setSearch(e.target.value))} placeholder="Name, Employee ID, branch, position..."/></label>
+    <div className="employee201-filterhead"><div><h4>Find Employees</h4><p>Start with quick filters. Open Advanced Filters for payroll, hiring and document checks.</p></div><HelpButton topic="filters" label="How to filter employee records"/></div>
+    <div className="employee201-quick-presets" role="group" aria-label="Quick employee filters">
+     {(["All","Probationary","Missing Documents","Pending Verification","New Hires"] as const).map(x=><button key={x} type="button" className={`employee201-preset ${quick===x?"active":""}`} aria-pressed={quick===x} onClick={()=>setFilter(()=>setQuick(x))}>{x}{x==="New Hires"&&<small> (90 days)</small>}</button>)}
+    </div>
+    <div className="rev-filters employee201-filters employee201-quickfilters">
+     <label>Search by name / ID / position<input value={search} onChange={e=>setFilter(()=>setSearch(e.target.value))} placeholder="Employee name, ID, position..."/></label>
      <label>Branch<select value={localBranch} onChange={e=>setFilter(()=>setLocalBranch(e.target.value))}><option value="All">{branch==="All Shops"?"All branches":"Current branch"}</option>{(branch==="All Shops"?shopNames:[branch]).map(x=><option key={x}>{x}</option>)}</select></label>
      <label>Employment status<select value={status} onChange={e=>setFilter(()=>setStatus(e.target.value))}><option>All</option>{employmentStatuses.map(x=><option key={x}>{x}</option>)}</select></label>
      <label>Department<select value={department} onChange={e=>setFilter(()=>setDepartment(e.target.value))}><option>All</option>{departments.map(x=><option key={x}>{x}</option>)}</select></label>
-     <label>Sort by<select value={order} onChange={e=>setFilter(()=>setOrder(e.target.value))}><option value="name">Name A–Z</option><option value="latest">Newest hires</option><option value="oldest">Earliest hires</option><option value="missing">Least documents verified</option></select></label>
-     <button className="secondary" onClick={()=>{setSearch("");setLocalBranch("All");setStatus("All");setDepartment("All");setOrder("name");setPage(1)}}>Clear Filters</button>
     </div>
+    <div className="employee201-filteractions">
+     <button type="button" className="secondary" aria-expanded={advancedOpen} aria-controls="employee201-advanced-panel" onClick={()=>setAdvancedOpen(v=>!v)}><SlidersHorizontal size={15}/> {advancedOpen?"Hide Advanced Filters":"Advanced Filters"} {advancedOpen?<ChevronUp size={15}/>:<ChevronDown size={15}/>}</button>
+     <label className="employee201-sort">Sort by<select value={order} onChange={e=>setFilter(()=>setOrder(e.target.value))}><option value="name">Name A–Z</option><option value="latest">Newest hires</option><option value="oldest">Earliest hires</option><option value="missing">Least documents verified</option>{salaryType!=="All"&&<><option value="salary-high">Highest basic rate</option><option value="salary-low">Lowest basic rate</option></>}</select></label>
+     <button type="button" className="secondary" onClick={resetFilters}>Clear All Filters</button>
+    </div>
+    {advancedOpen&&<div id="employee201-advanced-panel" className="employee201-advanced" role="region" aria-label="Advanced employee filters">
+     <div className="employee201-advanced-title"><Info size={16}/><span>Use these only when you need a specific employee group. Filters work together. Choose a salary type before comparing basic rates.</span></div>
+     <div className="employee201-advanced-grid">
+      <label>Gender<select value={gender} onChange={e=>setFilter(()=>setGender(e.target.value))}><option>All</option>{genders.map(x=><option key={x}>{x}</option>)}</select></label>
+      <label>Position<select value={position} onChange={e=>setFilter(()=>setPosition(e.target.value))}><option>All</option>{positions.map(x=><option key={x}>{x}</option>)}</select></label>
+      <label>Salary type<select value={salaryType} onChange={e=>setFilter(()=>{setSalaryType(e.target.value);setMinRate("");setMaxRate("");if(order.startsWith("salary"))setOrder("name")})}><option>All</option><option>Daily</option><option>Monthly</option></select></label>
+      <label>Document status<select value={documentFilter} onChange={e=>setFilter(()=>setDocumentFilter(e.target.value))}><option>All</option><option>Missing</option><option>Pending Verification</option><option>Complete</option></select></label>
+      <label>Hired from<input type="date" value={hiredFrom} max={hiredTo||undefined} onChange={e=>setFilter(()=>setHiredFrom(e.target.value))}/></label>
+      <label>Hired to<input type="date" value={hiredTo} min={hiredFrom||undefined} onChange={e=>setFilter(()=>setHiredTo(e.target.value))}/></label>
+      <label>Min basic rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={minRate} onChange={e=>setFilter(()=>setMinRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Minimum rate"}/></label>
+      <label>Max basic rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={maxRate} onChange={e=>setFilter(()=>setMaxRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Maximum rate"}/></label>
+     </div>
+     <p className="employee201-filterhelp">Example: select <strong>UC Las Piñas</strong> + <strong>Female</strong> + <strong>Monthly</strong> to find monthly-paid female employees in that branch. Rate filters compare <strong>basic rates</strong>, not gross payroll or deductions.</p>
+    </div>}
+    <div className="employee201-resultbar"><strong>{people.length} matching employee{people.length===1?"":"s"}</strong><span>{activeFilters.length} active filter{activeFilters.length===1?"":"s"}</span></div>
+    {activeFilters.length>0&&<div className="employee201-chips" aria-label="Applied employee filters">{activeFilters.map(x=><button key={x.key} type="button" className="employee201-chip" onClick={()=>removeFilter(x.key)} aria-label={`Remove ${x.label} filter`}>{x.label}<X size={13}/></button>)}</div>}
+    {hiredFrom&&hiredTo&&hiredFrom>hiredTo&&<p className="employee201-filterwarning" role="alert">The hire date range is invalid. Set “Hired from” on or before “Hired to”.</p>}
+    {salaryType!=="All"&&minRate!==""&&maxRate!==""&&Number(minRate)>Number(maxRate)&&<p className="employee201-filterwarning" role="alert">Minimum basic rate is greater than the maximum.</p>}
     <p className="employee201-tablehint">Scroll horizontally to view every directory column on smaller screens.</p>
     <div className="table-wrap employee201-tablewrap"><table className="employee201-table"><thead><tr>
      <th>Employee / ID</th><th>Branch</th><th>Department & Position</th><th>Gender</th><th>Employment Status</th><th>Date Hired</th><th>Salary / Type</th><th>Document Progress</th><th>Actions</th>
@@ -232,7 +322,7 @@ export default function EmployeeWorkspace({branch,role}:{branch:Branch;role:Role
      <td><div className="employee201-docprogress"><strong>{verified(p)}/{p.documents.length} verified</strong><small>{missing(p)>0?`${missing(p)} missing`:"No missing documents"}</small></div></td>
      <td><button className="secondary" onClick={()=>openProfile(p.id)}>View 201 <ArrowRight size={15}/></button></td>
     </tr>)}</tbody></table>
-    {shown.length===0&&<div className="empty">No matching employees. Try clearing the filters.</div>}
+    {shown.length===0&&<div className="empty"><strong>No employees match these filters.</strong><p>Try another branch or status, remove a filter chip above, or use Clear All Filters.</p><button type="button" className="secondary" onClick={resetFilters}>Show All Employees</button></div>}
     </div>
     <div className="rev-pagination employee201-pages" aria-label="Employee directory pagination">
      <span>Showing {people.length?(current-1)*rows+1:0}–{Math.min(current*rows,people.length)} of {people.length}</span>
