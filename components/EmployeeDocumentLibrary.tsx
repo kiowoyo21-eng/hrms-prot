@@ -31,6 +31,7 @@ function DocumentPreview({item,page}:{item:PreviewItem;page:number}){
 export default function EmployeeDocumentLibrary({person,releases,submissions,uploads,onUpload}:{person:HRPerson;releases:PayrollRelease[];submissions:Submission[];uploads:LocalEmployeeFile[];onUpload:(folder:FolderName,file:File)=>string}){
  const [folder,setFolder]=useState<FolderName>("Onboarding Files"),[selectedKey,setSelectedKey]=useState(""),[page,setPage]=useState(1),[full,setFull]=useState(false),[error,setError]=useState("");
  const [uploadFolder,setUploadFolder]=useState<FolderName>("Onboarding Files");
+ const [paperSize,setPaperSize]=useState<"A4"|"Letter">("A4");
  const [pdfPages,setPdfPages]=useState<number|null>(null);
  const allItems=useMemo(()=>{
   const files:Record<FolderName,PreviewItem[]>={"Onboarding Files":[],"Compliance & Other Forms":[],"NOV / NTE":[],"Payslips":[]};
@@ -68,13 +69,13 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
     {items.map((d,i)=><button key={d.key} type="button" className={`empdoc-file ${current?.key===d.key?"active":""}`} aria-pressed={current?.key===d.key} onClick={()=>{setSelectedKey(d.key);setPage(1)}}><FileText size={17}/><span><strong>{d.name}</strong><small>{d.status}</small></span><ChevronRight size={15}/></button>)}
    </div>
    <div className={`empdoc-preview ${full?"full":""}`} aria-label="Document preview">
-    {current?<><div className="empdoc-previewhead"><div><strong title={current.name}>{current.name}</strong><small>{current.status}</small></div><button className="secondary" type="button" aria-label={full?"Close enlarged preview":"Enlarge document preview"} onClick={()=>setFull(v=>!v)}>{full?<ArrowLeft size={15}/>:<Maximize2 size={15}/>}</button></div>
-     <div className="empdoc-previewbody"><DocumentPreview item={current} page={page}/></div>
+    {current?<><div className="empdoc-previewhead"><div><strong title={current.name}>{current.name}</strong><small>{current.status}</small></div><div className="empdoc-previewtools"><label className="empdoc-paperselector"><span className="empdoc-sr-only">Preview paper size</span><select aria-label="Preview paper size" title="Changes the preview page frame, not the original uploaded PDF" value={paperSize} onChange={e=>setPaperSize(e.target.value as "A4"|"Letter")}><option value="A4">A4</option><option value="Letter">Letter</option></select></label><button className="secondary" type="button" aria-label={full?"Close enlarged preview":"Enlarge document preview"} onClick={()=>setFull(v=>!v)}>{full?<ArrowLeft size={15}/>:<Maximize2 size={15}/>}</button></div></div>
+     <div className="empdoc-previewbody"><div className={`empdoc-pageframe ${paperSize==="A4"?"empdoc-page-a4":"empdoc-page-letter"}`} aria-label={`${paperSize} page preview`}><DocumentPreview item={current} page={page}/></div></div>
      <div className="empdoc-pager"><button type="button" className="secondary" onClick={()=>setPage(p=>Math.max(1,p-1))} disabled={page<=1}><ChevronLeft size={15}/> Prev Page</button><small>Page {page}{maxPage?` / ${maxPage}`:" · PDF toolbar shows total"}</small><button className="secondary" type="button" onClick={()=>setPage(p=>Math.min(200,p+1))} disabled={maxPage!==undefined&&page>=maxPage}>Next <ChevronRight size={15}/></button></div>
      <div className="empdoc-pager"><button type="button" className="secondary" disabled={itemIndex<=0} onClick={previousFile}><ArrowLeft size={14}/> Previous File</button><small>{itemIndex+1} of {items.length}</small><button type="button" className="secondary" disabled={itemIndex>=items.length-1} onClick={nextFile}>Next File <ArrowRight size={14}/></button></div>
     </>:<div className="empdoc-empty">Select a folder with files to preview a record.</div>}
    </div>
   </div>
-  <p className="muted empdoc-disclaimer">Existing document checklist items and prior submission filenames contain no actual file bytes. New uploads are available while this Employee 201 screen stays open; secure file storage, access control and verification require the backend.</p>
+  <p className="muted empdoc-disclaimer">Paper size changes the preview frame only; uploaded PDF page sizes are unchanged. Checklist records and past filenames contain no attached file bytes. New uploads are temporary until secure storage is connected.</p>
  </div>;
 }

@@ -1,3 +1,15 @@
+## Latest — Employee 201 Compact Profile, Controlled Actions & A4/Letter Preview (2026-10-12)
+
+- Compact two-column Employee/Employment Details; Salary & Benefits stays full width; Reviews, History and Clearance remain on one scroll.
+- Hire Date is entered during initial onboarding registration, then locked in Employee 201 View/Edit. It is preserved when saving other profile fields.
+- Dedicated **Employee Actions** after Clearance & Assets: Assessment, Regularization, Promotion, Transfer, Pay Rate, Assign Device, Offboarding with separation reason/type.
+- Documents have an A4/Letter paper-proportioned canvas with 35% pane, navigation and enlarged view (preview frame only; source PDF isn't reformatted).
+- Frontend review only; no secure file storage, signed approvals, live employee records or production payments.
+
+See `docs/EMPLOYEE201-DECISIONS-COMPACT-AND-DOCUMENT-PAPER-2026-10-12.md` for changes, QA guide and limitations.
+
+---
+
 ## Latest update: Assets & Devices — Accountability / Turnover (frontend-only)
 
 - **Assign Device** uses three steps: Assignment Details, Accountability Form, Turnover Confirmation.
