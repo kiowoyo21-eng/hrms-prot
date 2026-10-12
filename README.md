@@ -104,3 +104,7 @@ This release retains the previous Vercel Asset type fix and system-wide module U
 See [full changes, testing checklist and backend limitations](docs/EMPLOYEE201-PAYROLL-HIRING-REVISION-2026-10-12.md).
 
 **Important:** Sample payroll releases, salaries, manual deductions and payslip previews are fictional browser-only data. The application does not store real files, issue official payslips, perform real government deductions or make payments. Secure backend still required for production.
+
+
+## Latest complete integrated release (October 12, 2026)
+See `docs/FULL-INTEGRATED-RELEASE-2026-10-12.md` for current included modules, deployment steps, and outstanding limitations.
