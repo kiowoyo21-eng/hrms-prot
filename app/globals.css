@@ -165,3 +165,45 @@
 @media(max-width:620px){.public-application-upload{align-items:flex-start}.public-application-upload input[type=file]{width:100%}}
 .phase2-head>a.secondary{text-decoration:none;white-space:nowrap}
 @media(max-width:700px){.phase2-head>a.secondary{white-space:normal}}
+
+/* Employee 201 Directory and Profile: readable, responsive HR views */
+.employee201-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.employee201-summary>div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+.employee201-summary small{display:block;font-size:11px;color:var(--muted);margin-bottom:9px}
+.employee201-summary strong{font-size:27px;letter-spacing:-.7px}
+.employee201-filters{display:grid;grid-template-columns:minmax(160px,1.3fr) repeat(4,minmax(120px,1fr)) auto;align-items:end;gap:10px}
+.employee201-filters label{min-width:0}
+.employee201-tablehint{margin:0 0 10px;color:var(--muted);font-size:11px}
+.employee201-tablewrap{border:1px solid var(--line);border-radius:10px}
+.employee201-table{min-width:1130px}
+.employee201-table th,.employee201-table td{vertical-align:middle;padding:13px 10px}
+.employee201-table td:nth-child(3) strong{font-size:12px}
+.employee201-tablewrap .pay-small{display:block;margin-top:5px}
+.employee201-docprogress{display:flex;flex-direction:column;gap:5px;font-size:11px}
+.employee201-docprogress small{color:var(--muted)}
+.employee201-pages{flex-wrap:wrap;gap:10px}
+.employee201-pages label{display:inline-flex;gap:8px;align-items:center}
+.employee201-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.employee201-facts>div{min-width:0}
+.employee201-facts b{display:block;overflow-wrap:anywhere;white-space:normal}
+.employee201-detail h4{margin:18px 0 14px}
+.employee201-detail h4:first-child{margin-top:0}
+.employee201-profiletitle h3{display:flex;align-items:center;gap:8px}
+.employee201-overviewnotes{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.employee201-overviewnotes>div{display:flex;align-items:center;gap:9px;background:#fff9e5;border-radius:9px;padding:11px 13px;font-size:12px}
+.employee201-registration{display:flex;flex-direction:column;gap:20px}
+.employee201-formsection{border:1px solid var(--line);padding:18px;border-radius:11px}
+.employee201-formsection h4{margin:0 0 16px}
+.employee201-wide{grid-column:1/-1}
+.employee201-hint{background:#fff9e4;border:1px solid #f4e8bc;border-radius:10px;padding:12px;margin-top:16px;color:#73633b!important}
+.employee201-actions-title{margin-top:20px;border-top:1px solid var(--line);padding-top:16px}
+.employee201-docitem{display:flex;flex-direction:column;gap:6px;min-width:0;flex:1}
+.employee201-docitem small{color:var(--muted);font-size:11px}
+.employee201-doclist .rev-row{gap:12px}
+@media(max-width:1200px){.employee201-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.employee201-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.employee201-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.employee201-filters{grid-template-columns:1fr}.employee201-facts{grid-template-columns:1fr}.employee201-pages{justify-content:flex-start}.employee201-formsection{padding:14px}}
+.employee201-filters>label{min-width:0;flex:initial}
+.employee201-filters>button{align-self:end}
+.employee201-doclist .rev-row>span.tag{flex:0 0 auto}
+.employee201 .rev-title>div:first-child{min-width:0}
+@media(max-width:680px){.employee201-registration .rev-form,.employee201-detail .rev-form{grid-template-columns:1fr}.employee201-filters>label{min-width:0}}

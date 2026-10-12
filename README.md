@@ -1,3 +1,7 @@
+# Employee 201 Directory & Profile Update
+
+Expanded Employee 201 display and added **10 / 20 / 50** rows per page. See `docs/EMPLOYEE-201-DISPLAY-AND-PAGINATION-PATCH.md` for complete details and remaining limitations. The full project, including public reporting and hiring forms, is retained.
+
 # Underchargers HR PWA — Public Forms Frontend Patch
 
 ## Latest changes

@@ -2,7 +2,13 @@
 import {createContext,useContext,useEffect,useMemo,useState,type ReactNode} from "react";
 import {employees as samples,type Person} from "./people";
 export type HRDocument={name:string;status:"Missing"|"Submitted"|"Verified"};
-export type HRPerson=Person & {email:string;phone:string;hire:string;probation:number;sil:number;vil:number;documents:HRDocument[];timeline:string[]};
+export type HRPerson=Person & {
+ email:string;phone:string;hire:string;probation:number;sil:number;vil:number;
+ documents:HRDocument[];timeline:string[];
+ // Optional profile fields allow older browser-stored employees to remain compatible.
+ birthDate?:string;civilStatus?:string;address?:string;
+ emergencyName?:string;emergencyRelationship?:string;emergencyPhone?:string;
+};
 export type PremiumProfile={ot:number;rdw:number;rdot:number;regular:number;special:number;effective:string;reason:string};
 export type AssetStatus="Free"|"Assigned"|"For Return"|"Inspection"|"Maintenance"|"Retired";
 export type AssetRecord={id:string;name:string;serial:string;status:AssetStatus;employeeId:string;condition:string;accessories:string;notes?:string;history:string[];signed:boolean;date:string};
