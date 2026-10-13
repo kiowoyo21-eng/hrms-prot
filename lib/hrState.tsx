@@ -3,6 +3,7 @@ import {createContext,useContext,useEffect,useMemo,useState,type ReactNode} from
 import {employees as samples,type Person} from "./people";
 import {DEMO_ASSETS} from "./demoAssets";
 import {initialPayrollConfig,normalizePayrollConfig,type PayrollConfig} from "./payrollConfig";
+import {seedIllustrativePayslips,upgradeOriginalSamples} from "./demoPayslipSeed";
 export type EmployeeAssignment={
  id:string;effectiveDate:string;kind:"Initial Assignment"|"Transfer"|"Promotion"|"Reassignment";
  branch:string;department:string;position:string;memoId?:string;memoType?:string;
@@ -28,16 +29,13 @@ export type HRState={payrollConfig?:PayrollConfig;people:HRPerson[];rates:Record
 const requirements=["Resume","Medical Clearance","Employment Contract","NDA / Company Policies","Government IDs"];
 export const defaultRate:PremiumProfile={ot:125,rdw:130,rdot:169,regular:200,special:130,effective:"2026-10-01",reason:"Company reference profile"};
 export const deptRate:Record<string,Partial<PremiumProfile>>={Operations:{ot:200,rdw:200,rdot:260},Service:{ot:150}};
+const demoSeed=seedIllustrativePayslips(samples);
 export const initialState:HRState={
- payrollConfig:initialPayrollConfig,
+ payrollConfig:{...initialPayrollConfig,payslipDrafts:demoSeed.drafts},
  people:samples.map((p,i)=>({...p,email:"",phone:"",probation:p.status==="Probationary"?6:0,sil:5,vil:i%2?5:0,documents:requirements.map((name,j)=>({name,status:j===0?"Verified":j===1?"Missing":"Submitted"})),timeline:[`${p.hire} · Hired at ${p.branch}`],assignmentHistory:[{id:`initial-${p.id}`,effectiveDate:p.hire,kind:"Initial Assignment" as const,branch:p.branch,department:p.department,position:p.position}]})),
  rates:{}, // Demo compensation references only; no individually approved premiums.
  assets:DEMO_ASSETS,
- payrollReleases:samples.flatMap((p,i)=>["2026-09-16","2026-09-23","2026-09-30"].map((periodEnd,j)=>{
-  const gross=Number((p.salaryType==="Daily"?p.rate*6:p.rate/4).toFixed(2));
-  const deductions=Number((gross*(.07+(i%3)*.01)).toFixed(2));
-  return {id:`SAMPLE-PAY-${p.id}-${j+1}`,employeeId:p.id,periodStart:["2026-09-10","2026-09-17","2026-09-24"][j],periodEnd,paidAt:["2026-09-18","2026-09-25","2026-10-02"][j],gross,deductions,net:Number((gross-deductions).toFixed(2)),kind:"Salary" as const,status:"Released" as const,source:"Sample" as const};
- })),
+ payrollReleases:demoSeed.releases,
  submissions:samples.slice(0,5).map((p,i)=>({id:`DEMO-SUB-${1001+i}`,employeeId:p.id,type:i%2?"Government IDs":"Medical Clearance",fileName:`mock-requirement-${i+1}.pdf`,submittedBy:"Demo Employee",status:"Pending HR Review" as const,reason:"Fictional verification sample; no actual file uploaded"})),
  earnings:Object.fromEntries(samples.slice(0,8).map((p,i)=>[p.id,{days:i%5===0?4:6,ot:i%4,bonus:0,adjustment:0}])),
  deductions:Object.fromEntries(samples.slice(0,8).map(p=>[p.id,{sss:0,philhealth:0,pagibig:0,tax:0,loan:0}])) // Actual contribution calculations require verified statutory tables.
@@ -77,7 +75,7 @@ type ContextValue={data:HRState;update:(fn:(state:HRState)=>HRState)=>void;reset
 const HRContext=createContext<ContextValue|null>(null);
 export function HRProvider({children}:{children:ReactNode}){
  const [data,setData]=useState<HRState>(initialState);const [ready,setReady]=useState(false);
- useEffect(()=>{try{const raw=window.localStorage.getItem(KEY);if(raw){const loaded=JSON.parse(raw) as Partial<HRState>;if(isUntouchedLegacySample(loaded)){setData(initialState)}else if(Array.isArray(loaded.people)&&Array.isArray(loaded.assets))setData({...initialState,...loaded,earnings:loaded.earnings||{},deductions:loaded.deductions||{},payrollReleases:loaded.payrollReleases||initialState.payrollReleases,payrollConfig:normalizePayrollConfig(loaded.payrollConfig)});}}catch{}setReady(true)},[]);
+ useEffect(()=>{try{const raw=window.localStorage.getItem(KEY);if(raw){const loaded=JSON.parse(raw) as Partial<HRState>;if(isUntouchedLegacySample(loaded)){setData(initialState)}else if(Array.isArray(loaded.people)&&Array.isArray(loaded.assets)){const hydrated:HRState={...initialState,...loaded,earnings:loaded.earnings||{},deductions:loaded.deductions||{},payrollReleases:loaded.payrollReleases||initialState.payrollReleases,payrollConfig:normalizePayrollConfig(loaded.payrollConfig)};setData(upgradeOriginalSamples(hydrated,samples));}}}catch{}setReady(true)},[]);
  useEffect(()=>{if(ready){try{window.localStorage.setItem(KEY,JSON.stringify(data))}catch{}}},[data,ready]);
  const value=useMemo<ContextValue>(()=>({data,update:(fn)=>setData(previous=>fn(previous)),reset:()=>setData(initialState),ready}),[data,ready]);
  return <HRContext.Provider value={value}>{children}</HRContext.Provider>

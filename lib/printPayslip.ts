@@ -26,7 +26,7 @@ export function buildFormalPayslipHtml(release:PayrollRelease,person:Person|unde
  const row=(label:string,value:string,extra="")=>`<tr><th>${esc(label)}</th><td>${extra}</td><td>${esc(value)}</td></tr>`;
  const total=(label:string,value:number)=>`<tr class="total"><th>${esc(label)}</th><td></td><td>${amount(value)}</td></tr>`;
  const type=draft?.salaryType||person?.salaryType||"—";
- const rate=complete&&draft?(type==="Monthly"?(typeof draft.dailyRate==="number"?fixed(draft.dailyRate*26):undefined):draft.dailyRate):undefined;
+ const rate=complete&&draft?(typeof draft.rateAmount==="number"?draft.rateAmount:(type==="Monthly"?(typeof draft.dailyRate==="number"?fixed(draft.dailyRate*26):undefined):draft.dailyRate)):undefined;
  const rateLabel=typeof rate==="number"?`${type} — ${money(rate)}${type==="Daily"?" / day":" / month (26-day reference)"}`:`${type} — Not stored for this release`;
  const days=complete&&draft?String(draft.workedDays??draft.days):"—";
  const base=complete&&draft?draft.basicPay:undefined;
@@ -37,7 +37,7 @@ export function buildFormalPayslipHtml(release:PayrollRelease,person:Person|unde
  const otMeta=complete&&draft?`${draft.otHours.toFixed(2)} hrs · ${amount(draft.hourlyRate)}/hr`:"—";
  const earnings=[
   row("Basic Pay",amount(baseShown)),
-  row("ECOLA", "—"), // Not a saved field in the current payroll draft; do not manufacture an amount.
+  row("ECOLA", amount(complete?draft?.ecolaPay:undefined)), // Only display recorded ECOLA; demo explicitly stores zero where not configured.
   row("Total Days Worked",days,"<small>days</small>"),
   row("Overtime",amount(complete?draft?.otPay:undefined),`<small>${esc(otMeta)}</small>`),
   row("Leave with Pay",amount(leavePay),leaveDays?`<small>${leaveDays} day(s) · included in basic</small>`:""),
@@ -67,11 +67,11 @@ export function buildFormalPayslipHtml(release:PayrollRelease,person:Person|unde
   row("PhilHealth",amount(findAgency("PhilHealth"))),
   row("Pag-IBIG",amount(findAgency("Pag-IBIG"))),
   row("Withholding Tax / BIR",amount(findAgency("BIR"))),
-  row("SSS Loan",amount(sssLoan)),
-  row("Employee Loan",amount(otherLoan)),
-  row("Cash Advance",amount(cashAdvance)),
-  row("Late", "—", draft?.lateMinutes?`<small>${draft.lateMinutes} min · reflected in basic</small>`:""),
-  row("Other Authorized Deductions",amount(complete?draft?.manualDeduction:undefined)),
+  row("SSS Loan",amount(complete?(sssLoan??0):undefined)),
+  row("Employee Loan",amount(complete?(otherLoan??0):undefined)),
+  row("Cash Advance",amount(complete?(cashAdvance??0):undefined)),
+  row("Late", amount(complete?draft?.lateDeduction:undefined), draft?.lateMinutes?`<small>${draft.lateMinutes} min${draft.lateDeduction===undefined?" · already reflected in Basic Pay":""}</small>`:""),
+  row("Other Authorized Deductions",amount(complete?(draft?.manualDeduction??0):undefined)),
   total("TOTAL DEDUCTIONS",release.deductions)
  ].join("");
  const details=[
@@ -85,8 +85,8 @@ export function buildFormalPayslipHtml(release:PayrollRelease,person:Person|unde
   detail("Days Worked",days)
  ].join("");
  const grossOK=Math.abs(release.gross-release.deductions-release.net)<0.02;
- const earningsOK=!complete||!draft||Math.abs(fixed((draft.basicPay||0)+(draft.otPay||0)+(draft.holidayExtra||0)+(draft.allowances||0))-release.gross)<0.02;
- const deductOK=!complete||!draft||Math.abs(fixed((draft.deductionBreakdown||[]).reduce((sum,item)=>sum+item.employee,0)+(draft.loanDeduction||0)+(draft.manualDeduction||0))-release.deductions)<0.02;
+ const earningsOK=!complete||!draft||Math.abs(fixed((draft.basicPay||0)+(draft.ecolaPay||0)+(draft.otPay||0)+(draft.holidayExtra||0)+(draft.allowances||0))-release.gross)<0.02;
+ const deductOK=!complete||!draft||Math.abs(fixed((draft.deductionBreakdown||[]).reduce((sum,item)=>sum+item.employee,0)+(draft.loanDeduction||0)+(draft.manualDeduction||0)+(draft.lateDeduction||0))-release.deductions)<0.02;
  const warning=!grossOK||!earningsOK||!deductOK;
  const logo=(typeof window!=="undefined"?window.location.origin:"")+"/underchargers-document-logo.png";
  return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><title>${esc(`${format.title} ${release.employeeId}`)}</title><style>
@@ -99,7 +99,7 @@ export function buildFormalPayslipHtml(release:PayrollRelease,person:Person|unde
  .net{display:flex;justify-content:space-between;align-items:baseline;padding:12px 6px;margin-top:17px;border-top:2px solid #e0b22d;border-bottom:2px solid #e0b22d;font-weight:800}.net strong{font-size:11pt}.net b{font-size:16pt;white-space:nowrap}.receipt{margin-top:43px;display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:end;font-size:9pt}.receipt .line{border-bottom:1px solid #404b5c;min-height:23px}.record-warning{font-size:8pt;color:#946a23;margin:7px 0 0}.reconcile{margin-top:10px;font-size:8.5pt;color:#a12626}
  @media(max-width:560px){body{padding:12px}.details{grid-template-columns:1fr 1fr;gap:6px 10px}.sections.two{grid-template-columns:1fr}.net b{font-size:13pt}}@media print{body{padding:0;max-width:none}.toolbar{display:none}.header,.details,.net,.receipt{break-inside:avoid}thead{display:table-header-group}}
  </style></head><body>${embedded?"":`<div class="toolbar"><button onclick="window.print()">Print / Save PDF</button><button onclick="window.close()">Close</button></div>`}
- <header class="header"><img src="${esc(logo)}" alt="Underchargers logo"/><h1>${esc(format.title||"EMPLOYEE PAYSLIP")}</h1><div class="address">${esc(format.companyAddress.trim()||"Address: —")}</div>${!complete?`<div class="tag">LEGACY RECORD · PARTIAL DETAILS</div>`:""}</header>
+ <header class="header"><img src="${esc(logo)}" alt="Underchargers logo"/><h1>${esc(format.title||"EMPLOYEE PAYSLIP")}</h1><div class="address">${esc(format.companyAddress.trim()||"Address: —")}</div>${!complete?`<div class="tag">LEGACY RECORD · PARTIAL DETAILS</div>`:`<div class="tag">DEMO DATA · NOT PROOF OF PAYMENT</div>`}</header>
  <section><h2 class="heading">Employee & Payroll Details</h2><div class="details">${details}</div></section>
  <main class="sections ${format.layout==="two"?"two":"single"}"><section><h2 class="heading">Earnings</h2><table><tbody>${earnings}</tbody></table></section><section><h2 class="heading">Deductions</h2><table><tbody>${deductions}</tbody></table></section></main>
  <div class="net"><strong>NET PAY</strong><b>${money(release.net)}</b></div>

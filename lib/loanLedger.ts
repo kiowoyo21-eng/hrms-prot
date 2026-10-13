@@ -15,11 +15,11 @@ export function dueForCutoff(loan:LoanRecord,employeeId:string,personName:string
  const firstEligibleEnd=new Date(`${loan.start}T12:00:00`);
  firstEligibleEnd.setDate(firstEligibleEnd.getDate()+(3-firstEligibleEnd.getDay()+7)%7);
  const first=firstEligibleEnd.toISOString().slice(0,10);
- if(cutoffEnd<first)return 0;
+ if(new Date(`${cutoffEnd}T12:00:00`).getDay()!==3||cutoffEnd<first)return 0;
  if(loan.frequency==="Monthly"&&cutoffEnd.slice(0,7)===first.slice(0,7)&&cutoffEnd!==first)return 0;
  if(loan.frequency==="Monthly"&&cutoffEnd.slice(0,7)!==first.slice(0,7)&&Number(cutoffEnd.slice(8,10))>7)return 0;
  if(loan.frequency==="Biweekly"){
-  const weeks=Math.round((new Date(`${cutoffEnd}T12:00:00`).getTime()-firstEligibleEnd.getTime())/(7*86400000));
+  const weeks=Math.round((new Date(`${cutoffEnd}T12:00:00`).getTime()-new Date(`${first}T12:00:00`).getTime())/(7*86400000));
   if(weeks%2!==0)return 0;
  }
  return roundLoan(Math.min(loan.payment,loan.balance));
