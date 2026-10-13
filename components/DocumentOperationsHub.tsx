@@ -1,16 +1,22 @@
 "use client";
 import {useState} from "react";
+import {ArrowLeft,ArrowRight,Folders,Files,FileCheck2} from "lucide-react";
 import DocumentWorkspace from "./DocumentWorkspace";
 import TemplateLibraryWorkspace from "./TemplateLibraryWorkspace";
 import DocumentIntake from "./DocumentIntake";
-import HelpButton from "./HelpButton";
-import {useHR} from "../lib/hrState";
 import type {Branch,Role} from "../lib/mock";
-type Request={id:number;employeeId:string;document:string;expiry:string;status:string};
+
+type Section="library"|"templates"|"verification";
+const spaces=[
+ {id:"library" as Section,label:"Document Library",hint:"Browse employee files and organized document folders",Icon:Folders,tone:"gold"},
+ {id:"templates" as Section,label:"Document Templates",hint:"Upload existing templates or create new HR documents",Icon:Files,tone:"blue"},
+ {id:"verification" as Section,label:"Document Verification",hint:"Review pending submissions and supporting evidence",Icon:FileCheck2,tone:"green"}
+];
 export default function DocumentOperationsHub({role,branch}:{role:Role;branch:Branch}){
- const {data}=useHR();const employees=data.people;
- const [tab,setTab]=useState("Library & Templates"),[recipient,setRecipient]=useState(""),[document,setDocument]=useState("Employment Contract"),[expiry,setExpiry]=useState("2026-10-18"),[requests,setRequests]=useState<Request[]>([{id:1001,employeeId:"UC-0001",document:"Employee Accountability Form",expiry:"2026-10-20",status:"Pending request"}]),[notice,setNotice]=useState("");
- const users=employees.filter(p=>branch==="All Shops"||p.branch===branch);
- function create(){if(!recipient){setNotice("Select one employee for this request.");return}setRequests(p=>[{id:Date.now(),employeeId:recipient,document,expiry,status:"Prepared — secure link unavailable"},...p]);setNotice("Individual request prepared for review. No secure signing link has been issued.")}
- return <div className="rev-stack"><nav className="rev-tabs" aria-label="Document management sections">{[{id:"Library & Templates",label:"Document Library"},{id:"Document Templates",label:"Document Templates"},{id:"Employee Submissions",label:"Document Verification"},{id:"Individual Signing",label:"Signing Requests"}].map(({id,label})=><button type="button" key={id} className={tab===id?"active":""} aria-current={tab===id?"page":undefined} onClick={()=>setTab(id)}>{label}</button>)}</nav>{notice&&<div className="rev-note">{notice}</div>}{tab==="Library & Templates"&&<DocumentWorkspace branch={branch} role={role}/>} {tab==="Document Templates"&&<TemplateLibraryWorkspace role={role}/>} {tab==="Employee Submissions"&&<DocumentIntake branch={branch} role={role}/>} {tab==="Individual Signing"&&<><section className="panel"><div className="rev-title"><div><h3>Employee Signing Requests</h3><p>One employee, one document and one unique request. No bulk signing links.</p></div><HelpButton topic="signing" label="Signing instructions"/></div><div className="rev-form"><label>Employee<select value={recipient} onChange={e=>setRecipient(e.target.value)}><option value="">Select an employee</option>{users.map(p=><option key={p.id} value={p.id}>{p.name} · {p.id}</option>)}</select></label><label>Document<select value={document} onChange={e=>setDocument(e.target.value)}>{["Employment Contract","NDA","Device Accountability Form","Payslip","Policy Acknowledgment","Evaluation Form","Other"].map(x=><option key={x}>{x}</option>)}</select></label><label>Request expiry<input type="date" value={expiry} onChange={e=>setExpiry(e.target.value)}/></label></div><button className="primary" onClick={create}>Prepare Individual Request</button><p className="muted">Creating a secure, recipient-bound link and QR requires backend authentication, identity verification and revocation support. No fake usable URL is displayed here.</p></section><section className="panel"><h4>Signing Request Status</h4><div className="table-wrap"><table><thead><tr><th>Employee</th><th>Document</th><th>Expiry</th><th>Status</th><th>Action</th></tr></thead><tbody>{requests.map(r=><tr key={r.id}><td>{employees.find(x=>x.id===r.employeeId)?.name}</td><td>{r.document}</td><td>{r.expiry}</td><td>{r.status}</td><td><button className="secondary" onClick={()=>{setRequests(p=>p.map(x=>x.id===r.id?{...x,status:"Revoked (review)"}:x));setNotice("Request marked revoked for review.")}} disabled={r.status.startsWith("Revoked")}>Revoke</button></td></tr>)}</tbody></table></div></section></>}</div>
+ const [section,setSection]=useState<Section|null>(null);
+ const selected=spaces.find(s=>s.id===section);
+ return <div className="docops-root">
+  {section===null?<><div className="docops-intro"><h3>Documents &amp; Templates</h3><p>Choose a workspace to manage your HR records.</p></div><div className="docops-cards">{spaces.map(({id,label,hint,Icon,tone})=><button key={id} type="button" className="docops-card" onClick={()=>setSection(id)}><span className={`docops-visual ${tone}`}><Icon size={34} strokeWidth={1.7}/></span><span className="docops-card-body"><strong>{label}</strong><small>{hint}</small><ArrowRight size={16}/></span></button>)}</div><p className="docops-hint">Employee signing is initiated inside Onboarding, Incident Reports, Asset Accountability, and Payslips—not through a separate signing module.</p></>:
+  <><div className="docops-backbar"><button className="secondary" type="button" onClick={()=>setSection(null)}><ArrowLeft size={15}/> All Document Workspaces</button><strong>{selected?.label}</strong></div>{section==="library"&&<DocumentWorkspace branch={branch} role={role}/>}{section==="templates"&&<TemplateLibraryWorkspace role={role}/>}{section==="verification"&&<DocumentIntake branch={branch} role={role}/>}</>}
+ </div>
 }
