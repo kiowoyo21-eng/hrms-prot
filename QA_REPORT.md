@@ -1,25 +1,29 @@
-# UCMM HR — Targeted Function Audit (Oct 13, 2026)
+# Targeted QA — Automatic Cutoff Payroll
 
-## Passed (run against source in current patch)
+## Automated PASS
 
-- **105/105** fictional September sample release/draft pairs generated and linked by release ID.
-- Each generated payslip has a finite/non-negative result, a saved salary rate and worked days, and precise `gross - deductions = net` reconciliation.
-- Itemized earnings and deductions sum to the saved release totals; rendered payslip HTML does not show an unexplained reconciliation error.
-- Migration upgrades original seeded releases once (idempotent), preserves edited totals, and skips signed originals.
-- 35 employees and **2,135** deterministic Sep/Oct sample attendance rows; future demo dates are not treated as genuine payable time punches.
-- Monthly SSS reference split across first four Wednesday cutoffs; fifth Wednesday does not collect an extra monthly installment.
-- Separate SIL-type paid leave vs VIL unpaid leave classification.
-- Loan authorized/frequency check, linked employee-ID validation, balance cap and biweekly first-Wednesday anchor.
-- Printable payslip fields, safe escaping of HR-controlled title/address (HTML injection regression test).
-- Focused **strict TypeScript** checking of payroll-related pure libraries passed with a temporary React type shim.
-- **59 TypeScript/TSX source files** parsed without syntax errors; CSS parsed with PostCSS.
+- RFC4180-style CSV quotes / comma-containing notes.
+- Employee ID verified against chosen branch; dates in selected Thursday–Wednesday cutoff.
+- Valid 7-day status coverage creates 1 auto payroll record after cutoff.
+- Auto record: status For Review, source Uploaded CSV, itemized deductions, reconciled gross-minus-deductions and net.
+- Re-running the engine is idempotent and does not make a second record.
+- Missing dates, absent Time Out, duplicate employee/date, unknown employee and unapproved OT prevent a payable draft.
+- Before-cutoff, on-cutoff and overdue reminder categories.
+- Approved payroll records not auto-mutated.
+- 62 TypeScript/TSX files parse without errors; PostCSS parse successful.
 
-## NOT fully verified / needs actual Vercel browser review
+## Manual deployment checks required
 
-- Complete Next.js `next build` cannot be run here: npm dependency installation timed out; React/Next packages are not present in this runtime.
-- Button-by-button browser interactions throughout all HR modules, mobile styles, print output and browser PDF rendering.
-- Supabase real-time writes, security, applicant upload links, remote signing, employee permissions, and real file storage.
-- Payroll against real employer attendance, actual ECOLA entitlement, latest official government rate schedules, holiday combinations, and employer remittance approval.
-- CSV attendance importing has an existing preview-only limitation; uploaded contents are **not** yet posted into payroll calculations.
+1. Log in as HR or Admin; Dashboard payroll notification should appear on the applicable reminder days.
+2. Navigate Payroll → Automatic Payroll & Approval; select a past Thursday cutoff with full records.
+3. Upload a CSV matching the template. Verify invalid CSV is rejected with an error and valid CSV previews all rows.
+4. Save CSV. Check Attendance Records now lists the persisted actual rows (not merely metadata).
+5. Check completed employees appear automatically in For Review, held employees show stated issues; no manual Generate Draft action.
+6. Review portrait modal; check deductions add up, HR Approve & Record Payslip only creates one demo release.
+7. Open Payslip History; compare Days Worked and Salary Type / Rate with the CSV and Employee 201.
+8. Change a saved cutoff after approval: UI must prevent overwriting finalized payroll.
+9. Test Vercel build, mobile responsiveness, multiple browsers, role permissions and print output.
 
-No assertion of complete production readiness is made.
+## Not verified
+
+Full Next.js build and React browser runtime were unavailable because React/Next dependencies are not installed in this environment. Supabase persistence, app biometrics, real attendance authenticity, secure approvals, legal payroll rules and production readiness are NOT established.

@@ -1408,3 +1408,47 @@ button{min-width:0}
  .mu-detail-window{max-height:97dvh}
  .app-shell .uc-modal-dialog,.app-shell .uc-asset-modal{max-height:97dvh}
 }
+
+/* Attendance-upload-led automatic cutoff payroll approval */
+.uc-auto-payroll .pc-header p { margin:5px 0 0; }
+.uc-auto-cutoff-header { max-width:none; }
+.uc-auto-notice { display:flex; align-items:flex-start; gap:10px; font-size:13px; line-height:1.55; padding:13px 14px; background:#fffaf0; border:1px solid #f6e2a0; border-radius:11px; margin-top:12px; }
+.uc-auto-notice svg { flex-shrink:0; color:#98710a; }
+.uc-auto-stat-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:16px; }
+.uc-auto-stat-grid .pc-field { min-height:76px; }
+.uc-auto-reminders { display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:9px;margin-top:12px; }
+.uc-auto-reminder { display:flex;gap:8px;align-items:center;padding:11px;border-radius:9px;border:1px solid #f3ddb6;background:#fff8e7;font-size:12px; }
+.uc-auto-reminder svg {flex-shrink:0;color:#a07412;}
+.uc-auto-columns { display:grid;grid-template-columns:minmax(300px,40fr) minmax(360px,60fr);gap:16px;align-items:start; }
+.uc-auto-inputs {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.uc-auto-inputs label {font-size:12px;font-weight:600;display:flex;flex-direction:column;gap:5px;min-width:0;}
+.uc-auto-inputs select,.uc-auto-inputs input {min-width:0;width:100%;}
+.uc-auto-file-input {position:relative;display:flex;justify-content:center;align-items:center;gap:9px; padding:15px;border:1px dashed #c99e22;border-radius:10px;background:#fffef8;cursor:pointer;font-size:13px;font-weight:700;margin:16px 0 9px;}
+.uc-auto-file-input:focus-within {outline:2px solid #c99e22;outline-offset:2px;}
+.uc-auto-file-input input {position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
+.uc-auto-file-input:has(input:disabled) {opacity:.55;cursor:not-allowed;}
+.uc-auto-file-preview {border:1px solid #e7e7e7;border-radius:10px;padding:10px;margin:12px 0;}
+.uc-auto-file-preview table {font-size:11px;}
+.uc-auto-status-line {display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid #ededed;padding:13px 0;}
+.uc-auto-status-line>div:first-child {display:flex;flex-direction:column;gap:4px;}
+.uc-auto-status-line strong {font-size:13px;}
+.uc-auto-status-line small {color:#6b7280;font-size:11px;}
+.uc-auto-status-actions {display:flex;flex-wrap:wrap;gap:7px;align-items:center;justify-content:flex-end;}
+.uc-auto-coverage h4 {margin:17px 0 6px;font-size:13px;}
+.uc-auto-issue {border-bottom:1px solid #efefef;padding:9px 0;display:flex;flex-direction:column;gap:3px;font-size:12px;}
+.uc-auto-issue span {color:#ac6500;}
+.uc-auto-subtext {display:block;font-size:11px;color:#758088;margin-top:3px;}
+.uc-auto-empty {padding:24px 5px;text-align:center;color:#667085;}
+.uc-auto-modal-backdrop {position:fixed;inset:0;background:rgba(17,24,39,.55);z-index:2200;display:flex;align-items:center;justify-content:center;padding:16px;}
+.uc-auto-review-modal {display:flex;flex-direction:column;width:min(96vw,530px);height:min(90vh,850px);background:#fff;border-radius:15px;overflow:hidden;box-shadow:0 25px 80px rgba(0,0,0,.23);}
+.uc-auto-review-heading {padding:17px 20px;border-bottom:1px solid #ededed;display:flex;justify-content:space-between;align-items:start;gap:12px;}
+.uc-auto-review-heading h3 {margin:0 0 5px;font-size:18px;}.uc-auto-review-heading small {color:#697586;}
+.uc-auto-review-scroll {overflow-y:auto;padding:18px 20px;flex:1;}
+.uc-auto-review-scroll h4 {font-size:13px;margin:18px 0 8px;}
+.uc-auto-detail-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.uc-auto-detail-grid .pc-field {min-height:55px;}
+.uc-auto-netpay {display:flex;justify-content:space-between;align-items:center;background:#f7f7f4;padding:15px;border-radius:10px;margin-top:14px;gap:12px;}
+.uc-auto-netpay strong {font-size:23px;white-space:nowrap;}
+.uc-auto-modal-actions {display:flex;justify-content:flex-end;gap:9px;padding:13px 20px;border-top:1px solid #ededed;background:#fff;}
+@media(max-width:960px){.uc-auto-columns {grid-template-columns:minmax(0,1fr);}.uc-auto-stat-grid {grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:560px){.uc-auto-stat-grid,.uc-auto-inputs,.uc-auto-detail-grid {grid-template-columns:minmax(0,1fr);}.uc-auto-review-modal {height:min(94vh,850px);}.uc-auto-status-line {align-items:flex-start;flex-direction:column;}.uc-auto-netpay strong {font-size:19px;}}

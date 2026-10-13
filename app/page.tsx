@@ -5,6 +5,7 @@ import EmployeeWorkspace from "../components/EmployeeWorkspace";
 import {HRProvider,useHR} from "../lib/hrState";
 import AssetWorkspace from "../components/AssetWorkspace";
 import PayrollOperationsHub from "../components/PayrollOperationsHub";
+import PayrollCutoffAlertPublisher from "../components/PayrollCutoffAlertPublisher";
 import DocumentOperationsHub from "../components/DocumentOperationsHub";
 import DocumentIntake from "../components/DocumentIntake";
 import DashboardExtras from "../components/DashboardExtras";
@@ -32,7 +33,7 @@ function getDemoSession():User|null{
 }
 function persistDemoSession(user:User){try{const existing=window.localStorage.getItem(DEMO_SESSION_KEY);let createdAt=Date.now();if(existing){const parsed=JSON.parse(existing);if(parsed.username===user.username&&Number.isFinite(parsed.createdAt))createdAt=parsed.createdAt;}window.localStorage.setItem(DEMO_SESSION_KEY,JSON.stringify({...user,createdAt,lastActive:Date.now()}));}catch{}}
 
-export default function Home(){return <HRProvider><ModuleAlertsProvider><HRApp/></ModuleAlertsProvider></HRProvider>}
+export default function Home(){return <HRProvider><ModuleAlertsProvider><PayrollCutoffAlertPublisher/><HRApp/></ModuleAlertsProvider></HRProvider>}
 function HRApp(){
  const [user,setUser]=useState<User|null>(null),[sessionReady,setSessionReady]=useState(false),[username,setUsername]=useState(""),[password,setPassword]=useState(""),[showPassword,setShowPassword]=useState(false),[loginError,setLoginError]=useState("");
  const [assetPrefill,setAssetPrefill]=useState(""),[payrollPrefill,setPayrollPrefill]=useState(""),[page,setPage]=useState<ModuleId>("dashboard"),[branch,setBranch]=useState<Branch>("All Shops"),[menu,setMenu]=useState(false),[logGroup,setLogGroup]=useState("All"),[logSearch,setLogSearch]=useState(""),[logActor,setLogActor]=useState("All"),[signatureName,setSignatureName]=useState(""),[toast,setToast]=useState("");

@@ -1,55 +1,55 @@
-# UCMM HR — Payslip Details & Payroll Function Fix
+# UCMM HR — Automatic Cutoff Payroll + Attendance Upload Alerts
 
-**Updated-files-only patch · October 13, 2026**
+**Updated-files-only ZIP · October 13, 2026**
 
-Apply this ZIP **after** `UCMM_HR_2026-10-13_PORTRAIT_MODAL_FORMAL_PAYSLIP_UPDATE_ONLY.zip`. Upload only the exact paths below to the root of your GitHub repository, preserving folder names. Do **not** upload a containing wrapper folder.
+Install **after** `UCMM_HR_2026-10-13_PAYSLIP_DETAILS_FUNCTION_AUDIT_UPDATE_ONLY.zip`. Upload the files to your existing GitHub repository **at their exact paths**, replacing matching files. **Do not create a wrapper folder and do not reset existing HR data.**
 
-## Changed source paths
+## Updated / new paths
 
-- `components/PayrollOperationsHub.tsx`
-- `lib/hrState.tsx`
-- `lib/demoPayslipSeed.ts` **(new file)**
-- `lib/payrollConfig.ts`
-- `lib/printPayslip.ts`
-- `lib/loanLedger.ts`
+1. `app/globals.css` — responsive 40/60 upload/status layout, portrait HR approval modal
+2. `app/page.tsx` — global payroll-cutoff alert publisher mounted on the dashboard
+3. `components/PayrollOperationsHub.tsx` — attendance upload flow, cutoff settings, approval queue and one-click demo release
+4. `components/DemoAttendanceExplorer.tsx` — demo attendance no longer copies simulated days to a payroll draft
+5. `components/PayrollCutoffAlertPublisher.tsx` — **new**, dashboard/global notification logic
+6. `lib/attendanceUpload.ts` — **new**, CSV parse/validation, coverage, cutoff and reminder utilities
+7. `lib/autoPayroll.ts` — **new**, idempotent attendance-backed demo payroll computation
+8. `lib/payrollConfig.ts` — saved imported punches, batch identifiers, reminder settings and source references
 
-## What was fixed
+## User workflow
 
-1. **105 original gross-only fictional sample payslips** (35 employees × 3 September 2026 cutoffs) now have deterministic attendance-linked detail records. The matching snapshot includes salary type and exact rate, days worked, OT, hourly/daily rates, gross, employee agency references, late adjustment, deductions and net. The system no longer shows `—` for all the breakdown of an untouched original sample.
-2. **Safe migration on load:** only the exact original generated `SAMPLE-PAY-...` records with matching original employee names/rates and untouched original totals can be rebuilt. Records whose amounts have been changed, which have a signing record, which already have a linked detail record, or whose salary history has changed before the cutoff are NOT overwritten. Does not reset localStorage or affect manually released `Browser Review` records.
-3. **New drafts** now save the exact salary-rate snapshot and show any *late reduction separately under deductions*, so Gross − Total Deductions = Net Pay with no double charging. Reference BIR calculation continues to use taxable earnings after lateness adjustment.
-4. **Print / Preview** displays `Monthly — ₱20,000.00` for the sample Gabriel Aquino, Days Worked, OT, ECOLA (configured demo zero), government deduction lines, late amount, loan/cash advance, Gross and Net. A subtle DEMO DATA indicator appears on illustrative documents; it is not evidence of payment. Unknown data in manually modified historic releases is not fabricated.
-5. **Duplicate protection:** releasing a new approved attendance-linked demo payslip for a cutoff removes only the **matching original fictional SAMPLE-PAY release** and its demo detail, so that employee/cutoff is not shown twice. Manually entered historical records remain untouched.
-6. The 105 background sample detail records no longer crowd **Generate Payslips → Drafts & Approval**; actionable HR-created drafts remain visible.
-7. **Loan repayment:** fixed the biweekly collection anchor, so an authorized loan beginning on a Thursday is first collected on the next eligible Wednesday and every other Wednesday thereafter, not one week late.
+1. Go to **Payroll Management → Automatic Payroll & Approval** or **Attendance Records → Upload Attendance**.
+2. Choose **Branch** and the appropriate **Thursday cutoff start** (Wednesday cutoff end is filled automatically).
+3. Export your Excel attendance register **as CSV**. Use the Download CSV Template button to see required column headings. **Direct `.xlsx` import is not implemented in this patch.**
+4. Provide one row for each employee/date in the cutoff. A complete week has seven statuses per employee: `Present`, `Absent`, `Rest Day`, or `On Leave`. Present rows need both Time In and Time Out (24-hour `HH:MM` or `h:mm AM/PM`). `Approved OT Hours` requires `OT Approved=Yes`.
+5. Select CSV and review its preview. Click **Save Attendance & Auto-Compute** once. Rows and upload status save in browser localStorage; a structurally valid upload is marked **Validated CSV**, *not* trusted biometrics.
+6. Once the entire Thursday–Wednesday cutoff has ended (on the next date check while the app is open, including on the Dashboard), the system automatically prepares **For Review** payroll records only for employees with complete and valid daily coverage. Missing punches, gaps, unverified leave, zero-pay exceptions and insufficient gross remain on hold with stated reasons.
+7. HR opens a compact **portrait approval modal** and selects **Approve & Record Payslip**. This records a **DEMO release only**, with an itemized payslip in Payslip History; no cash is paid or transferred. Already approved/released records are not automatically overwritten.
 
-## One sample result for QA
+## Reminder behavior
 
-Gabriel Aquino · UC-0001 · Sep 10–16, 2026 · illustrative only:
-- Monthly salary reference ₱20,000.00
-- 5 fictional attendance-worked days out of 6 scheduled days
-- Gross ₱3,846.15
-- Employee government reference deductions: SSS ₱250.00, PhilHealth ₱125.00, Pag-IBIG ₱50.00, BIR ₱0.00
-- Total deductions ₱425.00
-- Net ₱3,421.15
+- Default: alert **two days before cutoff**; configurable in Payroll Management (1–5 days).
+- Another alert on **cutoff Wednesday** if the branch has not uploaded attendance.
+- **Overdue** attendance and incomplete-employee holds appear in notifications and on the Dashboard when the app is open.
+- The reminder rule uses existing **Thursday–Wednesday weekly cutoffs**. Government monthly reference contributions retain the existing maximum four collection slots per month (subject to statutory review).
+- Alerts are **in-app, not phone push, email or backend background tasks**. Open tabs refresh cutoff dates periodically; no alerts or calculations run while the app is fully closed, but pending uploads reconcile next time it is opened.
 
-These are **new demo calculation results** and intentionally differ from the original fabricated-only ₱5,000.00 / ₱350.00 / ₱4,650.00 sample. They are NOT confirmed payroll amounts.
+## Protections / preserved functionality
 
-## QA after Vercel deployment
+- Employee IDs must match the employee directory **in the chosen branch**, with dates inside the cutoff.
+- Quoted CSV fields, duplicated employee/day, invalid times, missing Time Out, incorrect statuses, or unapproved OT are detected; a CSV containing invalid rows is rejected before save.
+- Maximum: 6,000 rows or 1.2MB per CSV import. Original file bytes are **not** stored or uploaded to Supabase.
+- Existing sample releases and completed approved records are preserved. Old metadata-only attendance uploads must be **re-imported** to supply actual rows; metadata by itself cannot fund payroll.
+- Repeated opening of the app does not generate duplicate attendance-linked draft rows; provisional attendance-backed drafts can recalculate after fresh imports or changes to pay rates, deductions or loans.
+- Payroll approval requires cutoff closure, matching validated rows and complete date coverage. Employee rates and stored government reference versions drive calculations.
+- The employee demo payslip includes worked days, salary type/rate, earnings, reference deductions, loan installments and Net Pay; no separate manual Generate Draft step.
 
-1. Reload the web app; old *untouched mock sample* records should be upgraded automatically. Do not clear storage to force the upgrade.
-2. Payroll → Payslip History → September 2026 → Week Sep 10–16 → Gabriel Aquino → View: confirm monthly ₱20k, five days, detail columns, ₱3,846.15 gross, ₱425 deductions, ₱3,421.15 net.
-3. Verify Print → A4 matches View and remains a portrait document with UC logo.
-4. For a sample loan, select an authorized biweekly loan, test first payable Wednesday / skipped Wednesday / next due Wednesday.
-5. Generate a new demo draft for a past cutoff, verify branch-specific attendance first, move Draft → For Review → Approved → Released (Demo), and confirm the same-cutoff untouched SAMPLE release is replaced only on release. This is a browser-only workflow; no real funds are sent.
-6. Check one signed/edited historical record: it must remain unchanged and may still display unavailable itemized details.
-7. Inspect mobile UI and actual Vercel build logs; these were not run in this sandbox.
+## Critical production limitations
 
-## Important boundaries
+**This remains a browser-local HR prototype**, not a verified production payroll/attendance system. Neither CSV upload status nor its `OT Approved` flag proves manager authentication. Company shifts/rest days, approved leave classifications, holidays, ECOLA, real overtime, pay divisor, tax, current statutory contribution rules and approvals require HR/finance validation. Secure file storage, multi-user synchronization, tamper-resistant audit logs, biometric/app integration and legally enforceable signatures require a real authenticated backend. Avoid actual personal/payroll data in this demo.
 
-- Attendance source remains **fictional September/October 2026 time logs**, not actual time-in/time-out, even if shown with realistic timestamps. CSV import currently saves metadata for preview and does not make imported attendance records a validated payroll source.
-- Philippine mandatory contributions, BIR, ECOLA, OT/rest day/holiday calculations and the 26-day monthly divisor are *provisional demo references*, not verified compliance or an official payroll engine. Two fictional zero-work weeks show zero payable gross/net rather than a negative payslip; actual employer remittance obligations require separate review.
-- Payslip format customization, approvals and signatures remain browser-local demo. No production multi-user audit integrity or automatic Supabase integration is included.
-- The official company address has not been supplied; HR can set it via Customize Format.
-- Existing employee pay edits and real historical releases cannot be reconstructed from total-only amounts. Such releases remain incomplete until source payroll documentation is supplied.
-- See QA_REPORT.md for tested paths and unverified features.
+## QA performed
+
+- Parsed **62 TS/TSX files** with no syntax errors; PostCSS successfully parsed global stylesheet.
+- Focused functional test passed: quoted CSV, valid employee/cutoff mapping, seven-date coverage, gross−deductions=net, no duplicate computation, rejection of incomplete/out-of-period/duplicate/unknown-ID/unapproved-OT rows, reminder timing and prevention of past approval overwrites.
+- **Not completed here:** production `next build`, deployed browser click-through, mobile screenshot QA, Supabase/API integration, current Philippine statutory compliance testing.
+- Following Vercel deployment, review one uploaded **past** cutoff, one incomplete employee, a repeat upload of the same cutoff and duplicate release protection.
