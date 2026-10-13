@@ -1271,3 +1271,105 @@ button{min-width:0}
 .uc-cutoff-preview .table-wrap{max-height:280px;overflow-y:auto;}
 .uc-cutoff-preview .table-wrap table{min-width:560px;}
 .uc-attendance-warning-note{padding:10px 13px;margin:10px 0;background:#fff8eb;border:1px solid #efd9a9;border-radius:8px;color:#7c5310;font-size:13px;}
+
+/* UCMM Payslip — embedded formal document and print/sign dropdowns (Oct 2026) */
+.uc-payslip-review-dialog{width:min(1100px,100%);max-height:calc(100dvh - 30px);padding:18px 20px;gap:12px;overflow-y:auto}
+.uc-payslip-dialog-head{position:relative;z-index:4}
+.uc-payslip-toolbar{display:grid;gap:10px}
+.uc-payslip-review-note{display:flex;gap:9px;align-items:start;background:#f7f8fb;border:1px solid #e1e6ee;border-radius:10px;padding:10px 12px;color:#526277;font-size:12px;line-height:1.55}
+.uc-payslip-review-note svg{flex:0 0 auto;margin-top:1px}
+.uc-payslip-toolbar-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;position:relative;z-index:3}
+.uc-payslip-dropdown{position:relative;min-width:126px}
+.uc-payslip-dropdown-toggle{display:flex!important;align-items:center;justify-content:space-between;gap:9px;width:100%;font-size:12px!important}
+.uc-payslip-menu{position:absolute;right:0;top:calc(100% + 5px);z-index:5;min-width:255px;border:1px solid #dfe5ed;border-radius:10px;background:white;box-shadow:0 12px 30px #1c293520;padding:5px;display:grid}
+.uc-payslip-menu button{font:inherit;font-size:12px;color:#253044;background:transparent;border:0;border-radius:7px;text-align:left;padding:11px 12px;cursor:pointer;line-height:1.35}
+.uc-payslip-menu button:hover,.uc-payslip-menu button:focus-visible{background:#fff3d3;color:#634907;outline:0}
+.uc-payslip-embedded{background:#e9edf3;border:1px solid #dce3ed;border-radius:12px;padding:14px;min-width:0}
+.uc-payslip-embedded iframe{display:block;width:100%;height:min(78vh,850px);background:white;border:1px solid #d5dce8;border-radius:6px;box-shadow:0 3px 18px #263a4816}
+.uc-payslip-signing-panel{background:#fff;border-color:#e1e6ee}
+@media(max-width:700px){.uc-payslip-review-dialog{padding:12px;max-height:calc(100dvh - 14px)}.uc-payslip-embedded{padding:6px}.uc-payslip-embedded iframe{height:70vh}.uc-payslip-toolbar-actions{justify-content:stretch}.uc-payslip-dropdown{flex:1}.uc-payslip-menu{min-width:min(270px,82vw)}}
+
+/* UCMM UI alignment — Recruitment, Holiday Calendar and review modals · 2026-10-13 */
+/* Four recruitment totals are supporting statistics; do not let square aspect ratios
+   create oversized tiles in the constrained left column. */
+.app-shell .uc-hire-home-left .hire-home-kpis{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+  width:100%;max-width:none;align-content:start;
+}
+.app-shell .uc-hire-home-left .hire-home-kpis button{
+  aspect-ratio:auto!important;min-height:94px!important;height:94px!important;
+  display:flex!important;flex-direction:column;justify-content:center!important;
+  align-items:flex-start;gap:7px!important;padding:12px 15px!important;
+  border-radius:12px!important;box-shadow:0 1px 3px #1d31430a;
+}
+.app-shell .uc-hire-home-left .hire-home-kpis button b{
+  font-size:25px!important;line-height:1.1;letter-spacing:-.5px;
+}
+.app-shell .uc-hire-home-left .hire-home-kpis button span{
+  font-size:12px!important;line-height:1.3!important;
+}
+/* Holiday Calendar: genuinely 40% portrait editor / 60% calendar; one field per line. */
+.app-shell .uc-holiday-two-col{
+  display:grid;grid-template-columns:minmax(290px,2fr) minmax(390px,3fr)!important;
+  gap:16px;align-items:start;
+}
+.app-shell .uc-holiday-two-col>.uc-holiday-editor{
+  width:100%;min-width:0;max-width:none;
+  padding:18px!important;border-radius:14px;
+}
+.app-shell .uc-holiday-editor .uc-holiday-fields{
+  display:grid;grid-template-columns:minmax(0,1fr)!important;gap:12px;
+}
+.app-shell .uc-holiday-editor .uc-holiday-fields :is(input,select,.uc-date-trigger){
+  min-height:42px;max-width:100%;width:100%;border-radius:9px;
+  border:1px solid #dce3eb;background:#fff;font-size:13px;
+}
+.app-shell .uc-holiday-editor .pc-header{margin-bottom:12px}
+.app-shell .uc-holiday-editor .uc-holiday-rate-reference{
+  font-size:12px;line-height:1.55;padding:12px 13px;border-radius:10px;
+}
+.app-shell .uc-holiday-editor .uc-holiday-override{margin:14px 0 10px;padding:11px 13px}
+.app-shell .uc-holiday-calendar-panel{min-width:0;max-width:none!important;padding:18px!important;border-radius:14px}
+.app-shell .uc-holiday-calendar-panel .pc-month-day{
+  min-height:64px;aspect-ratio:1/1;min-width:0;align-content:start;
+}
+.app-shell .uc-holiday-calendar-panel .pc-month-calendar{gap:5px}
+/* Review/approve a single leave request in a readable portrait modal. */
+.leave-modal-backdrop{padding:16px}
+.leave-modal{
+  width:min(100%,570px)!important;max-height:min(92dvh,850px);
+  overflow-y:auto;overscroll-behavior:contain;
+  border:1px solid #e1e6ed;border-radius:17px;
+}
+.leave-modal .leave-detail-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:15px 20px;padding:18px 22px;
+}
+.leave-modal .leave-detail-grid>div{min-width:0;gap:5px}
+.leave-modal .leave-detail-grid b{font-size:13px;line-height:1.45}
+.leave-modal :is(.leave-narrative,.leave-history-log,.leave-quiet){margin-left:22px;margin-right:22px}
+.leave-modal .leave-decision{padding:17px 22px 0;gap:13px}
+.leave-modal .leave-decision-actions{
+  position:sticky;bottom:0;z-index:2;
+  background:#fff;box-shadow:0 -8px 14px -14px #18263850;
+  border-top:1px solid #e9edf3;padding:12px 0 14px;
+}
+.leave-modal .leave-decision-actions button{min-height:39px}
+@media(max-width:1120px){
+  .app-shell .uc-holiday-two-col{grid-template-columns:minmax(280px,2fr) minmax(330px,3fr)!important}
+  .app-shell .uc-holiday-calendar-panel .pc-month-day{min-height:50px}
+}
+@media(max-width:850px){
+  .app-shell .uc-holiday-two-col{grid-template-columns:minmax(0,1fr)!important}
+  .app-shell .uc-holiday-calendar-panel .pc-month-day{min-height:49px}
+}
+@media(max-width:520px){
+  .app-shell .uc-hire-home-left .hire-home-kpis button{height:81px!important;min-height:81px!important;padding:11px!important}
+  .app-shell .uc-hire-home-left .hire-home-kpis button b{font-size:23px!important}
+  .app-shell .uc-holiday-calendar-panel .pc-month-day{min-height:40px}
+  .leave-modal-backdrop{padding:7px}
+  .leave-modal{max-height:96dvh}
+  .leave-modal .leave-detail-grid{gap:13px 11px;padding:14px}
+  .leave-modal :is(.leave-narrative,.leave-history-log,.leave-quiet){margin-left:14px;margin-right:14px}
+  .leave-modal .leave-decision{padding-left:14px;padding-right:14px}
+}
