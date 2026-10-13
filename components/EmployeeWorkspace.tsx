@@ -9,7 +9,7 @@ import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/
 import HelpButton from "./HelpButton";
 import {ModuleAlertButton} from "./ModuleAlerts";
 import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
-import {basicRateOnDate,type PayRateChange} from "../lib/payrollConfig";
+import {basicRateOnDate,normalizePayrollConfig,type PayRateChange} from "../lib/payrollConfig";
 
 type Action="Evaluate"|"Regularize"|"Promote"|"Transfer"|"Offboard";
 type PersonalDraft=Pick<HRPerson,"name"|"gender"|"email"|"phone"|"birthDate"|"civilStatus"|"address"|"emergencyName"|"emergencyRelationship"|"emergencyPhone">;
@@ -70,6 +70,11 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const [selected,setSelected]=useState<string|null>(null);
  const [tab,setTab]=useState("Profile");
  const [salaryPeriod,setSalaryPeriod]=useState<"month"|"year"|"all">("year");
+ const [editingCompensation,setEditingCompensation]=useState(false);
+ const [compType,setCompType]=useState<"Daily"|"Monthly">("Daily");
+ const [compAmount,setCompAmount]=useState("");
+ const [compReason,setCompReason]=useState("");
+ const [compError,setCompError]=useState("");
  const [uploads,setUploads]=useState<Record<string,LocalEmployeeFile[]>>({});
  const [employmentDraft,setEmploymentDraft]=useState<{probation:number;sil:number;vil:number}|null>(null);
  const [historyKind,setHistoryKind]=useState<"branch"|"role"|null>(null);
@@ -206,6 +211,17 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const confirmLeavingEdits=()=>!hasUnsavedEdit()||window.confirm("You have unsaved employee changes. Discard them and continue?");
  const openAssetsForPerson=()=>{if(person&&onAssignDevice&&confirmLeavingEdits())onAssignDevice(person.id)};
  const openPayRates=()=>{if(person&&onOpenPayroll&&confirmLeavingEdits())onOpenPayroll(person.id)};
+ const beginCompensationEdit=()=>{if(!person||role==="BM")return;setEditingCompensation(true);setCompType(person.salaryType);setCompAmount(String(basicRateOnDate(person.id,person.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[])));setCompReason("");setCompError("")};
+ const saveCompensation=()=>{
+  if(!person||role==="BM")return;
+  const amount=Number(compAmount),reason=compReason.trim();
+  if(!Number.isFinite(amount)||amount<=0||!reason){setCompError("Enter a positive salary rate and a required adjustment reason.");return}
+  const today=new Date().toISOString().slice(0,10);
+  const employeeId=person.id;
+  const change:PayRateChange={id:`EMP201-RATE-${Date.now()}`,employeeId,salaryType:compType,amount,effective:today,reason,status:"Applied (Demo)",recordedAt:today};
+  update(previous=>{const config=normalizePayrollConfig(previous.payrollConfig);return {...previous,people:previous.people.map(p=>p.id===employeeId?{...p,rate:amount,salaryType:compType,timeline:[`${today} · HR rate review: ${compType} ${money(amount)} · ${reason}`,...p.timeline]}:p),payrollConfig:{...config,rateChanges:[...config.rateChanges,change]}}});
+  setEditingCompensation(false);setCompReason("");setMessage("Compensation updated in browser review. Previous payslip snapshots were not changed.");
+ };
  const startAction=(a:Action)=>{
   if(!person||!confirmLeavingEdits())return;
   setEditing(false);setPersonal(null);setEmploymentDraft(null);
@@ -467,6 +483,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
        </>}
        {detailKind==="salary"&&<>
         <div className="emp201-dialog-facts"><div><small>Basic Rate</small><b>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</b></div>{person.salaryType==="Daily"&&<div><small>Monthly basic reference (26 days)</small><b>{money(basicRateOnDate(person.id,person.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[])*26)}</b></div>}<div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>SIL</small><b>{person.sil} days</b></div><div><small>VIL</small><b>{person.vil} days</b></div></div>
+        {role!=="BM"&&<><div className="rev-actions"><button type="button" className="secondary" onClick={beginCompensationEdit}><Pencil size={15}/> Edit Basic Pay Rate</button></div>{editingCompensation&&<div className="panel uc-emp-rate-editor"><h4>Edit Compensation · HR Demo</h4><div className="rev-form"><label>Salary Type<select value={compType} onChange={e=>setCompType(e.target.value as "Daily"|"Monthly")}><option>Daily</option><option>Monthly</option></select></label><label>Basic Rate (₱)<input type="number" min="0.01" step="0.01" value={compAmount} onChange={e=>setCompAmount(e.target.value)}/></label><div className="pc-field">{compType==="Daily"?"Monthly reference (× 26)":"Daily reference (÷ 26)"}<strong>{money((Number(compAmount)||0)*(compType==="Daily"?26:1/26))}</strong></div><label>Effective Date<input type="date" readOnly value={new Date().toISOString().slice(0,10)}/></label></div><label>Reason / Approval Reference<textarea rows={2} value={compReason} onChange={e=>setCompReason(e.target.value)}/></label>{compError&&<p role="alert" className="pay-subtle">{compError}</p>}<p className="muted">Same-day demo changes only. Past finalized payslips stay unchanged; future-dated salary approvals remain in Payroll Rate Management.</p><div className="rev-actions"><button type="button" className="secondary" onClick={()=>setEditingCompensation(false)}>Cancel</button><button type="button" className="primary" onClick={saveCompensation}>Save HR Rate</button></div></div>}</>}
         <div className="emp201-dialog-subhead"><h4>Salary Received & Releases</h4><label className="emp201-period-select">Period <select value={salaryPeriod} onChange={e=>setSalaryPeriod(e.target.value as "month"|"year"|"all")}><option value="month">This Month</option><option value="year">This Year</option><option value="all">All Time</option></select></label></div>
         <div className="emp201-dialog-totals"><div><small>Net Salary Received</small><strong>{money(totals.net)}</strong></div><div><small>Gross Earnings</small><b>{money(totals.gross)}</b></div><div><small>Total Deductions</small><b>{money(totals.deductions)}</b></div></div>
         <div className="emp201-dialog-subhead"><h4>Released Payroll History ({paidSalary.length})</h4><div className="rev-actions"><button type="button" className="secondary" onClick={()=>goToDocuments("Payslips")}><FileText size={14}/> View Payslips</button>{onOpenPayroll&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openPayRates()}}>View Pay Rates <ArrowRight size={14}/></button>}</div></div>

@@ -1180,3 +1180,11 @@ button{min-width:0}
   .app-shell .uc-hire-calendar-appointment{flex-wrap:wrap}
   .app-shell .uc-hire-calendar-result{margin-left:auto}
 }
+
+/* 2026-10-13 Batch 1: Net payslip emphasis and compact loan/rate review */
+.uc-payslip-net{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-radius:14px;background:#f6f8fb;border:1px solid #dfe5ec;flex-wrap:wrap}
+.uc-payslip-net small{color:#617086;font-size:12px;font-weight:700;letter-spacing:.02em}
+.uc-payslip-net strong{font-size:clamp(23px,2.5vw,32px);color:#172338;font-weight:800;font-variant-numeric:tabular-nums}
+.uc-emp-rate-editor{margin:10px 0;max-width:700px!important;display:grid;gap:12px;background:#fbfcfe}
+.uc-emp-rate-editor .rev-form{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:620px){.uc-emp-rate-editor .rev-form{grid-template-columns:1fr}.uc-payslip-net{align-items:flex-start;flex-direction:column}}

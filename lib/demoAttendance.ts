@@ -41,7 +41,7 @@ export function buildDemoAttendance(people:readonly Person[]):DemoAttendanceRow[
    else if(seed<22)status="Late";
    else if(seed<31)status="Overtime";
    else status="Present";
-   const morning=index%2===0?9*60:8*60;
+   const morning=8*60; // 08:00–17:00, assuming an unpaid 12:00–13:00 lunch break
    const lateMinutes=status==="Late"?11+(seed%23):0;
    const overtimeHours=status==="Overtime"?1+(seed%3)*0.5:0;
    const hasPunch=!(["Absent","On Leave","Rest Day","Future Demo"] as string[]).includes(status);

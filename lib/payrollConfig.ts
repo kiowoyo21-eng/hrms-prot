@@ -1,5 +1,5 @@
 /** Frontend payroll review configuration. Source-backed reference schedules are NOT live payroll rules. */
-export type PayrollArea = "rates"|"government"|"holidays"|"thirteenth"|"history"|"generate"|"loans";
+export type PayrollArea = "rates"|"government"|"holidays"|"thirteenth"|"history"|"generate"|"loans"|"attendance";
 export type Agency = "SSS"|"PhilHealth"|"Pag-IBIG"|"BIR";
 export type DeductionBracket = {min:number;max:number;employee:number;employer:number;rate?:number;fixed?:number;effective:string};
 export type DeductionVersion={id:string;agency:Agency;label:string;effective:string;sourceUrl:string;sourceLabel:string;status:"Reference — needs HR review"|"Draft Update"|"Reviewed for Demo";rows:DeductionBracket[];notes:string};
@@ -8,7 +8,7 @@ export type PayRateChange={id:string;employeeId:string;salaryType:"Daily"|"Month
 export type HolidayRule={id:string;date:string;name:string;type:"Regular Holiday"|"Special Non-Working Day"|"Special Working Day";branch:string;baseline:number;department:string;departmentRate:number|null;employeeId:string;employeeRate:number|null;notes:string};
 export type AttendanceStatus="Not Uploaded"|"Uploaded"|"For Verification"|"Verified"|"Needs Correction";
 export type AttendanceRecord={id:string;branch:string;periodStart:string;periodEnd:string;status:AttendanceStatus;fileName:string;uploadedAt:string;verifiedAt?:string;notes:string};
-export type PayslipDraft={id:string;employeeId:string;periodStart:string;periodEnd:string;days:number;otHours:number;allowances:number;holidayExtra:number;gross:number;deductions:number;net:number;deductionBreakdown?:{agency:Agency;employee:number;employer:number;version:string}[];status:"Draft"|"For Review"|"Approved"|"Released (Demo)";createdAt:string;releasedId?:string;reviewer?:string;remarks:string};
+export type PayslipDraft={id:string;employeeId:string;periodStart:string;periodEnd:string;days:number;otHours:number;allowances:number;holidayExtra:number;gross:number;deductions:number;net:number;basicPay?:number;otPay?:number;loanDeduction?:number;loanEntries?:{loanId:number;amount:number}[];manualDeduction?:number;deductionBreakdown?:{agency:Agency;employee:number;employer:number;version:string}[];status:"Draft"|"For Review"|"Approved"|"Released (Demo)";createdAt:string;releasedId?:string;reviewer?:string;remarks:string};
 export type SignatureRequest={id:string;releaseId:string;employeeId:string;method:"Phone / QR"|"On This Device"|"Print & Upload";status:"Prepared — Backend Required"|"Awaiting Physical Copy"|"Acknowledged (Demo Only)"|"Revoked";createdAt:string;notes:string};
 export type ThirteenthReview={employeeId:string;year:number;eligibleBasic:number;amount:number;status:"Draft"|"For Review"|"Approved";notes:string};
 export type PayrollConfig={minimumWages:MinimumWage[];rateChanges:PayRateChange[];deductionVersions:DeductionVersion[];holidayRules:HolidayRule[];payslipDrafts:PayslipDraft[];signatureRequests:SignatureRequest[];thirteenthReviews:ThirteenthReview[];attendanceRecords:AttendanceRecord[];monthlyBases:Record<string,number>;birExemptEmployees:string[]};
@@ -36,5 +36,5 @@ export const normalizePayrollConfig=(p?:Partial<PayrollConfig>):PayrollConfig=>(
  holidayRules:p?.holidayRules||[],payslipDrafts:p?.payslipDrafts||[],
  signatureRequests:p?.signatureRequests||[],thirteenthReviews:p?.thirteenthReviews||[],attendanceRecords:p?.attendanceRecords||[],monthlyBases:p?.monthlyBases||{},birExemptEmployees:p?.birExemptEmployees||[]
 });
-export function basicRateOnDate(employeeId:string,original:number,asOf:string,changes:PayRateChange[]){return changes.filter(r=>r.employeeId===employeeId&&r.effective<=asOf).sort((a,b)=>b.effective.localeCompare(a.effective))[0]?.amount??original}
+export function basicRateOnDate(employeeId:string,original:number,asOf:string,changes:PayRateChange[]){return changes.map((r,index)=>({...r,index})).filter(r=>r.employeeId===employeeId&&r.effective<=asOf).sort((a,b)=>b.effective.localeCompare(a.effective)||b.index-a.index)[0]?.amount??original}
 export const roundMoney=(n:number)=>Math.round((n+Number.EPSILON)*100)/100;
