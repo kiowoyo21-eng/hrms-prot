@@ -1264,3 +1264,10 @@ button{min-width:0}
  .app-shell .uc-hire-home-left .hire-home-kpis{gap:9px;max-width:none}
  .app-shell .uc-hire-home-left .hire-home-kpis button{padding:12px}
 }
+
+/* Attendance-linked draft preview: readable but not oversized */
+.uc-cutoff-preview{border:1px solid #e1e6ee;background:#fff;border-radius:14px;padding:16px;margin:14px 0;}
+.uc-cutoff-preview .pc-field-grid{margin:12px 0;}
+.uc-cutoff-preview .table-wrap{max-height:280px;overflow-y:auto;}
+.uc-cutoff-preview .table-wrap table{min-width:560px;}
+.uc-attendance-warning-note{padding:10px 13px;margin:10px 0;background:#fff8eb;border:1px solid #efd9a9;border-radius:8px;color:#7c5310;font-size:13px;}

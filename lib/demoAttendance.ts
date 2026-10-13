@@ -6,7 +6,7 @@ import type {Person} from "./people";
 export type DemoAttendanceStatus = "Present" | "Late" | "Overtime" | "Absent" | "On Leave" | "Incomplete" | "Rest Day" | "Future Demo";
 export type DemoAttendanceRow = {
   employeeId:string; employeeName:string; branch:string; department:string;
-  date:string; timeIn:string; timeOut:string; status:DemoAttendanceStatus;
+  date:string; timeIn:string; timeOut:string; hoursWorked:number; status:DemoAttendanceStatus;
   lateMinutes:number; overtimeHours:number; notes:string;
 };
 const SAMPLE_AS_OF="2026-10-13";
@@ -44,12 +44,15 @@ export function buildDemoAttendance(people:readonly Person[]):DemoAttendanceRow[
    const morning=8*60; // 08:00–17:00, assuming an unpaid 12:00–13:00 lunch break
    const lateMinutes=status==="Late"?11+(seed%23):0;
    const overtimeHours=status==="Overtime"?1+(seed%3)*0.5:0;
-   const hasPunch=!(["Absent","On Leave","Rest Day","Future Demo"] as string[]).includes(status);
+   const hasPunch=!(["Absent","On Leave","Rest Day"] as string[]).includes(status);
+   const clockIn=morning+lateMinutes;
+   const clockOut=morning+9*60+Math.round(overtimeHours*60);
+   const paidHours=hasPunch&&status!=="Incomplete"?Math.max(0,Math.round((clockOut-clockIn-60)/60*100)/100):0;
    return {
     employeeId:person.id,employeeName:person.name,branch:person.branch,department:person.department,
-    date:day,timeIn:hasPunch?time(morning+lateMinutes):"",timeOut:hasPunch&&status!=="Incomplete"?time(morning+9*60+Math.round(overtimeHours*60)):"",
+    date:day,timeIn:hasPunch?time(clockIn):"",timeOut:hasPunch&&status!=="Incomplete"?time(clockOut):"",hoursWorked:paidHours,
     status,lateMinutes,overtimeHours,
-    notes:status==="Future Demo"?"Future placeholder — not an actual clock-in":status==="Rest Day"?"Illustrative weekly rest day":status==="Incomplete"?"Missing clock-out; for review":status==="On Leave"?(DEMO_APPROVED_LEAVE.has(`${person.id}:${day}`)?"Linked to approved fictional leave request":"Sample leave without a matched approved request") :status==="Absent"?"Sample unpaid absence; requires HR review":status==="Late"?"Sample late arrival":status==="Overtime"?"Sample OT; requires supervisor approval":"Fictional complete shift"
+    notes:status==="Future Demo"?"SIMULATED FUTURE SHIFT — not a real clock-in or payable attendance":status==="Rest Day"?"Illustrative weekly rest day":status==="Incomplete"?"Missing clock-out; for review":status==="On Leave"?(DEMO_APPROVED_LEAVE.has(`${person.id}:${day}`)?"Linked to approved fictional leave request":"Sample leave without a matched approved request") :status==="Absent"?"Sample unpaid absence; requires HR review":status==="Late"?"Sample late arrival":status==="Overtime"?"Sample OT; requires supervisor approval":"Fictional complete shift"
    };
  })) .sort((a,b)=>b.date.localeCompare(a.date)||a.employeeName.localeCompare(b.employeeName));
 }
@@ -63,8 +66,8 @@ export function sampleCutoff(people:readonly Person[],employeeId:string,start:st
 }
 export function exportDemoAttendanceCSV(rows:readonly DemoAttendanceRow[]){
  const content=[
-  ["Employee ID","Employee Name","Branch","Department","Date","Time In","Time Out","Status","Late Minutes","OT Hours","Notes"],
-  ...rows.map(r=>[r.employeeId,r.employeeName,r.branch,r.department,r.date,r.timeIn,r.timeOut,r.status,String(r.lateMinutes),String(r.overtimeHours),r.notes])
+  ["Employee ID","Employee Name","Branch","Department","Date","Time In","Time Out","Paid Hours","Status","Late Minutes","OT Hours","Notes"],
+  ...rows.map(r=>[r.employeeId,r.employeeName,r.branch,r.department,r.date,r.timeIn,r.timeOut,String(r.hoursWorked),r.status,String(r.lateMinutes),String(r.overtimeHours),r.notes])
  ].map(cols=>cols.map(value=>`"${String(value).replace(/^([=+@-])/,'\'$1').replaceAll('"','""')}"`).join(",")).join("\r\n");
  const url=URL.createObjectURL(new Blob([content],{type:"text/csv;charset=utf-8"}));
  const a=document.createElement("a");a.href=url;a.download="UCMM_DEMO_Attendance_Sept_Oct_2026.csv";a.click();URL.revokeObjectURL(url);
