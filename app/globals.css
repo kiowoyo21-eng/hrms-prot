@@ -1023,3 +1023,20 @@ button{min-width:0}
 }
 
 .app-shell .uc-asset-modal-footer{grid-column:1/-1}
+
+/* Sep/Oct 2026 fictional attendance and applicant QA seed. */
+.uc-demo-load-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:12px 14px;background:var(--surface,#fff);border:1px solid var(--border,#e4e7ec);border-radius:12px;margin-bottom:14px;font-size:13px}
+.uc-demo-load-row b{font-size:11px;color:#8b6500;letter-spacing:.03em}
+.uc-demo-attendance{min-width:0}
+.uc-attendance-toolbar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+.uc-attendance-toolbar label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600}
+.uc-attendance-toolbar select{width:100%;min-width:0;height:38px;border:1px solid #dfe3e9;border-radius:9px;padding:0 10px;background:white;color:#252b31}
+.uc-attendance-stats{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.uc-attendance-stats span{font-size:12px;padding:7px 10px;background:#f6f7f9;border:1px solid #eaedf0;border-radius:8px;color:#555}
+.uc-attendance-stats b{font-size:14px;color:#252b31;font-variant-numeric:tabular-nums;margin-right:3px}
+.uc-attendance-state{font-size:11px;white-space:nowrap;color:#48566a;border-radius:6px;padding:3px 6px;background:#f0f2f5}
+.uc-attendance-state.attention{color:#a94436;background:#fff0eb}
+.uc-attendance-bottom{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:10px 0}
+.uc-demo-attendance .pc-alert{margin:14px 0 0}
+.uc-demo-attendance .pc-alert p{font-size:12px;margin:6px 0 10px}
+@media(max-width:720px){.uc-attendance-toolbar{grid-template-columns:1fr}.uc-demo-attendance .pc-header{align-items:flex-start;flex-wrap:wrap}.uc-attendance-bottom{align-items:flex-start}}

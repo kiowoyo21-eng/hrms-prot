@@ -13,22 +13,21 @@ type LeaveRequest={id:number,employee:string,branch:Branch,type:string,from:stri
 type CreditRequest={id:string,employeeId:string,type:"SIL"|"VIL",days:number,effectiveDate:string,remarks:string,status:"Pending"|"Approved"|"Rejected",createdAt:string,decisionAt?:string,decisionBy?:string,decisionRemarks?:string};
 type Section="home"|"pending"|"credits"|"history";
 const initialLeaves:LeaveRequest[]=[
- {id:1,employee:"Juan Dela Cruz",branch:"UC Mandaluyong",type:"SIL",from:"2026-10-19",to:"2026-10-19",days:1,status:"For Review",notes:"Personal appointment"},
- {id:2,employee:"Maria Santos",branch:"UC Las Piñas",type:"VIL",from:"2026-10-22",to:"2026-10-23",days:2,status:"Approved",notes:"Vacation"},
- {id:3,employee:"Andrea Cruz",branch:"MM Mandaluyong",type:"Company Sick Leave",from:"2026-10-14",to:"2026-10-14",days:1,status:"Pending",notes:"Medical follow-up"},
- // DEMO ONLY: more realistic sample requests; names/branches match current Employee 201 seed.
- {id:1101,employee:"Carlo Mendoza",branch:"UC Mandaluyong",type:"SIL",from:"2026-10-15",to:"2026-10-15",days:1,status:"For Review",notes:"Family medical appointment (sample)"},
- {id:1102,employee:"Mika Flores",branch:"UC Las Piñas",type:"VIL",from:"2026-10-26",to:"2026-10-27",days:2,status:"Pending",notes:"Pre-planned family trip (sample)"},
- {id:1103,employee:"Paolo Reyes",branch:"UC Quezon City",type:"SIL",from:"2026-10-20",to:"2026-10-20",days:1,status:"For Review",notes:"Personal appointment (sample)"},
- {id:1104,employee:"Rafael Garcia",branch:"UC Quezon City",type:"Unpaid Leave",from:"2026-10-28",to:"2026-10-28",days:1,status:"Pending",notes:"Family emergency (sample)"},
- {id:1105,employee:"Lea Villanueva",branch:"MM Mandaluyong",type:"Company Sick Leave",from:"2026-10-16",to:"2026-10-16",days:1,status:"For Review",notes:"Doctor consultation (sample)"},
- {id:1106,employee:"Noel Ramos",branch:"UC Las Piñas",type:"SIL",from:"2026-10-07",to:"2026-10-07",days:1,status:"Approved",notes:"Personal appointment (sample)",decisionHistory:[{at:"2026-10-05 10:00",status:"Approved",remarks:"Sample HR approval, not a real decision",by:"HR Demo"}]},
- {id:1107,employee:"Bianca Lim",branch:"UC Quezon City",type:"VIL",from:"2026-10-29",to:"2026-10-30",days:2,status:"For Review",notes:"Out-of-town family event (sample)"},
- {id:1108,employee:"Luis Navarro",branch:"UC Mandaluyong",type:"SIL",from:"2026-09-28",to:"2026-09-28",days:1,status:"Approved",notes:"Documentation appointment (sample)",decisionHistory:[{at:"2026-09-25 09:30",status:"Approved",remarks:"Sample HR approval, not a real decision",by:"HR Demo"}]},
- {id:1109,employee:"Angela Bautista",branch:"MM Mandaluyong",type:"Unpaid Leave",from:"2026-10-23",to:"2026-10-23",days:1,status:"Pending",notes:"Family errand (sample)"},
- {id:1110,employee:"Maria Santos",branch:"UC Las Piñas",type:"Company Sick Leave",from:"2026-09-17",to:"2026-09-17",days:1,status:"Rejected",notes:"Missing supporting documents (sample)",decisionHistory:[{at:"2026-09-16 16:00",status:"Rejected",remarks:"Sample decision only",by:"HR Demo"}]},
- {id:1111,employee:"Juan Dela Cruz",branch:"UC Mandaluyong",type:"SIL",from:"2026-09-09",to:"2026-09-09",days:1,status:"Approved",notes:"Barangay document processing (sample)",decisionHistory:[{at:"2026-09-07 11:00",status:"Approved",remarks:"Sample HR approval, not a real decision",by:"HR Demo"}]},
- {id:1112,employee:"Andrea Cruz",branch:"MM Mandaluyong",type:"VIL",from:"2026-10-09",to:"2026-10-09",days:1,status:"Cancelled",notes:"Plan was rescheduled by employee (sample)",decisionHistory:[{at:"2026-10-08 13:00",status:"Cancelled",remarks:"Sample cancellation record",by:"HR Demo"}]}
+ {id:1,employee:"Gabriel Aquino",branch:"UC Mandaluyong",type:"SIL",from:"2026-09-10",to:"2026-09-10",days:1,status:"Approved",notes:"Govt document processing (DEMO)",decisionHistory:[{at:"2026-10-13 09:00",status:"Approved",remarks:"Mock decision only; not verified",by:"HR Demo"}]},
+ {id:2,employee:"Daphne Mercado",branch:"UC Las Piñas",type:"VIL",from:"2026-09-17",to:"2026-09-18",days:2,status:"Approved",notes:"Family event (DEMO)",decisionHistory:[{at:"2026-10-13 09:00",status:"Approved",remarks:"Mock decision only; not verified",by:"HR Demo"}]},
+ {id:3,employee:"Enzo Villanueva",branch:"UC Quezon City",type:"Company Sick Leave",from:"2026-09-22",to:"2026-09-22",days:1,status:"Approved",notes:"Medical consultation (DEMO)",decisionHistory:[{at:"2026-10-13 09:00",status:"Approved",remarks:"Mock decision only; not verified",by:"HR Demo"}]},
+ {id:1101,employee:"Alvin Soriano",branch:"MM Mandaluyong",type:"SIL",from:"2026-10-08",to:"2026-10-08",days:1,status:"Approved",notes:"Personal appointment (DEMO)",decisionHistory:[{at:"2026-10-13 09:00",status:"Approved",remarks:"Mock decision only; not verified",by:"HR Demo"}]},
+ {id:1102,employee:"Leona Castillo",branch:"UC Mandaluyong",type:"Company Sick Leave",from:"2026-10-12",to:"2026-10-12",days:1,status:"Approved",notes:"Illness (DEMO)",decisionHistory:[{at:"2026-10-13 09:00",status:"Approved",remarks:"Mock decision only; not verified",by:"HR Demo"}]},
+ {id:1103,employee:"Jericho Ramos",branch:"UC Las Piñas",type:"SIL",from:"2026-10-14",to:"2026-10-14",days:1,status:"For Review",notes:"Family appointment (DEMO)"},
+ {id:1104,employee:"Paula Garcia",branch:"UC Quezon City",type:"Unpaid Leave",from:"2026-10-15",to:"2026-10-15",days:1,status:"Pending",notes:"Important personal matter (DEMO)"},
+ {id:1105,employee:"Miguel Serrano",branch:"MM Mandaluyong",type:"VIL",from:"2026-10-19",to:"2026-10-20",days:2,status:"For Review",notes:"Pre-planned vacation (DEMO)"},
+ {id:1106,employee:"Bryan Lim",branch:"UC Mandaluyong",type:"SIL",from:"2026-10-21",to:"2026-10-21",days:1,status:"Pending",notes:"Community appointment (DEMO)"},
+ {id:1107,employee:"Jasmine Dizon",branch:"UC Las Piñas",type:"Company Sick Leave",from:"2026-09-23",to:"2026-09-23",days:1,status:"Rejected",notes:"Missing supporting information (DEMO)",decisionHistory:[{at:"2026-10-13 09:00",status:"Rejected",remarks:"Mock decision only; not verified",by:"HR Demo"}]},
+ {id:1108,employee:"Hannah Velasco",branch:"UC Quezon City",type:"SIL",from:"2026-10-22",to:"2026-10-22",days:1,status:"For Review",notes:"Personal errand (DEMO)"},
+ {id:1109,employee:"Nathan Bautista",branch:"MM Mandaluyong",type:"VIL",from:"2026-10-26",to:"2026-10-27",days:2,status:"Pending",notes:"Family trip (DEMO)"},
+ {id:1110,employee:"Clara Fajardo",branch:"UC Mandaluyong",type:"Unpaid Leave",from:"2026-10-28",to:"2026-10-28",days:1,status:"For Review",notes:"Personal matter (DEMO)"},
+ {id:1111,employee:"Diego Santos",branch:"UC Las Piñas",type:"VIL",from:"2026-10-09",to:"2026-10-09",days:1,status:"Cancelled",notes:"Change of plans (DEMO)",decisionHistory:[{at:"2026-10-13 09:00",status:"Cancelled",remarks:"Mock decision only; not verified",by:"HR Demo"}]},
+ {id:1112,employee:"Elaine Torres",branch:"UC Quezon City",type:"SIL",from:"2026-10-30",to:"2026-10-30",days:1,status:"Pending",notes:"Document processing (DEMO)"}
 ];
 const initialCredits:CreditRequest[]=[];
 const currentISO=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
@@ -44,18 +43,21 @@ export default function LeaveManagementWorkspace({branch,role}:{branch:Branch;ro
  const {data,update}=useHR();
  const [leaves,setLeaves]=useLocalRecords<LeaveRequest[]>("leave",initialLeaves);
  const [credits,setCredits]=useLocalRecords<CreditRequest[]>("leave-credit-requests",initialCredits);
- // One-time, additive sample-data migration for browsers that already saved the earlier 3 examples.
- // Preserve decisions and user-entered records; never reinsert deleted samples on later refreshes.
+ // Replace only the untouched legacy 3/15 demo requests so record names match the 35-person scenario.
+ // Do not overwrite user-modified leave decisions or requests.
  useEffect(()=>{
-  try {
-   const migrationKey="uc-hr-demo-leaves-oct13-v2-seeded";
-   if(window.localStorage.getItem(migrationKey))return;
+  try{
+   const key="uc-hr-demo-leaves-35-v1";
+   if(window.localStorage.getItem(key))return;
    setLeaves(previous=>{
-    const ids=new Set(previous.map(item=>item.id));
-    return [...previous,...initialLeaves.filter(item=>item.id>=1101&&!ids.has(item.id))];
+    const legacyNames=["Juan Dela Cruz","Maria Santos","Andrea Cruz","Carlo Mendoza","Mika Flores","Paolo Reyes","Rafael Garcia","Lea Villanueva","Noel Ramos","Bianca Lim","Luis Navarro","Angela Bautista"];
+    const legacy=previous.length>0&&previous.length<=15&&previous.every(r=>legacyNames.includes(r.employee))
+      &&previous.every(r=>r.id<=3||r.id>=1101&&r.id<=1112)
+      &&previous.every(r=>!r.decisionHistory?.some(h=>h.by!=="HR Demo"));
+    return legacy?initialLeaves:previous;
    });
-   window.localStorage.setItem(migrationKey,"1");
-  } catch {} // Browser-only demo data; never block production UI on storage failure.
+   window.localStorage.setItem(key,"1");
+  }catch{}
  },[setLeaves]);
  const [area,setArea]=useState<Section>("home"),[search,setSearch]=useState(""),[statusFilter,setStatusFilter]=useState("All"),[typeFilter,setTypeFilter]=useState("All"),[yearFilter,setYearFilter]=useState("All"),[monthFilter,setMonthFilter]=useState("All"),[page,setPage]=useState(1),[perPage,setPerPage]=useState(10);
  const [detailId,setDetailId]=useState<number|null>(null),[creditId,setCreditId]=useState<string|null>(null);

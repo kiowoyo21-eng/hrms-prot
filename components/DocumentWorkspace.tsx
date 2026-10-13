@@ -4,11 +4,11 @@ import {Upload,FileText,Search,Printer,Download,Eye,Trash2,AlertTriangle,Plus,Ch
 import type {Branch,Role} from "../lib/mock";
 type Doc={id:string;name:string;type:string;branch:Branch;employee:string;status:"Draft"|"Awaiting signature"|"Signed";mime:string;url?:string;created:string};
 const seeded:Doc[]=[
- {id:"DOC-1001",name:"Employment Contract",type:"Contract",branch:"UC Mandaluyong",employee:"Juan Dela Cruz",status:"Awaiting signature",mime:"application/pdf",created:"2026-10-08"},
- {id:"DOC-1002",name:"NDA and Company Policies",type:"NDA",branch:"UC Las Piñas",employee:"Maria Santos",status:"Signed",mime:"application/pdf",created:"2026-10-05"},
- {id:"DOC-1003",name:"Probationary Assessment",type:"Assessment",branch:"MM Mandaluyong",employee:"Andrea Cruz",status:"Draft",mime:"application/pdf",created:"2026-10-10"},
- {id:"DOC-1004",name:"Device Accountability Form",type:"Accountability",branch:"UC Quezon City",employee:"Paolo Reyes",status:"Awaiting signature",mime:"image/jpeg",created:"2026-10-09"},
- {id:"DOC-1005",name:"Payslip Oct 1–7",type:"Payslip",branch:"UC Mandaluyong",employee:"Juan Dela Cruz",status:"Signed",mime:"application/pdf",created:"2026-10-09"}
+ {id:"DOC-1001",name:"Employment Contract",type:"Contract",branch:"UC Mandaluyong",employee:"Gabriel Aquino",status:"Awaiting signature",mime:"application/pdf",created:"2026-10-08"},
+ {id:"DOC-1002",name:"NDA and Company Policies",type:"NDA",branch:"UC Las Piñas",employee:"Daphne Mercado",status:"Signed",mime:"application/pdf",created:"2026-10-05"},
+ {id:"DOC-1003",name:"Probationary Assessment",type:"Assessment",branch:"MM Mandaluyong",employee:"Alvin Soriano",status:"Draft",mime:"application/pdf",created:"2026-10-10"},
+ {id:"DOC-1004",name:"Device Accountability Form",type:"Accountability",branch:"UC Quezon City",employee:"Enzo Villanueva",status:"Awaiting signature",mime:"image/jpeg",created:"2026-10-09"},
+ {id:"DOC-1005",name:"Payslip Oct 1–7",type:"Payslip",branch:"UC Mandaluyong",employee:"Gabriel Aquino",status:"Signed",mime:"application/pdf",created:"2026-10-09"}
 ];
 const types=["Contract","NDA","Assessment","Payslip","Accountability","Medical","Government","Other"];
 export default function DocumentWorkspace({branch,role}:{branch:Branch;role:Role}){

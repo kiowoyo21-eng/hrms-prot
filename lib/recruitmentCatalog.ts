@@ -64,9 +64,61 @@ export function mergeRequirements(requirements:ApplicantRequirement[]):Applicant
 export const candidateRequirements=(form?:HiringForm):ApplicantRequirement[]=>mergeRequirements(
  (form?.onboardingDocuments?.length?form.onboardingDocuments:DEFAULT_ONBOARDING_DOCUMENTS).map(name=>({name,status:"Missing" as const,required:true})));
 
-export const initialApplicants:ApplicantRecord[]=[
+export const originalSampleApplicants:ApplicantRecord[]=[
  {id:"APP-1001",name:"Rafael Mendoza",email:"rafael@example.com",phone:"09•• ••• 1001",role:"Automotive Technician",branch:"UC Mandaluyong",submitted:"2026-10-08",stage:"New Applicant",notes:"Sample application for layout review",relevantYears:5,totalYears:6,education:"Automotive servicing NC II",qualifications:{"Automotive diagnostics":"Yes","Preventive maintenance":"Yes","Engine or transmission repair":"Yes"},resumeName:"rafael_resume.pdf",requirements:[{name:"Resume / CV",status:"Submitted"},{name:"Medical Clearance",status:"Missing"},{name:"Employment Contract",status:"Missing"}]},
  {id:"APP-1002",name:"Kyla Ramos",email:"kyla@example.com",phone:"09•• ••• 1002",role:"Service Advisor",branch:"MM Mandaluyong",submitted:"2026-10-09",stage:"Shortlisted",notes:"Sample candidate awaiting interview schedule",relevantYears:2,totalYears:4,education:"College undergraduate",qualifications:{"Customer service":"Yes","Vehicle service knowledge":"Yes","Job orders and estimates":"No"},resumeName:"kyla_cv.pdf",requirements:[{name:"Resume / CV",status:"Verified"},{name:"Medical Clearance",status:"Missing"},{name:"Employment Contract",status:"Missing"}]},
  {id:"APP-1003",name:"Marco Bautista",email:"marco@example.com",phone:"09•• ••• 1003",role:"HR Assistant",branch:"UC Las Piñas",submitted:"2026-10-07",stage:"Initial Interview",interviewAt:"2026-10-14T10:00",notes:"Sample scheduled interview",relevantYears:1,totalYears:3,education:"BS Business Administration",resumeName:"marco_cv.pdf",qualifications:{"Records management":"Yes","Scheduling":"Yes","Office software":"Yes"},requirements:[{name:"Resume / CV",status:"Verified"},{name:"Medical Clearance",status:"Submitted"},{name:"Employment Contract",status:"Missing"}]},
  {id:"APP-1004",name:"Aira Castillo",email:"aira@example.com",phone:"09•• ••• 1004",role:"Branch Supervisor",branch:"UC Quezon City",submitted:"2026-10-06",stage:"Passed",notes:"Sample candidate selected for onboarding",relevantYears:4,totalYears:6,education:"BS Management",resumeName:"aira_resume.pdf",qualifications:{"Team supervision":"Yes","Branch operations":"Yes","Customer issue resolution":"Yes"},offerStatus:"Accepted",requirements:[{name:"Resume / CV",status:"Verified"},{name:"Medical Clearance",status:"Verified"},{name:"Employment Contract",status:"Submitted"}]}
 ];
+
+/** Fictional QA applicants: all contact details are example-only and no files are stored. */
+type SampleCandidate={id:number;name:string;position:string;branch:(typeof BRANCHES)[number];date:string;stage:ApplicantStage;years:number;interviewAt?:string;result?:HiringInterview["result"]};
+const extraSampleCandidates:SampleCandidate[]=[
+ {id:1005,name:"Janelle Aquino",position:"Service Advisor",branch:"UC Las Piñas",date:"2026-09-04",stage:"New Applicant",years:2},
+ {id:1006,name:"Christian Villanueva",position:"Automotive Technician",branch:"UC Mandaluyong",date:"2026-09-08",stage:"Shortlisted",years:3},
+ {id:1007,name:"Nicole Ferrer",position:"HR Assistant",branch:"MM Mandaluyong",date:"2026-09-11",stage:"Rejected",years:1},
+ {id:1008,name:"Joshua Navarro",position:"Automotive Technician",branch:"UC Quezon City",date:"2026-09-15",stage:"Phone Interview",years:4,interviewAt:"2026-10-16T09:30",result:"Pending"},
+ {id:1009,name:"Trisha Garcia",position:"Service Advisor",branch:"UC Mandaluyong",date:"2026-09-19",stage:"Final Interview",years:5,interviewAt:"2026-10-15T14:00",result:"Pending"},
+ {id:1010,name:"Francis Dizon",position:"Branch Supervisor",branch:"UC Las Piñas",date:"2026-09-20",stage:"Passed",years:7,interviewAt:"2026-10-07T10:00",result:"Passed"},
+ {id:1011,name:"Rhea Salazar",position:"HR Assistant",branch:"UC Mandaluyong",date:"2026-09-23",stage:"New Applicant",years:1},
+ {id:1012,name:"Patrick Mendoza",position:"Automotive Technician",branch:"MM Mandaluyong",date:"2026-09-25",stage:"On Hold",years:2},
+ {id:1013,name:"Mae Villanueva",position:"Service Advisor",branch:"UC Las Piñas",date:"2026-09-28",stage:"Initial Interview",years:3,interviewAt:"2026-10-09T13:00",result:"Pending"},
+ {id:1014,name:"Aaron Lim",position:"Automotive Technician",branch:"UC Quezon City",date:"2026-10-01",stage:"New Applicant",years:3},
+ {id:1015,name:"Camille Flores",position:"HR Assistant",branch:"UC Las Piñas",date:"2026-10-03",stage:"Shortlisted",years:2},
+ {id:1016,name:"Dylan Cruz",position:"Branch Supervisor",branch:"MM Mandaluyong",date:"2026-10-04",stage:"Phone Interview",years:5,interviewAt:"2026-10-17T11:00",result:"Pending"},
+ {id:1017,name:"Sofia Bautista",position:"Service Advisor",branch:"UC Quezon City",date:"2026-10-05",stage:"New Applicant",years:2},
+ {id:1018,name:"Eric Ramos",position:"Automotive Technician",branch:"UC Las Piñas",date:"2026-10-06",stage:"Shortlisted",years:4},
+ {id:1019,name:"Gloria Santos",position:"Branch Supervisor",branch:"UC Mandaluyong",date:"2026-10-10",stage:"Initial Interview",years:6,interviewAt:"2026-10-14T15:30",result:"Pending"},
+ {id:1020,name:"Ivan Castillo",position:"HR Assistant",branch:"MM Mandaluyong",date:"2026-10-12",stage:"New Applicant",years:0}
+];
+const mockHiringRequirements=(role:string,progress:string):ApplicantRequirement[]=>{
+ const form=DEFAULT_HIRING_FORMS.find(item=>item.position===role);
+ const requirements=candidateRequirements(form);
+ return requirements.map((r,i)=>({...r,
+  status:(i===0?"Submitted":progress==="Passed"&&i===1?"Submitted":"Missing") as ApplicantRequirement["status"],
+  fileName:i===0?"demo-resume-reference.pdf":undefined
+ }));
+};
+export const extraApplicants:ApplicantRecord[]=extraSampleCandidates.map(c=>{
+ const form=DEFAULT_HIRING_FORMS.find(f=>f.position===c.position);
+ const interviews:HiringInterview[]=c.interviewAt?[{
+  id:`INT-DEMO-${c.id}`,round:c.stage.includes("Interview")?c.stage:"Final Interview",at:c.interviewAt,
+  interviewer:"Sample HR Reviewer",result:c.result||"Pending",notes:"Demo interview for workflow testing",
+  ...(c.result==="Passed"?{ratings:{"Role-specific knowledge":4,"Communication":4,"Reliability":5},checklist:{"Minimum requirements checked":true,"Interview documents reviewed":true},evaluator:"Sample HR Reviewer",assessedAt:"2026-10-08"}:{}),
+ }]:[];
+ return {
+  id:`APP-${c.id}`,name:c.name,email:`applicant${c.id}@example.com`,phone:`09•• ••• ${c.id}`,
+  role:c.position,branch:c.branch,submitted:c.date,stage:c.stage,
+  notes:c.stage==="Rejected"?"Demo rejection after qualifications review":c.stage==="On Hold"?"Demo candidate awaiting additional details":"Fictional test application — no real applicant data",
+  history:[`${c.date} · DEMO application created`,...(c.stage==="New Applicant"?[]:[`2026-10-10 · DEMO status: ${c.stage}`])],
+  relevantYears:c.years,totalYears:c.years+1,
+  education:c.position==="Automotive Technician"?"Automotive technical / vocational":c.position==="HR Assistant"?"Business administration":"Relevant work training",
+  qualifications:Object.fromEntries((form?.qualifications||[]).map((q,i)=>[q,i===2&&c.years<2?"No":"Yes"])) as ApplicantRecord["qualifications"],
+  answers:Object.fromEntries((form?.questions||[]).map(q=>[q,"Sample response for UI testing"])),
+  resumeName:`demo-app-${c.id}-resume.pdf`,requirements:mockHiringRequirements(c.position,c.stage),
+  interviews,offerStatus:c.stage==="Passed"?"Sent":"Not sent",
+ };
+});
+
+/** Seed used by new browsers; existing review records can opt-in to additions. */
+export const initialApplicants:ApplicantRecord[]=[...originalSampleApplicants,...extraApplicants];
