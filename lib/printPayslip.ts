@@ -2,57 +2,111 @@
 import type {PayrollRelease} from "./hrState";
 import type {Person} from "./people";
 import type {PayslipDraft} from "./payrollConfig";
+import type {LoanRecord} from "./loanLedger";
 
+export type PayslipFormat={
+ companyAddress:string;
+ title:string;
+ layout:"single"|"two";
+ showEmployeeId:boolean;
+ showDepartment:boolean;
+ showBranch:boolean;
+};
+export const defaultPayslipFormat:PayslipFormat={companyAddress:"",title:"EMPLOYEE PAYSLIP",layout:"single",showEmployeeId:true,showDepartment:true,showBranch:true};
+export const payslipFormatStorageKey="ucmm:payslip:format:v1";
 const esc=(value:unknown)=>String(value??"—").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]||char));
-const peso=(n:number)=>`₱${Number(n).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
-const fmt=(s:string)=>new Date(`${s}T12:00:00`).toLocaleDateString("en-PH",{day:"numeric",month:"short",year:"numeric"});
-export function buildFormalPayslipHtml(release:PayrollRelease,employee:Person|undefined,draft:PayslipDraft|undefined,paper:"A4"|"Letter"="A4",embedded=false){
- const logo=`${window.location.origin}/underchargers-document-logo.png`;
- const row=(title:string,number:number)=>`<tr><th>${esc(title)}</th><td>${peso(number)}</td></tr>`;
- const line=(title:string,value:unknown)=>`<div class="detail"><span>${esc(title)}</span><strong>${esc(value)}</strong></div>`;
+const money=(n:number)=>`₱${Number(n).toLocaleString("en-PH",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+const fixed=(n:number)=>Math.round((n+Number.EPSILON)*100)/100;
+const date=(v:string)=>v?new Date(`${v}T12:00:00`).toLocaleDateString("en-PH",{day:"numeric",month:"short",year:"numeric"}):"—";
+/** Format only; never infer missing payslip line items from old gross-only releases. */
+export function buildFormalPayslipHtml(release:PayrollRelease,person:Person|undefined,draft:PayslipDraft|undefined,paper:"A4"|"Letter"="A4",embedded=false,format:PayslipFormat=defaultPayslipFormat,loans:readonly LoanRecord[]=[]){
  const complete=Boolean(draft&&typeof draft.basicPay==="number"&&Array.isArray(draft.deductionBreakdown));
- const rate=draft?.dailyRate;
- const balanced=Math.abs((release.gross-release.deductions)-release.net)<0.02;
- const earningsBalance=complete&&draft?Math.abs((draft.basicPay||0)+(draft.otPay||0)+draft.allowances+draft.holidayExtra-release.gross)<0.02:true;
- const deductionBalance=complete&&draft?Math.abs((draft.deductionBreakdown||[]).reduce((s,row)=>s+row.employee,0)+(draft.loanDeduction||0)+(draft.manualDeduction||0)-release.deductions)<0.02:true;
- const items=complete&&draft?[
- row("Basic Pay (including any approved paid leave)",draft.basicPay||0),
- row("Approved Overtime Pay",draft.otPay||0),
- row("Additional Holiday Premium",draft.holidayExtra||0),
- row("Allowances / Bonus",draft.allowances||0),
- `<tr class="total"><th>GROSS EARNINGS</th><td>${peso(release.gross)}</td></tr>`
- ].join(""): `<tr><td colspan="2" class="missing">Legacy record: original itemized earnings were not saved. No amounts have been fabricated.</td></tr><tr class="total"><th>RECORDED GROSS</th><td>${peso(release.gross)}</td></tr>`;
- const deduct=complete&&draft?[
- ...draft.deductionBreakdown!.map(v=>row(`${v.agency} — employee share`,v.employee)),
- row("Loans / Cash Advances",draft.loanDeduction||0),row("Other Authorized Deductions",draft.manualDeduction||0),
- `<tr class="total"><th>TOTAL DEDUCTIONS</th><td>${peso(release.deductions)}</td></tr>`
- ].join(""):`<tr><td colspan="2" class="missing">Legacy record: deduction categories were not saved. Breakdown unavailable.</td></tr><tr class="total"><th>RECORDED DEDUCTIONS</th><td>${peso(release.deductions)}</td></tr>`;
- const attendance=complete&&draft?[
- line("Daily Rate / Equivalent",rate===undefined?"Not recorded":peso(rate)),line("Actually Worked",`${draft.workedDays??draft.days} days`),line("Paid Hours Worked",draft.workedHours===undefined?"Not stored":`${draft.workedHours.toFixed(2)} hours`),
- line("Approved Paid Leave",`${draft.paidLeaveDays??0} days`),line("Unpaid Leave",`${draft.unpaidLeaveDays??0} days`),
- line("Late",`${draft.lateMinutes??0} minutes`),line("Overtime",`${draft.otHours} hours`),
- line("Attendance source",draft.attendanceSource||"Payroll review")
- ].join(""): `<div class="missing">Days worked, daily rate, time records and detailed earnings were not stored with this legacy release. Create a new attendance-linked demo draft for a complete payslip.</div>`;
- return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><title>${esc(`Payslip ${release.employeeId} ${release.periodEnd}`)}</title>
- <style>@page{size:${paper};margin:12mm}*{box-sizing:border-box}body{font:10.5pt/1.45 Arial,Helvetica,sans-serif;color:#182337;background:#fff;max-width:186mm;margin:0 auto;padding:12px 0}.toolbar{display:flex;justify-content:flex-end;gap:8px;margin:0 0 12px}.toolbar button{padding:8px 12px;cursor:pointer;border:1px solid #d6dce6;border-radius:6px;background:#fff}.brand{text-align:center;border-bottom:2px solid #e6b52d;padding-bottom:12px;margin-bottom:16px}.brand img{display:block;object-fit:contain;width:205px;max-height:115px;margin:0 auto 4px}.brand h1{font-size:15pt;letter-spacing:1.2px;margin:4px 0}.sub{font-size:9pt;color:#677488}.blocktitle{font-size:10pt;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #d9dee8;padding-bottom:5px;margin:17px 0 8px}.details{display:grid;grid-template-columns:1fr 1fr;gap:5px 22px}.detail{display:flex;justify-content:space-between;gap:10px;font-size:9.5pt;border-bottom:1px solid #e8ebf0;padding:5px 0}.detail span{color:#596578}.detail strong{text-align:right}.payslip-main{display:grid;grid-template-columns:minmax(0,.91fr) minmax(0,1.09fr);gap:21px;align-items:start}.payslip-main .details{grid-template-columns:1fr;gap:2px}.split{display:grid;grid-template-columns:1fr;gap:4px;align-items:start}.payslip-right .net{margin-top:14px}.payslip-main .blocktitle:first-child{margin-top:6px}table{width:100%;border-collapse:collapse;font-size:9pt}th,td{text-align:left;padding:7px 5px;border-bottom:1px solid #e8ebf0}td{text-align:right;white-space:nowrap}.total{background:#f5f7f9;font-weight:700}.missing{white-space:normal;text-align:left;color:#9a6315;background:#fffaf0;line-height:1.6}.net{display:flex;align-items:center;justify-content:space-between;border:2px solid #e1ad21;padding:12px 16px;margin-top:18px;background:#fffbf1}.net b{font-size:17pt}.sign{display:grid;grid-template-columns:1fr 1fr;gap:42px;margin-top:36px}.line{border-top:1px solid #617080;text-align:center;font-size:9pt;padding-top:6px}@media screen and (max-width:590px){.payslip-main{grid-template-columns:1fr;gap:8px}.brand img{width:175px}.detail{font-size:9pt}.net b{font-size:15pt}}.disclaimer{font-size:8pt;color:#647184;margin-top:20px;border-top:1px solid #e5e7eb;padding-top:9px}@media print{body{margin:0;padding:0;max-width:none}.toolbar{display:none}.payslip-main,.split,.details,.net,.sign{break-inside:avoid}}</style></head><body>
- ${embedded?"":`<div class="toolbar"><button onclick="window.print()">Print / Save PDF</button><button onclick="window.close()">Close</button></div>`}
- <header class="brand"><img src="${esc(logo)}" alt="Underchargers logo"/><h1>EMPLOYEE PAYSLIP</h1><div class="sub">${complete?"DEMO REVIEW — NOT OFFICIAL PAYROLL":"LEGACY DEMO RECORD — INCOMPLETE DETAIL"} · ${esc(release.id)}</div></header>
- <main class="payslip-main">
- <div class="payslip-left"><h2 class="blocktitle">Employee & Payroll Details</h2><div class="details">${[
- ["Employee",employee?.name||release.employeeId],["Employee ID",release.employeeId],["Department",employee?.department||"—"],["Branch",employee?.branch||"—"],
- ["Salary Type",draft?.salaryType||employee?.salaryType||"—"],["Rate",draft?.dailyRate!==undefined?(draft.salaryType==="Monthly"?`${peso(draft.dailyRate)} daily equivalent (÷26)`: `${peso(draft.dailyRate)} / day`):"Not stored for this release"],
- ["Pay Period",`${fmt(release.periodStart)} – ${fmt(release.periodEnd)}`],["Release Date",fmt(release.paidAt)]
- ].map(([a,b])=>line(a,b)).join("")}</div>
- <h2 class="blocktitle">Attendance & Rate Summary</h2><div class="details">${attendance}</div></div>
- <div class="payslip-right"><div class="split"><section><h2 class="blocktitle">Earnings</h2><table><tbody>${items}</tbody></table></section><section><h2 class="blocktitle">Deductions</h2><table><tbody>${deduct}</tbody></table></section></div>
- <div class="net"><strong>NET PAY · TAKE-HOME</strong><b>${peso(release.net)}</b></div>${!balanced||!earningsBalance||!deductionBalance?`<p class="missing" style="padding:10px">WARNING: Saved payslip totals require reconciliation. Do not issue until amounts agree.</p>`:""}</div>
- </main>
- <div class="sign"><div class="line">Prepared / Authorized by</div><div class="line">Employee Acknowledgment / Date</div></div>
- <footer class="disclaimer">${complete?"DEMO ONLY. Time records, salary divisors, rest/holiday rules, government contributions and disbursements must be checked before actual payroll processing.":"Legacy sample totals only. Supporting payroll lines and attendance are unavailable; this is not a verified or issuable payslip."} Normal schedule reference: 08:00–17:00, assuming one unpaid lunch hour.</footer></body></html>`;
+ const amount=(n:number|undefined)=>typeof n==="number"&&Number.isFinite(n)?money(n):"—";
+ const detail=(label:string,value:unknown)=>`<div class="detail"><span>${esc(label)}</span><b>${esc(value)}</b></div>`;
+ const row=(label:string,value:string,extra="")=>`<tr><th>${esc(label)}</th><td>${extra}</td><td>${esc(value)}</td></tr>`;
+ const total=(label:string,value:number)=>`<tr class="total"><th>${esc(label)}</th><td></td><td>${amount(value)}</td></tr>`;
+ const type=draft?.salaryType||person?.salaryType||"—";
+ const rate=complete&&draft?(type==="Monthly"?(typeof draft.dailyRate==="number"?fixed(draft.dailyRate*26):undefined):draft.dailyRate):undefined;
+ const rateLabel=typeof rate==="number"?`${type} — ${money(rate)}${type==="Daily"?" / day":" / month (26-day reference)"}`:`${type} — Not stored for this release`;
+ const days=complete&&draft?String(draft.workedDays??draft.days):"—";
+ const base=complete&&draft?draft.basicPay:undefined;
+ const leaveDays=complete&&draft?(draft.paidLeaveDays??0):0;
+ // A paid-leave component is split OUT of the saved basic-pay subtotal, never added twice.
+ const leavePay=typeof base==="number"&&leaveDays>0&&typeof draft?.dailyRate==="number"?fixed(Math.min(base,leaveDays*draft.dailyRate)):undefined;
+ const baseShown=typeof base==="number"?fixed(base-(leavePay??0)):undefined;
+ const otMeta=complete&&draft?`${draft.otHours.toFixed(2)} hrs · ${amount(draft.hourlyRate)}/hr`:"—";
+ const earnings=[
+  row("Basic Pay",amount(baseShown)),
+  row("ECOLA", "—"), // Not a saved field in the current payroll draft; do not manufacture an amount.
+  row("Total Days Worked",days,"<small>days</small>"),
+  row("Overtime",amount(complete?draft?.otPay:undefined),`<small>${esc(otMeta)}</small>`),
+  row("Leave with Pay",amount(leavePay),leaveDays?`<small>${leaveDays} day(s) · included in basic</small>`:""),
+  row("Rest Day Duty / Holiday Additional",amount(complete?draft?.holidayExtra:undefined)),
+  row("Allowances / Bonus",amount(complete?draft?.allowances:undefined)),
+  total("GROSS PAY",release.gross)
+ ].join("");
+ const findAgency=(agency:string)=>complete?draft?.deductionBreakdown?.find(x=>x.agency===agency)?.employee:undefined;
+ // Separate SSS loans and cash advances ONLY when the saved loan ID resolves to a known ledger entry.
+ let sssLoan: number|undefined, cashAdvance:number|undefined, otherLoan:number|undefined;
+ if(complete&&draft){
+  if((draft.loanEntries||[]).length){
+   for(const entry of draft.loanEntries||[]){
+    const record=loans.find(l=>l.id===entry.loanId);
+    const group=record?.provider.toLowerCase().includes("sss")?"sss":record?.provider.toLowerCase().includes("cash advance")?"cash":"other";
+    if(group==="sss")sssLoan=fixed((sssLoan||0)+entry.amount);
+    else if(group==="cash")cashAdvance=fixed((cashAdvance||0)+entry.amount);
+    else otherLoan=fixed((otherLoan||0)+entry.amount);
+   }
+   const allocated=(sssLoan||0)+(cashAdvance||0)+(otherLoan||0);
+   const unclassified=fixed((draft.loanDeduction||0)-allocated);
+   if(unclassified>0)otherLoan=fixed((otherLoan||0)+unclassified);
+  }else if(draft.loanDeduction){otherLoan=draft.loanDeduction}
+ }
+ const deductions=[
+  row("SSS",amount(findAgency("SSS"))),
+  row("PhilHealth",amount(findAgency("PhilHealth"))),
+  row("Pag-IBIG",amount(findAgency("Pag-IBIG"))),
+  row("Withholding Tax / BIR",amount(findAgency("BIR"))),
+  row("SSS Loan",amount(sssLoan)),
+  row("Employee Loan",amount(otherLoan)),
+  row("Cash Advance",amount(cashAdvance)),
+  row("Late", "—", draft?.lateMinutes?`<small>${draft.lateMinutes} min · reflected in basic</small>`:""),
+  row("Other Authorized Deductions",amount(complete?draft?.manualDeduction:undefined)),
+  total("TOTAL DEDUCTIONS",release.deductions)
+ ].join("");
+ const details=[
+  detail("Period Covered",`${date(release.periodStart)} – ${date(release.periodEnd)}`),
+  detail("Date",date(release.paidAt)),
+  detail("Employee Name",person?.name||release.employeeId),
+  ...(format.showEmployeeId?[detail("Employee ID",release.employeeId)]:[]),
+  ...(format.showDepartment?[detail("Department",person?.department||"—")]:[]),
+  ...(format.showBranch?[detail("Branch",person?.branch||"—")]:[]),
+  detail("Salary Type / Rate",rateLabel),
+  detail("Days Worked",days)
+ ].join("");
+ const grossOK=Math.abs(release.gross-release.deductions-release.net)<0.02;
+ const earningsOK=!complete||!draft||Math.abs(fixed((draft.basicPay||0)+(draft.otPay||0)+(draft.holidayExtra||0)+(draft.allowances||0))-release.gross)<0.02;
+ const deductOK=!complete||!draft||Math.abs(fixed((draft.deductionBreakdown||[]).reduce((sum,item)=>sum+item.employee,0)+(draft.loanDeduction||0)+(draft.manualDeduction||0))-release.deductions)<0.02;
+ const warning=!grossOK||!earningsOK||!deductOK;
+ const logo=(typeof window!=="undefined"?window.location.origin:"")+"/underchargers-document-logo.png";
+ return `<!doctype html><html lang="en"><head><meta charset="utf-8"/><title>${esc(`${format.title} ${release.employeeId}`)}</title><style>
+ @page{size:${paper};margin:13mm}*{box-sizing:border-box}html{background:white}body{margin:0 auto;max-width:180mm;padding:13px 0;font:10pt/1.45 Arial,Helvetica,sans-serif;color:#1c2635;background:#fff}
+ .toolbar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}.toolbar button{border:1px solid #d2d8e2;border-radius:5px;background:white;padding:8px 11px;cursor:pointer}
+ .header{text-align:center;padding:5px 0 15px;border-bottom:2px solid #e2b12f}.header img{display:block;width:190px;height:auto;max-height:100px;object-fit:contain;margin:0 auto 7px}.header h1{font-size:14pt;letter-spacing:1px;margin:5px 0 3px}.address{font-size:8.8pt;white-space:pre-line;color:#546176;overflow-wrap:anywhere}.tag{font-size:7.8pt;letter-spacing:.6px;color:#776341;margin:3px auto 0}
+ .heading{font-size:9pt;font-weight:800;letter-spacing:.6px;text-transform:uppercase;border-bottom:1px solid #dfe4eb;padding-bottom:5px;margin:17px 0 7px}.details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px}.detail{display:grid;gap:2px;padding:4px 0;border-bottom:1px solid #eef1f4;min-width:0}.detail span{font-size:8pt;color:#687585}.detail b{font-size:9.2pt;font-weight:650;overflow-wrap:anywhere}
+ .sections{display:grid;grid-template-columns:1fr;gap:0}.sections.two{grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+ table{width:100%;border-collapse:collapse;font-size:9pt}th,td{padding:7px 4px;border-bottom:1px solid #e5e9ee;vertical-align:top}th{text-align:left;font-weight:500;width:50%}td{text-align:right}td:nth-child(2){text-align:right;color:#738094;font-size:8pt}td:last-child{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}small{font-size:7.5pt;color:#788495}.total{border-top:1px solid #9fa8b4;background:#f5f7f9}.total th,.total td{font-weight:800!important}
+ .net{display:flex;justify-content:space-between;align-items:baseline;padding:12px 6px;margin-top:17px;border-top:2px solid #e0b22d;border-bottom:2px solid #e0b22d;font-weight:800}.net strong{font-size:11pt}.net b{font-size:16pt;white-space:nowrap}.receipt{margin-top:43px;display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:end;font-size:9pt}.receipt .line{border-bottom:1px solid #404b5c;min-height:23px}.record-warning{font-size:8pt;color:#946a23;margin:7px 0 0}.reconcile{margin-top:10px;font-size:8.5pt;color:#a12626}
+ @media(max-width:560px){body{padding:12px}.details{grid-template-columns:1fr 1fr;gap:6px 10px}.sections.two{grid-template-columns:1fr}.net b{font-size:13pt}}@media print{body{padding:0;max-width:none}.toolbar{display:none}.header,.details,.net,.receipt{break-inside:avoid}thead{display:table-header-group}}
+ </style></head><body>${embedded?"":`<div class="toolbar"><button onclick="window.print()">Print / Save PDF</button><button onclick="window.close()">Close</button></div>`}
+ <header class="header"><img src="${esc(logo)}" alt="Underchargers logo"/><h1>${esc(format.title||"EMPLOYEE PAYSLIP")}</h1><div class="address">${esc(format.companyAddress.trim()||"Address: —")}</div>${!complete?`<div class="tag">LEGACY RECORD · PARTIAL DETAILS</div>`:""}</header>
+ <section><h2 class="heading">Employee & Payroll Details</h2><div class="details">${details}</div></section>
+ <main class="sections ${format.layout==="two"?"two":"single"}"><section><h2 class="heading">Earnings</h2><table><tbody>${earnings}</tbody></table></section><section><h2 class="heading">Deductions</h2><table><tbody>${deductions}</tbody></table></section></main>
+ <div class="net"><strong>NET PAY</strong><b>${money(release.net)}</b></div>
+ ${warning?`<p class="reconcile">Payroll totals need reconciliation before issuing this document.</p>`:""}
+ <div class="receipt"><span>Received By:</span><span class="line"></span></div></body></html>`;
 }
-export function printFormalPayslip(release:PayrollRelease,employee:Person|undefined,draft:PayslipDraft|undefined,paper:"A4"|"Letter"="A4"){
- const popup=window.open("","_blank");
- if(!popup){window.alert("Allow pop-ups to print the payslip.");return}
- popup.document.write(buildFormalPayslipHtml(release,employee,draft,paper));
- popup.document.close();popup.focus();
+export function printFormalPayslip(release:PayrollRelease,person:Person|undefined,draft:PayslipDraft|undefined,paper:"A4"|"Letter"="A4",format:PayslipFormat=defaultPayslipFormat,loans:readonly LoanRecord[]=[]){
+ const popup=window.open("","_blank");if(!popup){window.alert("Allow pop-ups to print the payslip.");return}
+ popup.document.write(buildFormalPayslipHtml(release,person,draft,paper,false,format,loans));popup.document.close();popup.focus();
 }

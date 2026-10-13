@@ -1,29 +1,26 @@
-# UCMM HR — UI Alignment: Formal Payslip, Recruitment, Holiday Calendar, Leave Modal
+# UCMM HR — Portrait Dialogs and Formal Payslip Layout (October 13, 2026)
 
-Updated files only · 2026-10-13 · Frontend demo
+**Update-only patch.** This contains three changed source files and this README, not a complete project. Apply after the `UCMM_HR_2026-10-13_UI_PAYSLIP_RECRUITMENT_HOLIDAY_LEAVE_UPDATE_ONLY.zip` patch. Maintain the existing logo at `public/underchargers-document-logo.png` (provided by the earlier Attendance & Formal Payslip patch).
 
-## Installation / prerequisites
-Apply this incrementally to the repository with the earlier **Combined Mock Dataset**, **Recruitment/Interview Calendar**, **Batch 1 Payroll & Employee**, **Vercel Type Hotfix**, and **Attendance/Formal Payslip** patches already installed. Extract the archive and overwrite **only** matching files, preserving the relative paths. Don't create a nested folder or delete existing modules.
+## Changes
 
-The Underchargers document logo introduced by the previous attendance/formal payslip patch must remain at `public/underchargers-document-logo.png`.
+1. `lib/printPayslip.ts`: formal, print-friendly portrait payslip with original UC logo at top center, employee payslip title, HR-configurable company address, pay period/date/employee information, salary type and cutoff rate reference, days worked, earnings, deductions, Net Pay, and Received By line. Earnings include Basic, ECOLA, worked days, OT hours/rate/pay, paid leave (split from basic when available), additional rest-day/holiday duty premium, allowances and Gross. Deductions show SSS, PhilHealth, Pag-IBIG, BIR, available loan types, Cash Advance, Late (already reflected in basic pay if applicable), Other, and Total. Removed the standalone Attendance & Rate Summary section and the prepared-by/notes footers. Layout defaults to straight vertical, with an optional side-by-side earnings/deductions choice for HR.
+2. `components/PayrollOperationsHub.tsx`: the same payslip format is used in embedded View Payslip and Print/Save PDF; HR has a `Customize Format` control for document title, address, layout and optional employee metadata. Saving these **appearance-only** settings to browser localStorage does not alter payslip financial records and does not synchronize across devices.
+3. `app/globals.css`: portrait widths for standard approval/detail dialogs (Leave, Loan, Assets, Employee quick views), with consistent sizing, padding and scroll. Complex full-case workspaces, wide tables, calendars, signing/document previews retain the width required to be usable. The payslip view is now sized as a portrait document rather than a widescreen dashboard.
 
-## Changes in this patch
-1. **Payslip History → View**: full formal payslip displayed inline inside the viewing modal (same document markup used for printing), with the UC logo at the upper center, employee and attendance/rate details on the left, earnings/deductions/Net Pay on the right. The source document remains a print-friendly A4/Letter layout.
-2. **Payslip tools**: informational demo/legacy note above action buttons; `Print ▾` with A4/Letter Print/Save PDF; `Signature ▾` with demo On-Device, Phone/QR and Print/Upload options. The detailed signing panel appears only on request, not on every View. Existing signing-reference controls are preserved. Incomplete legacy records cannot prepare a fresh request or open the on-device signing canvas.
-3. **Recruitment**: four summary counters below the existing three horizontal feature cards resized to compact 2 × 2 stats rather than tall square tiles. Calendar stays on the right.
-4. **Holiday Calendar**: desktop form/calendar ratio 40%/60%, with single-column portrait form controls and a larger calendar. Small screens stack both sections.
-5. **Leave Request Review**: portrait modal with two columns for short details, separate full-width narrative and decision areas, and a sticky review-action footer.
-6. **Global consistency**: focused sizing, spacing, borders and responsive adjustments for the affected UI; other module logic untouched.
+## Data integrity
 
-## Review after Vercel deployment
-- Recruitment & Hiring: check desktop and half-screen; 3 cards upper-left, 4 compact summary cards below, calendar right.
-- Payroll Management → Holiday Calendar: calendar receives roughly 60% of available width on desktop; form stays portrait and stacked; narrower screens stack sections.
-- Leave Management → open a pending request: two-column details; readable portrait dialog; remarks and approve/decline at bottom.
-- Payroll Management → Payslip History → View: formal document appears within modal. Check logo, employee details on left, gross/deductions/net on right, notes + Print/Signature menus. Check A4/Letter printing.
-- Open legacy payslip: see **LEGACY / INCOMPLETE** warning; itemized values must not be fabricated; signing request action disabled. Confirm existing issued sample references remain intact.
+- No payroll calculation formulas, attendance logs, employees, loan ledger values, leave approvals, or government tables were changed.
+- Never fills in unknown historical amounts. Old gross-only releases show known Gross/Deductions/Net and `—` for unavailable itemized lines. Monthly historical rate also remains unknown unless a saved detailed draft exists. For a complete monthly draft, a *26-day monthly rate reference* is derived from the stored daily equivalent; HR should verify the appropriate rate/divisor.
+- ECOLA has no independent stored payroll field; it is shown as `—` rather than a fabricated amount. Paid leave is separated visually from saved Basic Pay only when paid-leave day count and daily equivalent are available. This does not change Gross.
+- Separate loan categories appear when saved loan IDs can be matched to local ledger providers; otherwise the deduction is shown as Employee Loan.
+- Late adjustments were included in the current demo basic-pay calculation, so the Late line indicates the minutes and does **not** double-deduct them.
+- The browser demo is not a legally verified payroll/remote signing workflow. Official payroll release and HR template permissions require production back-end policies and statutory review.
 
-## Validation / limitations
-- TypeScript/TSX syntax checked across 58 source files; CSS tokenized without stylesheet parse errors.
-- Sample formal payslip markup was generated from TypeScript with the exact UC logo path; actual headless visual capture could not finish in the environment.
-- **Full Next.js production build and Vercel/browser visual QA not verified** here because the dependency tree is not available in the local runtime. Validate on Vercel before rollout.
-- Demo payroll/signature workflows remain browser-local. No statutory payroll computations, secure identity verification, payment processing, or remote signing backend added in this UI patch.
+## Test after installing
+
+1. Payroll > Payslip History > View Payslip: portrait preview, logo, date, employee, salary type, days worked, earnings, deductions, Net Pay, Received By.
+2. As an authorized HR role, open `Customize Format`, edit the address, set the layout, and `Save Format (This Browser)`; confirm preview and Print/Save PDF match. Reopen the modal after refresh and verify the settings persist on the same browser.
+3. Compare one complete saved release and one legacy sample release; legacy must **not** show invented daily rate/days, and actions requiring complete breakdown must remain unavailable.
+4. Open an ordinary Leave / Assets / Employee / Loan modal; it should now read as a portrait dialog without pushing a long table off-screen. Complex IR case details are intentionally not compressed.
+5. Run the real Next.js/Vercel build and review in desktop, tablet, mobile and printed A4. The full Next.js build is not verified here because Next/React dependencies are not installed in this runtime.
