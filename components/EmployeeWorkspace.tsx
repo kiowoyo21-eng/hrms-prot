@@ -7,6 +7,7 @@ import type {Branch,Role} from "../lib/mock";
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
 import HelpButton from "./HelpButton";
+import {ModuleAlertButton} from "./ModuleAlerts";
 import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
 import {basicRateOnDate,type PayRateChange} from "../lib/payrollConfig";
 
@@ -272,8 +273,8 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
 
  return <div className="rev-stack employee201">
   {!person&&<div className="rev-title">
-   <div><h3>Employee 201 Files</h3></div>
-   <div className="rev-actions"><HelpButton topic="employee" label="Employee 201 Guide"/>
+   <div><p className="uc-compact-summary">{people.length} employee records · {people.filter(p=>missing(p)>0).length} with missing documents</p></div>
+   <div className="rev-actions"><HelpButton topic="employee" label="Employee 201 Guide"/><ModuleAlertButton module="employees" branch={branch}/>
     {!person&&!add&&<button className="primary" onClick={()=>{setAdd(true);setMessage("")}}><Plus size={16}/> Add Employee</button>}
    </div>
   </div>}

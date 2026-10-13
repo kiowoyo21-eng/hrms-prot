@@ -12,7 +12,7 @@ export type HiringForm = {
   createdAt:string;
 };
 export type ApplicantStage = "New Applicant" | "Shortlisted" | "Phone Interview" | "Initial Interview" | "Final Interview" | "Passed" | "Hired" | "Rejected" | "On Hold";
-export type ApplicantRequirement = {name:string;status:"Missing"|"Submitted"|"Verified"|"Not Required"|"Rejected";fileName?:string;required?:boolean;custom?:boolean;reviewNotes?:string};
+export type ApplicantRequirement = {name:string;status:"Missing"|"Submitted"|"Verified"|"Not Required"|"Rejected";fileName?:string;required?:boolean;custom?:boolean;process?:"applicant-upload"|"company-signature";reviewNotes?:string};
 export type HiringInterview = {id:string;round:string;at:string;interviewer:string;result:"Pending"|"Passed"|"Failed"|"Needs Follow-up"|"Did Not Attend";notes:string;ratings?:Record<string,number>;checklist?:Record<string,boolean>;evaluator?:string;assessedAt?:string};
 export type ApplicantRecord = {
   id:string; name:string;email:string;phone:string;role:string;branch:string;submitted:string;
@@ -33,7 +33,7 @@ export type ApplicantRecord = {
 export const RECRUITMENT_KEY="recruitment";
 export const HIRING_FORMS_KEY="hiring-forms";
 export const BRANCHES=["UC Mandaluyong","UC Las Piñas","UC Quezon City","MM Mandaluyong"] as const;
-export const DEFAULT_ONBOARDING_DOCUMENTS=["Resume / CV","Medical Clearance","Employment Contract"];
+export const DEFAULT_ONBOARDING_DOCUMENTS=["Resume / CV","Medical Clearance","Employment Contract","Non-Disclosure Agreement (NDA)","General Policies"];
 /** Example options for HR configuration, not legal certification requirements. */
 export function positionDocumentSuggestions(position:string):string[]{
   if(/automotive|technician|mechanic/i.test(position))return ["Automotive NC II / relevant certification","Technical training certificates","Certificate of Employment / related experience","Driver's license (if role requires driving)"];

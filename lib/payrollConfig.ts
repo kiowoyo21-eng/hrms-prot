@@ -27,7 +27,7 @@ export const referenceScheduleVersions:DeductionVersion[]=[
  {id:"BIR-2023-WEEKLY",agency:"BIR",label:"BIR 2023-onwards · Weekly withholding",effective:"2023-01-01",sourceUrl:BIR_SOURCE,sourceLabel:"BIR RR 11-2018 Annex E · Weekly",status:"Reference — needs HR review",rows:weeklyTax.map(([min,max,rate,fixed])=>({min,max,employee:0,employer:0,rate,fixed,effective:"2023-01-01"})),notes:"Taxable WEEKLY compensation brackets; not gross pay. Actual computation requires taxable-income classification and mandatory deductions, plus year-end adjustments."}
 ];
 export const initialPayrollConfig:PayrollConfig={
- minimumWages:[{id:"NCR-28-NA",region:"NCR",classification:"Non-Agriculture",amount:755,effective:"2026-09-26",source:NCR_SOURCE},{id:"NCR-28-SMALL",region:"NCR",classification:"Eligible Small Service/Retail or Agriculture",amount:718,effective:"2026-09-26",source:NCR_SOURCE}],
+ minimumWages:[{id:"NCR-28-NA",region:"NCR",classification:"Non-Agriculture",amount:755,effective:"2026-09-26",source:NCR_SOURCE},{id:"NCR-28-SMALL",region:"NCR",classification:"Small Service/Retail — verify eligibility",amount:718,effective:"2026-09-26",source:NCR_SOURCE}],
  rateChanges:[],deductionVersions:referenceScheduleVersions,holidayRules:[],payslipDrafts:[],signatureRequests:[],thirteenthReviews:[],attendanceRecords:[],monthlyBases:{},birExemptEmployees:[]
 };
 export const normalizePayrollConfig=(p?:Partial<PayrollConfig>):PayrollConfig=>({

@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useState,type ChangeEvent} from "react";
 import {FileUp,FileText,CheckCircle2,Clock3,Info} from "lucide-react";
+import {uploadRequirements,companyDocuments} from "../../lib/documentWorkflow";
 import {initialApplicants,mergeRequirements,RECRUITMENT_KEY,type ApplicantRecord} from "../../lib/recruitmentCatalog";
 const KEY=`uc-hr-ui-${RECRUITMENT_KEY}`;
 /** Same-browser demonstration ONLY: the actual file bytes are intentionally never stored. */
@@ -20,7 +21,8 @@ export default function ApplicantUploadPortal(){
  },[]);
  useEffect(()=>{const timer=window.setInterval(()=>setNow(Date.now()),15000);return ()=>window.clearInterval(timer)},[]);
  const expired=!candidate?.uploadExpiresAt||Date.parse(candidate.uploadExpiresAt)<=now;
- const requirements=candidate?mergeRequirements(candidate.requirements):[];
+ const requirements=candidate?uploadRequirements(mergeRequirements(candidate.requirements)):[];
+ const companyDocs=candidate?companyDocuments(mergeRequirements(candidate.requirements)):[];
  function upload(e:ChangeEvent<HTMLInputElement>,name:string){const file=e.target.files?.[0];if(!file||!candidate||expired)return;
   if(!/\.(pdf|png|jpe?g|webp)$/i.test(file.name)||file.size>10*1024*1024){setError("Supported: PDF/JPG/PNG/WEBP, up to 10MB per demo selection.");return}
   const records=JSON.parse(localStorage.getItem(KEY)||"[]") as ApplicantRecord[];
@@ -36,6 +38,7 @@ export default function ApplicantUploadPortal(){
  {candidate&&<><div><h2>{candidate.name}</h2><p>{candidate.role} · {candidate.id}</p></div><p className="muted"><Clock3 size={15}/> {expired?"Invitation expired or revoked":`Invitation expires ${new Date(candidate.uploadExpiresAt||"").toLocaleString("en-PH")}`}. HR can issue a new link; earlier filenames remain in the record.</p>
  <div className="applicant-upload-summary"><span>Pending: {requirements.filter(r=>r.required!==false&&["Missing","Rejected"].includes(r.status)).length}</span><span>Submitted: {requirements.filter(r=>r.status==="Submitted").length}</span><span>Verified: {requirements.filter(r=>r.status==="Verified").length}</span><span>Not Required: {requirements.filter(r=>r.required===false||r.status==="Not Required").length}</span></div>
  {requirements.map(req=><div className="applicant-upload-item" key={req.name}><div><b><FileText size={16}/> {req.name}</b><small>{req.required===false||req.status==="Not Required"?"Not Required":req.status}{req.fileName?` · ${req.fileName}`:""}</small>{req.status==="Rejected"&&req.reviewNotes&&<small>HR feedback: {req.reviewNotes}</small>}</div>{req.required!==false&&req.status!=="Not Required"&&req.status!=="Verified"&&!expired&&<label className="secondary"><FileUp size={14}/> {req.fileName?"Replace (Demo)":"Choose File (Demo)"}<input type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" style={{display:"none"}} onChange={e=>upload(e,req.name)}/></label>}{req.status==="Verified"&&<CheckCircle2 size={20}/>}</div>)}
+ <section className="applicant-company-notice"><h3>Company Forms · Review & Signature</h3><p>These documents are issued by HR and are not files for you to upload. A genuine signing invitation must open the full actual form before asking for your signature.</p>{companyDocs.map(req=><div key={req.name}><FileText size={15}/><span>{req.name} — waiting for secure document delivery</span></div>)}<p>Signing links are not enabled in this browser-only preview. Request a verified signing invitation from HR.</p></section>
  <p className="muted">Every selected file name auto-saves immediately in this browser. This is not successful file submission; real uploaded bytes, HR verification and applicant authentication require the backend.</p></>}
  </section></main>;
 }
