@@ -12,8 +12,8 @@ export type HiringForm = {
   createdAt:string;
 };
 export type ApplicantStage = "New Applicant" | "Shortlisted" | "Phone Interview" | "Initial Interview" | "Final Interview" | "Passed" | "Hired" | "Rejected" | "On Hold";
-export type ApplicantRequirement = {name:string;status:"Missing"|"Submitted"|"Verified";fileName?:string;required?:boolean;custom?:boolean};
-export type HiringInterview = {id:string;round:string;at:string;interviewer:string;result:"Pending"|"Passed"|"Failed"|"Needs Follow-up"|"Did Not Attend";notes:string};
+export type ApplicantRequirement = {name:string;status:"Missing"|"Submitted"|"Verified"|"Not Required"|"Rejected";fileName?:string;required?:boolean;custom?:boolean;reviewNotes?:string};
+export type HiringInterview = {id:string;round:string;at:string;interviewer:string;result:"Pending"|"Passed"|"Failed"|"Needs Follow-up"|"Did Not Attend";notes:string;ratings?:Record<string,number>;checklist?:Record<string,boolean>;evaluator?:string;assessedAt?:string};
 export type ApplicantRecord = {
   id:string; name:string;email:string;phone:string;role:string;branch:string;submitted:string;
   stage:ApplicantStage;notes:string;history?:string[];
@@ -27,6 +27,8 @@ export type ApplicantRecord = {
   offerStatus?:"Not sent"|"Sent"|"Accepted"|"Declined";
   hireDate?:string;
   signingStatus?:"Pending"|"Completed";
+  employeeId?:string;
+  uploadToken?:string;uploadExpiresAt?:string;
 };
 export const RECRUITMENT_KEY="recruitment";
 export const HIRING_FORMS_KEY="hiring-forms";
@@ -45,9 +47,23 @@ export const DEFAULT_HIRING_FORMS:HiringForm[]=[
   {id:"branch-supervisor",position:"Branch Supervisor",status:"Published",minimumYears:3,education:"Relevant management or operational experience",qualifications:["Team supervision","Branch operations","Customer issue resolution"],questions:["How would you handle a customer complaint?"],onboardingDocuments:[...DEFAULT_ONBOARDING_DOCUMENTS],createdAt:"2026-10-01"},
 ];
 export const makeFormId=(position:string)=>position.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
-export const candidateRequirements=(form?:HiringForm):ApplicantRequirement[]=>
-  [...new Set((form?.onboardingDocuments?.length?form.onboardingDocuments:DEFAULT_ONBOARDING_DOCUMENTS).map(x=>x.trim()).filter(Boolean))]
-   .map(name=>({name,status:"Missing" as const,required:true}));
+export const canonicalDocumentName=(name:string):string=>/^(resume|c\.?v\.?|resume\s*\/\s*c\.?v\.?|curriculum vitae)$/i.test(name.trim())?"Resume / CV":name.trim();
+export function mergeRequirements(requirements:ApplicantRequirement[]):ApplicantRequirement[]{
+ const result:ApplicantRequirement[]=[];
+ for(const current of requirements){const name=canonicalDocumentName(current.name);if(!name)continue;
+  const original={...current,name};const existing=result.find(r=>r.name.toLowerCase()===name.toLowerCase());
+  if(!existing){result.push(original);continue}
+  // Retain any attachment, verified status, and mandatory status when merging legacy duplicates.
+  existing.required=existing.required!==false||current.required!==false;
+  if(!existing.fileName&&current.fileName)existing.fileName=current.fileName;
+  const ranks={"Not Required":0,"Rejected":1,"Missing":2,"Submitted":3,"Verified":4};
+  if(ranks[current.status]>ranks[existing.status])existing.status=current.status;
+ }
+ return result;
+}
+export const candidateRequirements=(form?:HiringForm):ApplicantRequirement[]=>mergeRequirements(
+ (form?.onboardingDocuments?.length?form.onboardingDocuments:DEFAULT_ONBOARDING_DOCUMENTS).map(name=>({name,status:"Missing" as const,required:true})));
+
 export const initialApplicants:ApplicantRecord[]=[
  {id:"APP-1001",name:"Rafael Mendoza",email:"rafael@example.com",phone:"09•• ••• 1001",role:"Automotive Technician",branch:"UC Mandaluyong",submitted:"2026-10-08",stage:"New Applicant",notes:"Sample application for layout review",relevantYears:5,totalYears:6,education:"Automotive servicing NC II",qualifications:{"Automotive diagnostics":"Yes","Preventive maintenance":"Yes","Engine or transmission repair":"Yes"},resumeName:"rafael_resume.pdf",requirements:[{name:"Resume / CV",status:"Submitted"},{name:"Medical Clearance",status:"Missing"},{name:"Employment Contract",status:"Missing"}]},
  {id:"APP-1002",name:"Kyla Ramos",email:"kyla@example.com",phone:"09•• ••• 1002",role:"Service Advisor",branch:"MM Mandaluyong",submitted:"2026-10-09",stage:"Shortlisted",notes:"Sample candidate awaiting interview schedule",relevantYears:2,totalYears:4,education:"College undergraduate",qualifications:{"Customer service":"Yes","Vehicle service knowledge":"Yes","Job orders and estimates":"No"},resumeName:"kyla_cv.pdf",requirements:[{name:"Resume / CV",status:"Verified"},{name:"Medical Clearance",status:"Missing"},{name:"Employment Contract",status:"Missing"}]},

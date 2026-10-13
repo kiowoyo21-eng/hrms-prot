@@ -6,7 +6,7 @@ import type {Branch,Role} from "../lib/mock";
 import {useHR} from "../lib/hrState";
 import {useLocalRecords} from "../lib/useLocalRecords";
 import {printHRDocument} from "../lib/printDocument";
-import {ModuleAlertButton,usePublishModuleAlerts} from "./ModuleAlerts";
+import {usePublishModuleAlerts} from "./ModuleAlerts";
 import {incidentStages,incidentDocumentCategories,incidentDocuments,seedIncidents,type IncidentCase,type IncidentAttachment,type IncidentStage,type IncidentDocumentCategory} from "../lib/incidentRecords";
 
 type View="home"|"existing"|"history"|"case"|"new";
@@ -68,7 +68,7 @@ export default function IncidentWorkspace({branch,role}:{branch:Branch;role:Role
   {view==="home"&&<><div className="ir2-cards">
    <button className="ir2-home-card" onClick={()=>{setView("existing");setQuery("");setStageFilter("All")}}><div className="ir2-card-visual ir2-blue"><FileText size={35}/></div><div className="ir2-card-content"><b>Existing Reports</b><small>HR Routed / BM Routed · New & Active cases</small><span>{open.length} Open Cases <ArrowRight size={17}/></span></div></button>
    <button className="ir2-home-card" onClick={()=>{setView("history");setQuery("");setStageFilter("All")}}><div className="ir2-card-visual ir2-green"><FolderOpen size={35}/></div><div className="ir2-card-content"><b>IR History</b><small>Closed cases, case documents and HR decisions</small><span>{closed.length} Closed Cases <ArrowRight size={17}/></span></div></button>
-  </div><div className="ir2-shortcuts"><button className="secondary" onClick={()=>setView("new")}><FilePlus2 size={16}/> Create IR</button><a className="secondary" href="/report" target="_blank" rel="noreferrer">Open Public Report Form</a><ModuleAlertButton module="ir" branch={branch} onOpen={a=>{const c=accessible.find(x=>x.id===a.action);if(c)openCase(c)}}/></div></>}
+  </div><div className="ir2-shortcuts"><button className="secondary" onClick={()=>setView("new")}><FilePlus2 size={16}/> Create IR</button><a className="secondary" href="/report" target="_blank" rel="noreferrer">Open Public Report Form</a></div></>}
   {(view==="existing"||view==="history"||view==="case")&&<section className="panel ir2-list"><div className="ir2-head"><div><button className="ir2-back" onClick={()=>setView("home")}><ArrowLeft size={15}/> Incident Reports</button><h3>{directoryView==="history"?"IR History":"Existing Reports"}</h3></div><button className="secondary" onClick={()=>setView("new")}><FilePlus2 size={15}/> Create IR</button></div>
    {directoryView==="existing"&&<><div className="ir2-route-tabs" role="tablist" aria-label="Case routing">{(["HR","BM"] as const).filter(x=>manager||x==="BM").map(t=><button type="button" role="tab" key={t} aria-selected={route===t} className={route===t?"active":""} onClick={()=>{setRoute(t);setSubtab("All")}}>{t} Routed <small>{open.filter(c=>c.handler===t).length}</small></button>)}</div><div className="ir2-stagefilters">{(["All","New","Active"] as const).map(t=><button type="button" key={t} className={subtab===t?"active":""} onClick={()=>setSubtab(t)}>{t}</button>)}</div></>}
    <div className="ir2-filters"><label className="search-box"><Search size={15}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search case, concern, branch or involved employee"/></label><select value={stageFilter} aria-label="Filter stage" onChange={e=>setStageFilter(e.target.value)}><option>All</option>{incidentStages.filter(s=>directoryView==="history"?s==="Closed":s!=="Closed").map(s=><option key={s}>{s}</option>)}</select></div>

@@ -5,12 +5,11 @@ import {createPortal} from "react-dom";
 import {ArrowLeft,ArrowRight,ChevronLeft,ChevronRight,FileText,FolderOpen,Maximize2,Upload,X} from "lucide-react";
 import type {HRPerson,PayrollRelease,Submission} from "../lib/hrState";
 import {money} from "../lib/hrState";
-import {incidentDocuments,incidentRoleFor,type IncidentCase} from "../lib/incidentRecords";
 
 export type LocalEmployeeFile={id:string;name:string;folder:FolderName;file:File;memoId?:string};
-type FolderName="Onboarding Files"|"Compliance & Other Forms"|"NOV / NTE"|"Employment Memos"|"Payslips"|"Incident Case Records";
-const folders:FolderName[]=["Onboarding Files","Compliance & Other Forms","NOV / NTE","Employment Memos","Payslips","Incident Case Records"];
-type PreviewItem={key:string;name:string;status:string;kind:"metadata"|"upload"|"payslip"|"incident";incidentText?:string;file?:File;release?:PayrollRelease};
+type FolderName="Onboarding Files"|"Compliance & Other Forms"|"NOV / NTE"|"Employment Memos"|"Payslips";
+const folders:FolderName[]=["Onboarding Files","Compliance & Other Forms","NOV / NTE","Employment Memos","Payslips"];
+type PreviewItem={key:string;name:string;status:string;kind:"metadata"|"upload"|"payslip";file?:File;release?:PayrollRelease};
 const datePH=(s:string)=>new Date(`${s}T00:00:00`).toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"numeric"});
 const folderFor=(name:string):FolderName=>/memo|promotion|transfer|reassignment/i.test(name)?"Employment Memos":/\b(NTE|NOV|notice|disciplin|explanation|decision)\b/i.test(name)?"NOV / NTE":/government|sss|philhealth|pag-ibig|bir|compliance|form/i.test(name)?"Compliance & Other Forms":"Onboarding Files";
 const isSupported=(file:File)=>file.type==="application/pdf"||file.type.startsWith("image/");
@@ -18,7 +17,6 @@ const isSupported=(file:File)=>file.type==="application/pdf"||file.type.startsWi
 function DocumentPreview({item,page}:{item:PreviewItem;page:number}){
  const [url,setUrl]=useState("");
  useEffect(()=>{if(!item.file||!isSupported(item.file)){setUrl("");return}const nextUrl=URL.createObjectURL(item.file);setUrl(nextUrl);return ()=>URL.revokeObjectURL(nextUrl)},[item.file]);
- if(item.kind==="incident"){return <div className="empdoc-paper empdoc-incident-paper"><div className="empdoc-paper-brand">UNDERCHARGERS <small>INCIDENT CASE RECORD · BROWSER REVIEW</small></div><h4>{item.name}</h4><p className="empdoc-incident-text">{item.incidentText||"No text recorded."}</p><div className="empdoc-paper-footer">Confidential HR review only · Not an official signed document</div></div>}
  if(item.kind==="payslip"&&item.release){
   const p=item.release;
   return <div className="empdoc-paper"><div className="empdoc-paper-brand">UNDERCHARGERS <small>PAYSLIP · SAMPLE RECORD</small></div>
@@ -31,7 +29,7 @@ function DocumentPreview({item,page}:{item:PreviewItem;page:number}){
  return <div className="empdoc-unavailable"><FileText size={32}/><strong>No document file attached</strong><span>“{item.name}” is an employee checklist record, not an uploaded file. Upload a PDF or image to preview it.</span></div>;
 }
 
-export default function EmployeeDocumentLibrary({person,releases,submissions,uploads,incidentCases=[],onUpload,requestedMemo,onMemoHandled,requestedFolder,onFolderHandled}:{person:HRPerson;releases:PayrollRelease[];submissions:Submission[];uploads:LocalEmployeeFile[];incidentCases?:IncidentCase[];onUpload:(folder:FolderName,file:File,memoId?:string)=>string;requestedMemo?:string|null;onMemoHandled?:()=>void;requestedFolder?:"Onboarding Files"|"Payslips"|"Incident Case Records"|null;onFolderHandled?:()=>void}){
+export default function EmployeeDocumentLibrary({person,releases,submissions,uploads,onUpload,requestedMemo,onMemoHandled,requestedFolder,onFolderHandled}:{person:HRPerson;releases:PayrollRelease[];submissions:Submission[];uploads:LocalEmployeeFile[];onUpload:(folder:FolderName,file:File,memoId?:string)=>string;requestedMemo?:string|null;onMemoHandled?:()=>void;requestedFolder?:"Onboarding Files"|"Payslips"|null;onFolderHandled?:()=>void}){
  const [folder,setFolder]=useState<FolderName>("Onboarding Files"),[selectedKey,setSelectedKey]=useState(""),[page,setPage]=useState(1),[full,setFull]=useState(false),[error,setError]=useState("");
  const [uploadFolder,setUploadFolder]=useState<FolderName>("Onboarding Files");
  const [paperSize,setPaperSize]=useState<"A4"|"Letter">("A4");
@@ -43,8 +41,8 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
  useEffect(()=>{if(!requestedFolder)return;setFolder(requestedFolder);setUploadFolder(requestedFolder);setSelectedKey("");setPage(1);setFull(false);onFolderHandled?.()},[requestedFolder,onFolderHandled]);
  useEffect(()=>{if(!full)return;const before=document.body.style.overflow;document.body.style.overflow="hidden";fullCloseRef.current?.focus();const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setFull(false)};window.addEventListener("keydown",onKey);return ()=>{document.body.style.overflow=before;window.removeEventListener("keydown",onKey)}},[full]);
  const allItems=useMemo(()=>{
-  const files:Record<FolderName,PreviewItem[]>={"Onboarding Files":[],"Compliance & Other Forms":[],"NOV / NTE":[],"Employment Memos":[],"Payslips":[],"Incident Case Records":[]};
-  person.documents.forEach((d,i)=>files[folderFor(d.name)].push({key:`required-${i}-${d.name}`,name:d.name,status:d.status,kind:"metadata"}));
+  const files:Record<FolderName,PreviewItem[]>={"Onboarding Files":[],"Compliance & Other Forms":[],"NOV / NTE":[],"Employment Memos":[],"Payslips":[]};
+  person.documents.forEach((d,i)=>files[folderFor(d.name)].push({key:`required-${i}-${d.name}`,name:d.fileName?`${d.name} · ${d.fileName}`:d.name,status:d.status,kind:"metadata"}));
   submissions.filter(s=>s.employeeId===person.id).forEach(s=>files[folderFor(s.type)].push({key:`submitted-${s.id}`,name:`${s.type} · ${s.fileName}`,status:s.status,kind:"metadata"}));
   const assignedMemoFiles=new Set<string>();
   (person.assignmentHistory||[]).filter(h=>Boolean(h.memoId)).forEach(h=>{
@@ -53,10 +51,9 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
    files["Employment Memos"].push({key:`memo-${h.memoId}`,name:`${h.memoId} · ${h.memoType||"Employment Memo"}`,status:matching?"Attached file (session only)":"No file attached",kind:matching?"upload":"metadata",file:matching?.file});
   });
   uploads.forEach(f=>{if(!assignedMemoFiles.has(f.id))files[f.folder].push({key:`upload-${f.id}`,name:f.name,status:"Session file",kind:"upload",file:f.file})});
-  incidentCases.forEach(c=>{const prefix=`${c.id} · ${incidentRoleFor(c,person.id).join(" & ")}`;incidentDocuments(c).forEach((d,i)=>files["Incident Case Records"].push({key:`ir-${c.id}-doc-${i}`,name:`${prefix} · ${d.title}`,status:d.category,kind:"incident",incidentText:`Case: ${c.id}\nBranch: ${c.branch}\nConcern: ${c.summary}\nRole in case: ${incidentRoleFor(c,person.id).join(" & ")}\nOutcome: ${c.outcome||"Not classified"}\n\n${d.body}`}));(c.attachments||[]).forEach(a=>files["Incident Case Records"].push({key:`ir-${c.id}-attachment-${a.id}`,name:`${prefix} · ${a.name}`,status:`${a.category} · File metadata only`,kind:"incident",incidentText:`${a.name}\n\nThis file was selected during a browser session. The file bytes are not stored; it must be uploaded again after secure backend storage is connected.`}));});
   releases.filter(r=>r.employeeId===person.id&&r.status==="Released").sort((a,b)=>b.paidAt.localeCompare(a.paidAt)).forEach(r=>files.Payslips.push({key:`payslip-${r.id}`,name:`${r.kind} · ${datePH(r.periodEnd)}`,status:r.source==="Sample"?"Sample Release":"Browser Review",kind:"payslip",release:r}));
   return files;
- },[person,submissions,uploads,releases,incidentCases]);
+ },[person,submissions,uploads,releases]);
  const items=allItems[folder];
  const current=items.find(x=>x.key===selectedKey)||items[0];
  const itemIndex=current?items.findIndex(x=>x.key===current.key):-1;
