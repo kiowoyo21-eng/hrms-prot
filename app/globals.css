@@ -917,3 +917,109 @@ button{min-width:0}
 .app-shell .uc-ir-signing-action>button{justify-self:start}
 .app-shell .uc-compact-summary{font-size:13px;font-weight:650;color:#61738a;margin:0}
 .app-shell .uc-module-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+
+/* UCMM October 13 refinement — focused sizing, task badges, dialogs, and directory filters. */
+/* Restore the compact Recruitment navigation cards; slightly larger than the older cards,
+   never stretched to fill the entire content width. */
+.app-shell .hire-workspace-grid{
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,285px),320px))!important;
+  max-width:none;
+  align-items:stretch;
+  justify-content:start;
+  gap:16px!important;
+}
+.app-shell .hire-workspace-card{
+  width:100%;max-width:320px;min-height:252px!important;
+  border-radius:14px;
+  box-shadow:0 2px 8px #1e2f4608;
+}
+.app-shell .hire-card-art{height:96px!important;min-height:96px!important;flex-basis:96px!important}
+.app-shell .hire-card-art svg{width:27px;height:27px}
+.app-shell .hire-card-body{padding:16px!important;gap:9px!important}
+.app-shell .hire-card-body>strong{font-size:15px!important}
+.app-shell .hire-card-body>small{font-size:12px!important;line-height:1.45!important}
+.app-shell .hire-card-body>span{font-size:11px!important}
+/* Dashboard: counts are actionable alert counts, not a red-filled box with total headcount. */
+.app-shell .mu-dashboard-grid strong{background:transparent!important;color:#a82b35!important;font-size:17px;font-weight:750;box-shadow:none!important;padding:0!important}
+.app-shell .mu-dashboard-grid button{background:#fff;border-color:#e3e8f0;min-height:66px}
+.app-shell .mu-dashboard-grid small{color:#728096}
+/* Employee 201: elevated grouped filter panel instead of a full-page form grid. */
+.app-shell .employee201-directory-panel{position:relative;isolation:isolate}
+.app-shell .employee201-toolbar{align-items:center;gap:9px}
+.app-shell .employee201-toolbar .employee201-sort{margin-left:auto;gap:8px}
+.app-shell .employee201-sort select{height:39px!important;font-size:12px!important;border:1px solid #dce4ec;border-radius:9px}
+.app-shell .employee201-advanced{
+  position:absolute;z-index:60;top:152px;right:16px;
+  width:min(735px,calc(100% - 32px));
+  max-height:min(68vh,650px);overflow:auto;
+  margin:0!important;padding:16px!important;
+  background:#fff;border:1px solid #dce4ec;border-radius:15px;
+  box-shadow:0 22px 65px #152c4630;
+}
+.app-shell .employee201-advanced-title{font-size:12px;margin-bottom:14px;color:#60728a}
+.app-shell .employee201-advanced-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.app-shell .employee201-advanced-group{border:1px solid #e9edf2;background:#fafbfc;border-radius:11px;padding:13px;min-width:0}
+.app-shell .employee201-group-heading{display:block;font-size:12px;color:#233047;margin-bottom:11px}
+.app-shell .employee201-advanced-group:last-child{grid-column:1/-1}
+.app-shell .employee201-advanced-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px!important}
+.app-shell .employee201-advanced-grid label{font-size:11px!important;color:#53647d;gap:5px}
+.app-shell .employee201-advanced-grid :is(input,select){background:#fff;border:1px solid #dce4ed!important;border-radius:9px;padding:8px 9px!important;height:39px;font-size:12px!important}
+.app-shell .employee201-advanced-footer{position:sticky;bottom:-16px;display:flex;justify-content:flex-end;gap:9px;padding:13px 0 0;margin-top:13px;border-top:1px solid #e9edf2;background:#fff}
+.app-shell .employee201-advanced-footer button{min-height:37px}
+.app-shell .employee201-toolbar-search{max-width:none;flex:1 1 280px}
+.app-shell .employee201-quick-presets{gap:8px!important}
+.app-shell .employee201-preset{font-size:12px!important;min-height:34px!important}
+/* Inventory: use the same centered dialog treatment as Leave requests, keeping table in place. */
+.app-shell .uc-asset-modal{width:min(100%,650px);display:grid;gap:17px;padding:22px!important}
+.app-shell .uc-asset-modal-head{align-items:start;margin:0}
+.app-shell .uc-asset-kicker{display:block;font-size:10px;letter-spacing:.07em;font-weight:750;color:#8391a5;margin-bottom:5px}
+.app-shell .uc-asset-modal-head h3{font-size:20px;margin:0 0 4px}
+.app-shell .uc-asset-modal-head p{font-size:12px;color:#748398;margin:0}
+.app-shell .uc-asset-close{width:36px;height:36px;min-width:36px;padding:0;justify-content:center}
+.app-shell .uc-asset-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.app-shell .uc-asset-facts>div{min-width:0;display:grid;gap:6px;border:1px solid #e6ebf1;background:#f8f9fb;border-radius:10px;padding:12px}
+.app-shell .uc-asset-facts small{font-size:11px;color:#77869b}
+.app-shell .uc-asset-facts strong{font-size:13px;color:#24334b;overflow-wrap:anywhere}
+.app-shell .uc-asset-history{display:grid;gap:2px}
+.app-shell .uc-asset-history>.rev-title{margin-bottom:8px}
+.app-shell .uc-asset-history h4{display:flex;align-items:center;gap:8px;font-size:14px;margin:0}
+.app-shell .uc-asset-history-row{display:flex;gap:9px;align-items:start;padding:11px 2px;border-bottom:1px solid #eef1f5;color:#42546c;font-size:12px;line-height:1.5}
+.app-shell .uc-asset-history-dot{flex:0 0 7px;width:7px;height:7px;background:#e6ae23;border-radius:50%;margin-top:5px}
+.app-shell .uc-asset-preview-note{display:flex;gap:8px;align-items:start;background:#fff9ec;border:1px solid #f1e2b9;padding:11px;border-radius:10px;font-size:11px;color:#705c27;line-height:1.5;margin:0}
+.app-shell .uc-asset-preview-note svg{flex:0 0 auto}
+.app-shell .uc-asset-modal-footer{justify-content:flex-end;padding-top:5px}
+@media(max-width:860px){
+ .app-shell .hire-workspace-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),320px))!important}
+ .app-shell .employee201-advanced-groups{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+ .app-shell .hire-workspace-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ .app-shell .hire-workspace-card{max-width:none;min-height:210px!important}
+ .app-shell .hire-card-art{height:78px!important;min-height:78px!important;flex-basis:78px!important}
+ .app-shell .hire-card-body{padding:11px!important}
+ .app-shell .employee201-advanced{top:174px;right:10px;width:calc(100% - 20px);max-height:70vh;padding:12px!important}
+ .app-shell .employee201-advanced-grid{grid-template-columns:1fr}
+ .app-shell .employee201-advanced-group{padding:10px}
+ .app-shell .uc-asset-modal{padding:15px!important}
+ .app-shell .uc-asset-facts{grid-template-columns:1fr}
+}
+@media(max-width:370px){.app-shell .hire-workspace-grid{grid-template-columns:1fr!important}}
+/* Related feature cards across modules use the same restrained near-square dimensions. */
+.app-shell :is(.pc-card-grid,.uc-leave-card-grid,.ir2-cards,.docops-cards){
+ grid-template-columns:repeat(auto-fill,minmax(min(100%,265px),310px))!important;
+ max-width:none;justify-content:start;gap:14px!important;
+}
+.app-shell :is(.pc-card,.uc-leave-card,.ir2-home-card,.docops-card){
+ width:100%;max-width:310px;min-height:245px!important;
+}
+.app-shell .mu-dashboard-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,175px),205px));gap:10px;justify-content:start}
+.app-shell .mu-dashboard-grid button{min-height:86px}
+@media(max-width:720px){
+ .app-shell :is(.pc-card-grid,.uc-leave-card-grid,.ir2-cards,.docops-cards){grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),310px))!important}
+}
+@media(max-width:500px){
+ .app-shell :is(.pc-card-grid,.uc-leave-card-grid,.ir2-cards,.docops-cards){grid-template-columns:1fr!important}
+ .app-shell :is(.pc-card,.uc-leave-card,.ir2-home-card,.docops-card){max-width:none;min-height:220px!important}
+}
+
+.app-shell .uc-asset-modal-footer{grid-column:1/-1}

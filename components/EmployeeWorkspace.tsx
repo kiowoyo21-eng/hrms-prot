@@ -63,6 +63,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const [documentFilter,setDocumentFilter]=useState("All");
  const [quick,setQuick]=useState("All");
  const [advancedOpen,setAdvancedOpen]=useState(false);
+ useEffect(()=>{if(!advancedOpen)return;const handler=(event:KeyboardEvent)=>{if(event.key==="Escape")setAdvancedOpen(false)};window.addEventListener("keydown",handler);return()=>window.removeEventListener("keydown",handler)},[advancedOpen]);
  const [order,setOrder]=useState("name");
  const [page,setPage]=useState(1);
  const [rows,setRows]=useState<10|20|50>(10);
@@ -321,7 +322,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
     <div><small>Probationary employees</small><strong>{people.filter(p=>p.status==="Probationary").length}</strong></div>
     <div><small>With missing documents</small><strong>{people.filter(p=>missing(p)>0).length}</strong></div>
    </div>
-   <section className="panel"><div className="rev-title"><div><h3>Employee Directory</h3></div><span className="tag">{people.length} records</span></div>
+   <section className="panel employee201-directory-panel"><div className="rev-title"><div><h3>Employee Directory</h3></div><span className="tag">{people.length} records</span></div>
     <div className="employee201-toolbar">
      <label className="employee201-toolbar-search"><Search size={17}/><input aria-label="Search employee name, ID or position" value={search} onChange={e=>setFilter(()=>setSearch(e.target.value))} placeholder="Search employee name, ID or position…"/></label>
      <button type="button" className={`secondary employee201-filter-toggle ${advancedOpen?"is-open":""}`} aria-expanded={advancedOpen} aria-controls="employee201-advanced-panel" onClick={()=>setAdvancedOpen(v=>!v)}><SlidersHorizontal size={16}/> Filters{activeFilters.filter(x=>x.key!=="search"&&x.key!=="quick").length>0&&<b>{activeFilters.filter(x=>x.key!=="search"&&x.key!=="quick").length}</b>}{advancedOpen?<ChevronUp size={14}/>:<ChevronDown size={14}/>}</button>
@@ -334,20 +335,22 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
     </div>
     {advancedOpen&&<div id="employee201-advanced-panel" className="employee201-advanced" role="region" aria-label="Advanced employee filters">
      <div className="employee201-advanced-title"><SlidersHorizontal size={15}/><span>Refine results · rate filters use the selected pay type (daily/monthly).</span></div>
-     <div className="employee201-advanced-grid">
+     <div className="employee201-advanced-groups"><div className="employee201-advanced-group"><strong className="employee201-group-heading">Employee Details</strong><div className="employee201-advanced-grid">
       <label>Branch<select value={localBranch} onChange={e=>setFilter(()=>setLocalBranch(e.target.value))}><option value="All">{branch==="All Shops"?"All branches":"Current branch"}</option>{(branch==="All Shops"?shopNames:[branch]).map(x=><option key={x}>{x}</option>)}</select></label>
       <label>Employment Status<select value={status} onChange={e=>setFilter(()=>setStatus(e.target.value))}><option>All</option>{employmentStatuses.map(x=><option key={x}>{x}</option>)}</select></label>
       <label>Department<select value={department} onChange={e=>setFilter(()=>setDepartment(e.target.value))}><option>All</option>{departments.map(x=><option key={x}>{x}</option>)}</select></label>
       <label>Gender<select value={gender} onChange={e=>setFilter(()=>setGender(e.target.value))}><option>All</option>{genders.map(x=><option key={x}>{x}</option>)}</select></label>
       <label>Job Position<select value={position} onChange={e=>setFilter(()=>setPosition(e.target.value))}><option>All</option>{positions.map(x=><option key={x}>{x}</option>)}</select></label>
+     </div></div><div className="employee201-advanced-group"><strong className="employee201-group-heading">Employment & Compensation</strong><div className="employee201-advanced-grid">
       <label>Salary Type<select value={salaryType} onChange={e=>setFilter(()=>{setSalaryType(e.target.value);setMinRate("");setMaxRate("");if(order.startsWith("salary"))setOrder("name")})}><option>All</option><option>Daily</option><option>Monthly</option></select></label>
-      <label>Document Status<select value={documentFilter} onChange={e=>setFilter(()=>setDocumentFilter(e.target.value))}><option>All</option><option>Missing</option><option>Pending Verification</option><option>Complete</option></select></label>
+
       <label>Hired From<input type="date" value={hiredFrom} max={hiredTo||undefined} onChange={e=>setFilter(()=>setHiredFrom(e.target.value))}/></label>
       <label>Hired To<input type="date" value={hiredTo} min={hiredFrom||undefined} onChange={e=>setFilter(()=>setHiredTo(e.target.value))}/></label>
       <label>Minimum Basic Rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={minRate} onChange={e=>setFilter(()=>setMinRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Minimum rate"}/></label>
       <label>Maximum Basic Rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={maxRate} onChange={e=>setFilter(()=>setMaxRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Maximum rate"}/></label>
-     </div>
+     </div></div><div className="employee201-advanced-group"><strong className="employee201-group-heading">Document Requirements</strong><div className="employee201-advanced-grid"><label>Document Status<select value={documentFilter} onChange={e=>setFilter(()=>setDocumentFilter(e.target.value))}><option>All</option><option>Missing</option><option>Pending Verification</option><option>Complete</option></select></label></div></div></div>
      
+    <div className="employee201-advanced-footer"><button type="button" className="secondary" onClick={resetFilters}>Reset filters</button><button type="button" className="primary" onClick={()=>setAdvancedOpen(false)}>Show {people.length} employee{people.length===1?"":"s"}</button></div>
     </div>}
     <div className="employee201-resultbar"><strong>{people.length} matching employee{people.length===1?"":"s"}</strong><span>{activeFilters.length} active filter{activeFilters.length===1?"":"s"}</span></div>
     {activeFilters.length>0&&<div className="employee201-chips" aria-label="Applied employee filters">{activeFilters.map(x=><button key={x.key} type="button" className="employee201-chip" onClick={()=>removeFilter(x.key)} aria-label={`Remove ${x.label} filter`}>{x.label}<X size={13}/></button>)}</div>}
