@@ -2,7 +2,7 @@
 
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {createPortal} from "react-dom";
-import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet} from "lucide-react";
+import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,Search,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
@@ -321,24 +321,22 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
     <div><small>With missing documents</small><strong>{people.filter(p=>missing(p)>0).length}</strong></div>
    </div>
    <section className="panel"><div className="rev-title"><div><h3>Employee Directory</h3></div><span className="tag">{people.length} records</span></div>
-    <div className="employee201-filterhead"><HelpButton topic="filters" label="Filter help"/></div>
+    <div className="employee201-toolbar">
+     <label className="employee201-toolbar-search"><Search size={17}/><input aria-label="Search employee name, ID or position" value={search} onChange={e=>setFilter(()=>setSearch(e.target.value))} placeholder="Search employee name, ID or position…"/></label>
+     <button type="button" className={`secondary employee201-filter-toggle ${advancedOpen?"is-open":""}`} aria-expanded={advancedOpen} aria-controls="employee201-advanced-panel" onClick={()=>setAdvancedOpen(v=>!v)}><SlidersHorizontal size={16}/> Filters{activeFilters.filter(x=>x.key!=="search"&&x.key!=="quick").length>0&&<b>{activeFilters.filter(x=>x.key!=="search"&&x.key!=="quick").length}</b>}{advancedOpen?<ChevronUp size={14}/>:<ChevronDown size={14}/>}</button>
+     <label className="employee201-sort">Sort<select aria-label="Sort employee directory" value={order} onChange={e=>setFilter(()=>setOrder(e.target.value))}><option value="name">Name A–Z</option><option value="latest">Newest hires</option><option value="oldest">Earliest hires</option><option value="missing">Least documents verified</option>{salaryType!=="All"&&<><option value="salary-high">Highest basic rate</option><option value="salary-low">Lowest basic rate</option></>}</select></label>
+     {activeFilters.length>0&&<button type="button" className="secondary employee201-clear" onClick={resetFilters}>Clear all</button>}
+     <HelpButton topic="filters" label="Help"/>
+    </div>
     <div className="employee201-quick-presets" role="group" aria-label="Quick employee filters">
      {(["All","Probationary","Missing Documents","Pending Verification","New Hires"] as const).map(x=><button key={x} type="button" className={`employee201-preset ${quick===x?"active":""}`} aria-pressed={quick===x} onClick={()=>setFilter(()=>setQuick(x))}>{x}{x==="New Hires"&&<small> (90 days)</small>}</button>)}
     </div>
-    <div className="rev-filters employee201-filters employee201-quickfilters">
-     <label>Search by name / ID / position<input value={search} onChange={e=>setFilter(()=>setSearch(e.target.value))} placeholder="Employee name, ID, position..."/></label>
-     <label>Branch<select value={localBranch} onChange={e=>setFilter(()=>setLocalBranch(e.target.value))}><option value="All">{branch==="All Shops"?"All branches":"Current branch"}</option>{(branch==="All Shops"?shopNames:[branch]).map(x=><option key={x}>{x}</option>)}</select></label>
-     <label>Employment Status<select value={status} onChange={e=>setFilter(()=>setStatus(e.target.value))}><option>All</option>{employmentStatuses.map(x=><option key={x}>{x}</option>)}</select></label>
-     <label>Department<select value={department} onChange={e=>setFilter(()=>setDepartment(e.target.value))}><option>All</option>{departments.map(x=><option key={x}>{x}</option>)}</select></label>
-    </div>
-    <div className="employee201-filteractions">
-     <button type="button" className="secondary" aria-expanded={advancedOpen} aria-controls="employee201-advanced-panel" onClick={()=>setAdvancedOpen(v=>!v)}><SlidersHorizontal size={15}/> {advancedOpen?"Hide Advanced Filters":"Advanced Filters"} {advancedOpen?<ChevronUp size={15}/>:<ChevronDown size={15}/>}</button>
-     <label className="employee201-sort">Sort By<select value={order} onChange={e=>setFilter(()=>setOrder(e.target.value))}><option value="name">Name A–Z</option><option value="latest">Newest hires</option><option value="oldest">Earliest hires</option><option value="missing">Least documents verified</option>{salaryType!=="All"&&<><option value="salary-high">Highest basic rate</option><option value="salary-low">Lowest basic rate</option></>}</select></label>
-     <button type="button" className="secondary" onClick={resetFilters}>Clear All Filters</button>
-    </div>
     {advancedOpen&&<div id="employee201-advanced-panel" className="employee201-advanced" role="region" aria-label="Advanced employee filters">
-     <div className="employee201-advanced-title"><Info size={15}/><span>Advanced search · Select salary type before filtering by basic rate.</span></div>
+     <div className="employee201-advanced-title"><SlidersHorizontal size={15}/><span>Refine results · rate filters use the selected pay type (daily/monthly).</span></div>
      <div className="employee201-advanced-grid">
+      <label>Branch<select value={localBranch} onChange={e=>setFilter(()=>setLocalBranch(e.target.value))}><option value="All">{branch==="All Shops"?"All branches":"Current branch"}</option>{(branch==="All Shops"?shopNames:[branch]).map(x=><option key={x}>{x}</option>)}</select></label>
+      <label>Employment Status<select value={status} onChange={e=>setFilter(()=>setStatus(e.target.value))}><option>All</option>{employmentStatuses.map(x=><option key={x}>{x}</option>)}</select></label>
+      <label>Department<select value={department} onChange={e=>setFilter(()=>setDepartment(e.target.value))}><option>All</option>{departments.map(x=><option key={x}>{x}</option>)}</select></label>
       <label>Gender<select value={gender} onChange={e=>setFilter(()=>setGender(e.target.value))}><option>All</option>{genders.map(x=><option key={x}>{x}</option>)}</select></label>
       <label>Job Position<select value={position} onChange={e=>setFilter(()=>setPosition(e.target.value))}><option>All</option>{positions.map(x=><option key={x}>{x}</option>)}</select></label>
       <label>Salary Type<select value={salaryType} onChange={e=>setFilter(()=>{setSalaryType(e.target.value);setMinRate("");setMaxRate("");if(order.startsWith("salary"))setOrder("name")})}><option>All</option><option>Daily</option><option>Monthly</option></select></label>
@@ -464,7 +462,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         <div className="emp201-dialog-timeline">{[...assignmentHistory].sort((a,b)=>b.effectiveDate.localeCompare(a.effectiveDate)).map((h,i)=><div key={h.id||i}><small>{formatDate(h.effectiveDate)} · {h.kind}</small><b>{h.branch} · {h.department} — {h.position}</b>{h.memoId?<button type="button" className="emp201-memo-link" onClick={()=>{setDetailKind(null);setTab("Documents");setRequestedMemo(h.memoId||null)}}><FileText size={13}/>{h.memoId}</button>:<small>No memo attached</small>}</div>)}</div>
        </>}
        {detailKind==="salary"&&<>
-        <div className="emp201-dialog-facts"><div><small>Basic Rate</small><b>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</b></div><div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>SIL</small><b>{person.sil} days</b></div><div><small>VIL</small><b>{person.vil} days</b></div></div>
+        <div className="emp201-dialog-facts"><div><small>Basic Rate</small><b>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</b></div>{person.salaryType==="Daily"&&<div><small>Monthly basic reference (26 days)</small><b>{money(basicRateOnDate(person.id,person.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[])*26)}</b></div>}<div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>SIL</small><b>{person.sil} days</b></div><div><small>VIL</small><b>{person.vil} days</b></div></div>
         <div className="emp201-dialog-subhead"><h4>Salary Received & Releases</h4><label className="emp201-period-select">Period <select value={salaryPeriod} onChange={e=>setSalaryPeriod(e.target.value as "month"|"year"|"all")}><option value="month">This Month</option><option value="year">This Year</option><option value="all">All Time</option></select></label></div>
         <div className="emp201-dialog-totals"><div><small>Net Salary Received</small><strong>{money(totals.net)}</strong></div><div><small>Gross Earnings</small><b>{money(totals.gross)}</b></div><div><small>Total Deductions</small><b>{money(totals.deductions)}</b></div></div>
         <div className="emp201-dialog-subhead"><h4>Released Payroll History ({paidSalary.length})</h4><div className="rev-actions"><button type="button" className="secondary" onClick={()=>goToDocuments("Payslips")}><FileText size={14}/> View Payslips</button>{onOpenPayroll&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openPayRates()}}>View Pay Rates <ArrowRight size={14}/></button>}</div></div>

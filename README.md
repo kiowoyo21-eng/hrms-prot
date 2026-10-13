@@ -1,3 +1,5 @@
+> **Latest review update (2026-10-13):** global compact headers, uniform cards, premium Employee 201 filters, local demo login persistence, daily rate × 26 monthly reference, and expanded original Incident Report with guided stages. See [`docs/UCMM-HR-2026-10-13-GLOBAL-UI-AND-SESSION-UPDATE.md`](docs/UCMM-HR-2026-10-13-GLOBAL-UI-AND-SESSION-UPDATE.md). This remains a browser-local demo, not production-secure HR/payroll software.
+
 ## Latest — Employee 201 Compact Profile, Controlled Actions & A4/Letter Preview (2026-10-12)
 
 - Compact two-column Employee/Employment Details; Salary & Benefits stays full width; Reviews, History and Clearance remain on one scroll.
