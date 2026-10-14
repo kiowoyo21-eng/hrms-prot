@@ -186,6 +186,12 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   setSelected(null);setHistoryKind(null);setRequestedMemo(null);setRequestedFolder(null);setDetailKind(null);setAction(null);setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("");setAdd(false);
  };
  const setFilter=(fn:()=>void)=>{fn();setPage(1)};
+ const toggleSummary=(kind:"all"|"regular"|"probationary"|"missing")=>{
+  const active=kind==="regular"&&status==="Regular"&&quick==="All" || kind==="probationary"&&quick==="Probationary" || kind==="missing"&&quick==="Missing Documents";
+  resetFilters();
+  if(!active){if(kind==="regular")setStatus("Regular");if(kind==="probationary")setQuick("Probationary");if(kind==="missing")setQuick("Missing Documents");}
+ };
+ const metricPeople=data.people.filter(p=>branch==="All Shops"||p.branch===branch);
  const resetFilters=()=>{
   setSearch("");setLocalBranch("All");setStatus("All");setDepartment("All");
   setGender("All");setPosition("All");setSalaryType("All");setMinRate("");setMaxRate("");
@@ -332,11 +338,11 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   </section>}
 
   {!add&&!person&&<>
-   <div className="employee201-summary">
-    <div><small>Employees in view</small><strong>{people.length}</strong></div>
-    <div><small>Regular employees</small><strong>{people.filter(p=>p.status==="Regular").length}</strong></div>
-    <div><small>Probationary employees</small><strong>{people.filter(p=>p.status==="Probationary").length}</strong></div>
-    <div><small>With missing documents</small><strong>{people.filter(p=>missing(p)>0).length}</strong></div>
+   <div className="employee201-summary" role="group" aria-label="Employee directory quick filters">
+    <button type="button" className="uc-quick-stat" aria-label="Show all employees" onClick={()=>toggleSummary("all")}><small>Employees in view</small><strong>{people.length}</strong></button>
+    <button type="button" className={`uc-quick-stat ${status==="Regular"&&quick==="All"?"is-active":""}`} aria-pressed={status==="Regular"&&quick==="All"} onClick={()=>toggleSummary("regular")}><small>Regular employees</small><strong>{metricPeople.filter(p=>p.status==="Regular").length}</strong></button>
+    <button type="button" className={`uc-quick-stat ${quick==="Probationary"?"is-active":""}`} aria-pressed={quick==="Probationary"} onClick={()=>toggleSummary("probationary")}><small>Probationary employees</small><strong>{metricPeople.filter(p=>p.status==="Probationary").length}</strong></button>
+    <button type="button" className={`uc-quick-stat ${quick==="Missing Documents"?"is-active":""}`} aria-pressed={quick==="Missing Documents"} onClick={()=>toggleSummary("missing")}><small>With missing documents</small><strong>{metricPeople.filter(p=>missing(p)>0).length}</strong></button>
    </div>
    <section className="panel employee201-directory-panel"><div className="rev-title"><div><h3>Employee Directory</h3></div><span className="tag">{people.length} records</span></div>
     <div className="employee201-toolbar">
