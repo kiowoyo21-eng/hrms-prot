@@ -1,6 +1,5 @@
 "use client";
 import WorkflowSigning from "./WorkflowSigning";
-import RecruitmentInterviewCalendar,{type RecruitmentCalendarEvent} from "./RecruitmentInterviewCalendar";
 import {uploadRequirements,companyDocuments,commonCompanyDocuments} from "../lib/documentWorkflow";
 import {useHR,type HRPerson} from "../lib/hrState";
 import {useEffect,useMemo,useState,type ChangeEvent,type FormEvent} from "react";
@@ -77,10 +76,6 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
  const dueEvaluation=visible.filter(r=>activeCycle(r)&&readInterviews(r).some(i=>i.result==="Pending"&&i.at.slice(0,10)<today()));
  const newApplicants=visible.filter(r=>r.stage==="New Applicant");
  const pendingOnboard=visible.filter(r=>r.stage==="Passed");
- const calendarInterviews:RecruitmentCalendarEvent[]=visible.flatMap(candidate=>readInterviews(candidate).filter(interview=>/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(interview.at)).map(interview=>({
-  id:interview.id,applicantId:candidate.id,applicantName:candidate.name,position:candidate.role,branch:candidate.branch,
-  round:interview.round,at:interview.at,interviewer:interview.interviewer,result:interview.result
- }))).sort((a,b)=>a.at.localeCompare(b.at));
  const alerts=[
   ...newApplicants.map(r=>({id:`screen-${r.id}`,title:`Screen applicant: ${r.name}`,detail:`${r.role} · New application`,branch:r.branch,level:"normal" as const,action:`cycle:${r.id}`})),
   ...todayInterviews.map(r=>({id:`today-${r.id}`,title:`Interview today: ${r.name}`,detail:r.role,branch:r.branch,level:"urgent" as const,action:`cycle:${r.id}`})),
@@ -171,26 +166,14 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
   if(candidate.stage==="New Applicant")setCandidateScreen("application");
   setCycleTab(candidate.stage==="Shortlisted"?"shortlisted":candidate.stage.includes("Interview")?"interviews":candidate.stage==="New Applicant"?"applications":"decisions");}
  return <div className="phase2-area hire-root">
- {space==="home"?<div className="uc-hire-home-alert"><ModuleAlertButton module="lifecycle" branch={branch} onOpen={a=>openAlert(a.action)}/></div>:<div className="phase2-head mu-section-head"><div><small className="mu-compact-sub">{visible.length} applicants · {newApplicants.length} awaiting screening · {todayInterviews.length} interviews today</small></div><ModuleAlertButton module="lifecycle" branch={branch} onOpen={a=>openAlert(a.action)}/></div>}
+ <div className="phase2-head mu-section-head"><div><small className="mu-compact-sub">{visible.length} applicants · {newApplicants.length} awaiting screening · {todayInterviews.length} interviews today</small></div><ModuleAlertButton module="lifecycle" branch={branch} onOpen={a=>openAlert(a.action)}/></div>
  {notice&&<div className="phase2-notice" role="status"><AlertTriangle size={15}/><span>{notice}</span><button type="button" onClick={()=>setNotice("")}>Dismiss</button></div>}
  {space!=="home"&&<nav className="hire-breadcrumb"><button type="button" onClick={()=>{setSpace("home");setPositionId(null);setSelectedId(null);setBuilder(null);setCycleTab("applications")}}><ArrowLeft size={14}/> Recruitment</button><ChevronRight size={14}/><span>{space==="forms"?"Hiring Forms":space==="cycle"?"Hiring Cycle":"Onboarding Process"}</span>{space==="forms"&&job&&<><ChevronRight size={14}/><button onClick={()=>{setSelectedId(null);setBuilder(null);setManualAdd(false)}}>{job.position}</button></>}</nav>}
- {space==="home"&&<div className="uc-hire-home-layout">
-  <div className="uc-hire-home-left">
-   <div className="hire-workspace-grid">{[
-    {id:"forms" as Space,title:"Hiring Forms",hint:"Create, publish and share job application links",value:forms.filter(f=>f.status==="Published").length,indicator:"published",symbol:<FileText size={25}/>},
-    {id:"cycle" as Space,title:"Hiring Cycle",hint:"Position-based intake, screening, interviews and decisions",value:visible.length,indicator:"applications",symbol:<CalendarDays size={25}/>},
-    {id:"onboarding" as Space,title:"Onboarding Process",hint:"Requirements, offers and signatures",value:pendingOnboard.length,indicator:"pending",symbol:<ClipboardCheck size={25}/>}
-   ].map(x=><button type="button" className={`hire-workspace-card hire-card-${x.id}`} key={x.id} onClick={()=>{setSpace(x.id);setSelectedId(null);setPositionId(null);setCycleTab("applications")}}><span className="hire-card-art">{x.symbol}</span><span className="hire-card-body"><strong>{x.title}</strong><small>{x.hint}</small><span><b>{x.value}</b> {x.indicator} <ArrowRight size={16}/></span></span></button>)}</div>
-   <div className="hire-home-kpis" aria-label="Recruitment summary">
-    <button type="button" onClick={()=>{setSpace("cycle");setPositionId(null);setCycleTab("applications")}}><b>{newApplicants.length}</b><span>New Applications</span></button>
-    <button type="button" onClick={()=>{setSpace("cycle");setPositionId(null);setCycleTab("interviews")}}><b>{todayInterviews.length}</b><span>Interviews Today</span></button>
-    <button type="button" onClick={()=>{setSpace("cycle");setPositionId(null);setCycleTab("interviews")}}><b>{unscheduled.length}</b><span>Unscheduled</span></button>
-    <button type="button" onClick={()=>setSpace("onboarding")}><b>{pendingOnboard.length}</b><span>Pending Onboarding</span></button>
-   </div>
-  </div>
-  <RecruitmentInterviewCalendar events={calendarInterviews} onOpenApplicant={id=>openCandidate(id,"cycle")} onGoToHiringCycle={()=>{setSpace("cycle");setPositionId(null);setSelectedId(null);setCycleTab("interviews")}}/>
- </div>}
- {space==="cycle"&&!selected&&<details className="uc-hire-demo-utility"><summary>Demo data tools</summary><div className="uc-demo-load-row"><span>Local test applicants (September–October 2026)</span><button type="button" className="secondary" onClick={()=>{const missing=initialApplicants.filter(sample=>!records.some(r=>r.id===sample.id));if(!missing.length){setNotice("All 20 demo applicants are already available. Existing records were preserved.");return}setRecords(previous=>[...previous,...missing]);setNotice(`${missing.length} fictional sample applicants added. Existing applicant changes were preserved.`)}}>Load Missing Demo Applicants</button></div></details>}
+ {space==="home"&&<><div className="uc-demo-load-row"><span>Sample applicants for September–October 2026 <b>· DEMO ONLY</b></span><button type="button" className="secondary" onClick={()=>{const missing=initialApplicants.filter(sample=>!records.some(r=>r.id===sample.id));if(!missing.length){setNotice("All 20 demo applicants are already available. Existing records were preserved.");return}setRecords(previous=>[...previous,...missing]);setNotice(`${missing.length} fictional sample applicants added. Existing applicant changes were preserved.`)}}>Load Missing Demo Applicants</button></div><div className="hire-home-kpis"><button onClick={()=>{setSpace("cycle");setPositionId(null);setCycleTab("applications")}}><b>{newApplicants.length}</b><span>New Applications</span></button><button onClick={()=>setSpace("cycle")}><b>{todayInterviews.length}</b><span>Interviews Today</span></button><button onClick={()=>setSpace("cycle")}><b>{unscheduled.length}</b><span>Unscheduled</span></button><button onClick={()=>setSpace("onboarding")}><b>{pendingOnboard.length}</b><span>Pending Onboarding</span></button></div><div className="hire-workspace-grid">{[
+  {id:"forms" as Space,title:"Hiring Forms",hint:"Create, publish and share job application links",value:forms.filter(f=>f.status==="Published").length,indicator:"published",symbol:<FileText size={30}/>},
+  {id:"cycle" as Space,title:"Hiring Cycle",hint:"Position-based intake, screening, interviews and decisions",value:visible.length,indicator:"applications",symbol:<CalendarDays size={30}/>},
+  {id:"onboarding" as Space,title:"Onboarding Process",hint:"Requirements, offers and signatures",value:pendingOnboard.length,indicator:"pending",symbol:<ClipboardCheck size={30}/>}
+ ].map(x=><button type="button" className={`hire-workspace-card hire-card-${x.id}`} key={x.id} onClick={()=>{setSpace(x.id);setSelectedId(null);setPositionId(null);setCycleTab("applications")}}><span className="hire-card-art">{x.symbol}</span><span className="hire-card-body"><strong>{x.title}</strong><small>{x.hint}</small><span><b>{x.value}</b> {x.indicator} <ArrowRight size={16}/></span></span></button>)}</div></>}
  {space==="forms"&&!builder&&<section className="panel hire-list-panel">
   <div className="hire-panel-heading"><div><h3>Hiring Forms</h3><small>Manage position-specific forms and public application links</small></div>
    {role!=="BM"&&<button className="primary" onClick={()=>editForm()}><Plus size={15}/> Create Form</button>}

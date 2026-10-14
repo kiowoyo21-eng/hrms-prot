@@ -1452,3 +1452,10 @@ button{min-width:0}
 .uc-auto-modal-actions {display:flex;justify-content:flex-end;gap:9px;padding:13px 20px;border-top:1px solid #ededed;background:#fff;}
 @media(max-width:960px){.uc-auto-columns {grid-template-columns:minmax(0,1fr);}.uc-auto-stat-grid {grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:560px){.uc-auto-stat-grid,.uc-auto-inputs,.uc-auto-detail-grid {grid-template-columns:minmax(0,1fr);}.uc-auto-review-modal {height:min(94vh,850px);}.uc-auto-status-line {align-items:flex-start;flex-direction:column;}.uc-auto-netpay strong {font-size:19px;}}
+
+/* Portrait-sized 13th-month approval/review modal; tall content scrolls, no wide dashboard cards. */
+.app-shell .pc-gov-overlay .uc-portrait-dialog{width:min(540px,100%);max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain;margin:0;padding:20px;display:grid;gap:12px;background:#fff;box-shadow:0 16px 60px rgba(15,23,42,.18)}
+.app-shell .pc-gov-overlay .uc-portrait-dialog .rev-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.app-shell .pc-gov-overlay .uc-portrait-dialog .pc-field{min-width:0;margin:0}
+.app-shell .pc-gov-overlay .uc-portrait-dialog .pc-header{align-items:flex-start}
+@media(max-width:520px){.app-shell .pc-gov-overlay .uc-portrait-dialog{padding:13px}.app-shell .pc-gov-overlay .uc-portrait-dialog .rev-form{grid-template-columns:1fr}}
