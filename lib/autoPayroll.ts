@@ -24,7 +24,7 @@ export function reconcileAutoPayroll({cfg,people,premiums,loans,releases,today}:
    const existing=next.find(d=>d.employeeId===person.id&&d.periodStart===batch.periodStart&&!d.id.startsWith('SAMPLE-DETAIL-'));
    // An already approved, released, manually drafted or signed snapshot must not be changed automatically.
    if(releases.some(r=>r.employeeId===person.id&&r.periodStart===batch.periodStart&&r.periodEnd===batch.periodEnd&&r.kind==='Salary'&&r.source==='Browser Review')||
-    (existing&&(existing.status==='Approved'||existing.status==='Released (Demo)'||existing.attendanceSource!=='Uploaded CSV'))){skipped++;continue}
+    (existing&&(existing.status==='Approved'||existing.status==='Released (Demo)'||(existing.attendanceSource!=='Uploaded CSV'&&!existing.id.startsWith('AUTO-DEMO-'))))){skipped++;continue}
    const c=employeeCoverage(rows,person.id,batch.periodStart,person.hire);
    if(!c.ready){issues.push({employeeId:person.id,name:person.name,reason:c.missing.length?`${c.missing.length} missing date(s): ${c.missing.slice(0,3).join(', ')}`:`${c.incomplete.length} incomplete punch(es)`});continue}
    const summary=c.selected;
@@ -53,7 +53,7 @@ export function reconcileAutoPayroll({cfg,people,premiums,loans,releases,today}:
     birExempt:cfg.birExemptEmployees.includes(person.id)
    });
    if(existing&&existing.attendanceFingerprint===fingerprint){skipped++;continue}
-   const draft:PayslipDraft={id:existing?.id||autoId(batch.branch,batch.periodStart,person.id),employeeId:person.id,
+   const draft:PayslipDraft={id:existing&&!existing.id.startsWith('AUTO-DEMO-')?existing.id:autoId(batch.branch,batch.periodStart,person.id),employeeId:person.id,
     periodStart:batch.periodStart,periodEnd:batch.periodEnd,days:workedDays,workedDays,workedHours:roundMoney(summary.reduce((n,r)=>n+r.workedHours,0)),
     paidLeaveDays:0,unpaidLeaveDays:0,lateMinutes,scheduledDays,salaryType:person.salaryType,rateAmount:rate,dailyRate:earn.dailyRate,hourlyRate:earn.hourlyRate,
     attendanceSource:'Uploaded CSV',attendanceBatchId:batch.id,attendanceFingerprint:fingerprint,otHours,allowances:0,ecolaPay:0,holidayExtra:0,

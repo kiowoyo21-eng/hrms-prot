@@ -4,6 +4,7 @@ import {employees as samples,type Person} from "./people";
 import {DEMO_ASSETS} from "./demoAssets";
 import {initialPayrollConfig,normalizePayrollConfig,type PayrollConfig} from "./payrollConfig";
 import {seedIllustrativePayslips,upgradeOriginalSamples} from "./demoPayslipSeed";
+import {backfillHistoricalDemoPreviews} from "./demoAutoPayslip";
 export type EmployeeAssignment={
  id:string;effectiveDate:string;kind:"Initial Assignment"|"Transfer"|"Promotion"|"Reassignment";
  branch:string;department:string;position:string;memoId?:string;memoType?:string;
@@ -75,9 +76,23 @@ type ContextValue={data:HRState;update:(fn:(state:HRState)=>HRState)=>void;reset
 const HRContext=createContext<ContextValue|null>(null);
 export function HRProvider({children}:{children:ReactNode}){
  const [data,setData]=useState<HRState>(initialState);const [ready,setReady]=useState(false);
- useEffect(()=>{try{const raw=window.localStorage.getItem(KEY);if(raw){const loaded=JSON.parse(raw) as Partial<HRState>;if(isUntouchedLegacySample(loaded)){setData(initialState)}else if(Array.isArray(loaded.people)&&Array.isArray(loaded.assets)){const hydrated:HRState={...initialState,...loaded,earnings:loaded.earnings||{},deductions:loaded.deductions||{},payrollReleases:loaded.payrollReleases||initialState.payrollReleases,payrollConfig:normalizePayrollConfig(loaded.payrollConfig)};setData(upgradeOriginalSamples(hydrated,samples));}}}catch{}setReady(true)},[]);
+ useEffect(()=>{
+  try{
+   const raw=window.localStorage.getItem(KEY);
+   if(!raw){setData(backfillHistoricalDemoPreviews(initialState))}
+   else{
+    const loaded=JSON.parse(raw) as Partial<HRState>;
+    if(isUntouchedLegacySample(loaded)){setData(backfillHistoricalDemoPreviews(initialState))}
+    else if(Array.isArray(loaded.people)&&Array.isArray(loaded.assets)){
+     const hydrated:HRState={...initialState,...loaded,earnings:loaded.earnings||{},deductions:loaded.deductions||{},payrollReleases:loaded.payrollReleases||initialState.payrollReleases,payrollConfig:normalizePayrollConfig(loaded.payrollConfig)};
+     setData(backfillHistoricalDemoPreviews(upgradeOriginalSamples(hydrated,samples)));
+    }else{setData(backfillHistoricalDemoPreviews(initialState))}
+   }
+  }catch{setData(backfillHistoricalDemoPreviews(initialState))}
+  setReady(true);
+ },[]);
  useEffect(()=>{if(ready){try{window.localStorage.setItem(KEY,JSON.stringify(data))}catch{}}},[data,ready]);
- const value=useMemo<ContextValue>(()=>({data,update:(fn)=>setData(previous=>fn(previous)),reset:()=>setData(initialState),ready}),[data,ready]);
+ const value=useMemo<ContextValue>(()=>({data,update:(fn)=>setData(previous=>fn(previous)),reset:()=>setData(backfillHistoricalDemoPreviews(initialState)),ready}),[data,ready]);
  return <HRContext.Provider value={value}>{children}</HRContext.Provider>
 }
 export function useHR(){const context=useContext(HRContext);if(!context)throw Error("HRProvider missing");return context}

@@ -21,6 +21,7 @@ const date=(v:string)=>v?new Date(`${v}T12:00:00`).toLocaleDateString("en-PH",{d
 /** Format only; never infer missing payslip line items from old gross-only releases. */
 export function buildFormalPayslipHtml(release:PayrollRelease,person:Person|undefined,draft:PayslipDraft|undefined,paper:"A4"|"Letter"="A4",embedded=false,format:PayslipFormat=defaultPayslipFormat,loans:readonly LoanRecord[]=[]){
  const complete=Boolean(draft&&typeof draft.basicPay==="number"&&Array.isArray(draft.deductionBreakdown));
+ const pendingPreview=release.status!=="Released";
  const amount=(n:number|undefined)=>typeof n==="number"&&Number.isFinite(n)?money(n):"—";
  const detail=(label:string,value:unknown)=>`<div class="detail"><span>${esc(label)}</span><b>${esc(value)}</b></div>`;
  const row=(label:string,value:string,extra="")=>`<tr><th>${esc(label)}</th><td>${extra}</td><td>${esc(value)}</td></tr>`;
@@ -99,12 +100,12 @@ export function buildFormalPayslipHtml(release:PayrollRelease,person:Person|unde
  .net{display:flex;justify-content:space-between;align-items:baseline;padding:12px 6px;margin-top:17px;border-top:2px solid #e0b22d;border-bottom:2px solid #e0b22d;font-weight:800}.net strong{font-size:11pt}.net b{font-size:16pt;white-space:nowrap}.receipt{margin-top:43px;display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:end;font-size:9pt}.receipt .line{border-bottom:1px solid #404b5c;min-height:23px}.record-warning{font-size:8pt;color:#946a23;margin:7px 0 0}.reconcile{margin-top:10px;font-size:8.5pt;color:#a12626}
  @media(max-width:560px){body{padding:12px}.details{grid-template-columns:1fr 1fr;gap:6px 10px}.sections.two{grid-template-columns:1fr}.net b{font-size:13pt}}@media print{body{padding:0;max-width:none}.toolbar{display:none}.header,.details,.net,.receipt{break-inside:avoid}thead{display:table-header-group}}
  </style></head><body>${embedded?"":`<div class="toolbar"><button onclick="window.print()">Print / Save PDF</button><button onclick="window.close()">Close</button></div>`}
- <header class="header"><img src="${esc(logo)}" alt="Underchargers logo"/><h1>${esc(format.title||"EMPLOYEE PAYSLIP")}</h1><div class="address">${esc(format.companyAddress.trim()||"Address: —")}</div>${!complete?`<div class="tag">LEGACY RECORD · PARTIAL DETAILS</div>`:`<div class="tag">DEMO DATA · NOT PROOF OF PAYMENT</div>`}</header>
+ <header class="header"><img src="${esc(logo)}" alt="Underchargers logo"/><h1>${esc(format.title||"EMPLOYEE PAYSLIP")}</h1><div class="address">${esc(format.companyAddress.trim()||"Address: —")}</div>${pendingPreview?`<div class="tag">UNAPPROVED PREVIEW · NOT RELEASED · NO PAYMENT</div>`:!complete?`<div class="tag">LEGACY RECORD · PARTIAL DETAILS</div>`:`<div class="tag">DEMO DATA · NOT PROOF OF PAYMENT</div>`}</header>
  <section><h2 class="heading">Employee & Payroll Details</h2><div class="details">${details}</div></section>
  <main class="sections ${format.layout==="two"?"two":"single"}"><section><h2 class="heading">Earnings</h2><table><tbody>${earnings}</tbody></table></section><section><h2 class="heading">Deductions</h2><table><tbody>${deductions}</tbody></table></section></main>
  <div class="net"><strong>NET PAY</strong><b>${money(release.net)}</b></div>
  ${warning?`<p class="reconcile">Payroll totals need reconciliation before issuing this document.</p>`:""}
- <div class="receipt"><span>Received By:</span><span class="line"></span></div></body></html>`;
+ ${pendingPreview?"":`<div class="receipt"><span>Received By:</span><span class="line"></span></div>`}</body></html>`;
 }
 export function printFormalPayslip(release:PayrollRelease,person:Person|undefined,draft:PayslipDraft|undefined,paper:"A4"|"Letter"="A4",format:PayslipFormat=defaultPayslipFormat,loans:readonly LoanRecord[]=[]){
  const popup=window.open("","_blank");if(!popup){window.alert("Allow pop-ups to print the payslip.");return}
