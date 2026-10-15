@@ -384,7 +384,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
     {activeFilters.length>0&&<div className="employee201-chips" aria-label="Applied employee filters">{activeFilters.map(x=><button key={x.key} type="button" className="employee201-chip" onClick={()=>removeFilter(x.key)} aria-label={`Remove ${x.label} filter`}>{x.label}<X size={13}/></button>)}</div>}
     {hiredFrom&&hiredTo&&hiredFrom>hiredTo&&<p className="employee201-filterwarning" role="alert">The hire date range is invalid. Set “Hired from” on or before “Hired to”.</p>}
     {salaryType!=="All"&&minRate!==""&&maxRate!==""&&Number(minRate)>Number(maxRate)&&<p className="employee201-filterwarning" role="alert">Minimum basic rate is greater than the maximum.</p>}
-    <p className="employee201-tablehint">On smaller laptop screens, scroll inside the employee table to view all columns. Mobile uses full-detail employee cards.</p>
+    <p className="employee201-tablehint">On smaller laptop screens, scroll inside the employee table to view all columns. Below 720px, the directory switches to compact employee cards.</p>
     <div className="table-wrap employee201-tablewrap"><table className="employee201-table"><thead><tr>
      <th>Employee / ID</th><th>Branch</th><th>Department & Position</th><th>Gender</th><th>Employment Status</th><th>Date Hired</th><th>Salary / Type</th><th>Document Status</th><th>Actions</th>
     </tr></thead><tbody>{shown.map(p=><tr key={p.id}>

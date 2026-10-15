@@ -632,7 +632,7 @@ button{min-width:0}
 .employee201-resultbar{margin-top:12px}
 .employee201-tablewrap{max-width:100%;width:100%;overflow-x:auto!important;display:block!important}
 .employee201-table{min-width:1120px;max-width:none;width:100%}
-.employee201-responsive-cards{display:none}
+.emp201-responsive-cards{display:none}
 .emp201-responsive-card{border:1px solid #e0e6ef;border-radius:11px;background:white;padding:12px;display:grid;gap:12px}
 .emp201-responsive-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .emp201-responsive-head>div{min-width:0;display:grid;gap:4px}
@@ -646,7 +646,7 @@ button{min-width:0}
 .emp201-responsive-actions button{flex:1;min-width:100px;justify-content:center}
 @media(max-width:1200px){.employee201-quickfilters{grid-template-columns:repeat(2,minmax(0,1fr))}.employee201-advanced-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.uc-gov-square-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,140px),1fr))}}
 @media(max-width:900px){.docops-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.uc-template-compose{grid-template-columns:1fr}.uc-template-writing textarea{min-height:240px}.uc-gov-square-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,133px),1fr))}}
-@media(max-width:720px){.content{overflow-x:clip}.docops-cards{grid-template-columns:1fr 1fr;gap:9px}.docops-visual{min-height:83px}.docops-visual svg{width:26px;height:26px}.docops-card-body{padding:10px;gap:6px}.docops-card-body strong{font-size:12px}.docops-card-body small{font-size:10px}.employee201-quickfilters{grid-template-columns:1fr 1fr}.employee201-advanced-grid{grid-template-columns:1fr 1fr}.employee201-tablewrap{display:none!important}.employee201-tablehint{display:none!important}.employee201-responsive-cards{display:grid;gap:9px}.employee201-sort{flex:1 1 150px;margin-left:0}.pc-gov-dialog{padding:8px}.pc-gov-dialog>.panel{padding:11px}.pc-gov-dialog .pc-version-list{grid-template-columns:1fr}.uc-gov-square-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.uc-gov-square{padding:7px 5px;gap:6px}.uc-gov-square-icon{width:35px;height:35px}.uc-gov-square-icon svg{width:20px;height:20px}.uc-gov-square strong{font-size:10px}.uc-gov-square-badge{top:4px;right:4px}}
+@media(max-width:720px){.content{overflow-x:clip}.docops-cards{grid-template-columns:1fr 1fr;gap:9px}.docops-visual{min-height:83px}.docops-visual svg{width:26px;height:26px}.docops-card-body{padding:10px;gap:6px}.docops-card-body strong{font-size:12px}.docops-card-body small{font-size:10px}.employee201-quickfilters{grid-template-columns:1fr 1fr}.employee201-advanced-grid{grid-template-columns:1fr 1fr}.employee201-tablewrap{display:none!important}.employee201-tablehint{display:none!important}.emp201-responsive-cards{display:grid;gap:9px}.employee201-sort{flex:1 1 150px;margin-left:0}.pc-gov-dialog{padding:8px}.pc-gov-dialog>.panel{padding:11px}.pc-gov-dialog .pc-version-list{grid-template-columns:1fr}.uc-gov-square-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.uc-gov-square{padding:7px 5px;gap:6px}.uc-gov-square-icon{width:35px;height:35px}.uc-gov-square-icon svg{width:20px;height:20px}.uc-gov-square strong{font-size:10px}.uc-gov-square-badge{top:4px;right:4px}}
 @media(max-width:460px){.employee201-quickfilters{grid-template-columns:1fr}.employee201-advanced-grid{grid-template-columns:1fr 1fr}.employee201-quick-presets{gap:5px}.employee201-preset{font-size:10px!important;padding:6px 8px!important}.emp201-responsive-card dl{grid-template-columns:1fr 1fr}.docops-cards{grid-template-columns:1fr 1fr}.docops-card-body strong{font-size:11px}.docops-card-body small{font-size:9px}.pc-agency-select{grid-template-columns:repeat(2,minmax(0,1fr))}.pc-agency-select .pc-small-card{padding:10px;min-height:112px}.pc-gov-dialog .rev-actions{flex-wrap:wrap}.uc-gov-square-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* In-context signing: capture on current device only; never fake a working QR URL. */
@@ -739,3 +739,36 @@ button{min-width:0}
 @media(max-width:1000px){.uc-gov-square-grid{grid-template-columns:repeat(auto-fill,minmax(145px,178px))}.docops-cards{grid-template-columns:repeat(2,minmax(170px,245px))}}
 @media(max-width:720px){.uc-gov-square-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;max-width:375px}.uc-gov-square{gap:7px;padding:10px}.uc-gov-square-icon{width:45px;height:45px}.uc-gov-square-icon svg{width:25px;height:25px}.uc-gov-square strong{font-size:12px}.ir2-cards{grid-template-columns:1fr 1fr;gap:9px}.docops-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.ir2-cards{grid-template-columns:1fr}.uc-gov-square-grid{max-width:350px}}
+
+
+/* UCMM Employee 201 directory — Oct 15 responsive layout fix.
+   The JSX uses emp201-responsive-cards (not employee201-responsive-cards).
+   Desktop/tablet = one table; mobile = one compact card per employee. */
+.employee201-tablewrap{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+.employee201-table th:last-child,
+.employee201-table td:last-child{position:sticky;right:0;background:#fff;z-index:1;white-space:nowrap;box-shadow:-1px 0 0 #e7eaf0}
+.employee201-table th:last-child{background:#f8f9fb;z-index:2}
+.employee201-table .emp201-rowactions{display:inline-flex;align-items:center;gap:6px;width:max-content}
+.employee201-table .emp201-rowactions button{width:auto;min-width:0;flex:0 0 auto;padding:7px 9px}
+.emp201-responsive-cards{display:none}
+@media(max-width:720px){
+ .employee201-tablewrap{display:none!important}
+ .emp201-responsive-cards{display:grid;grid-template-columns:minmax(0,1fr);gap:9px}
+ .emp201-responsive-card{min-width:0;padding:12px;gap:10px}
+ .emp201-responsive-actions{justify-content:flex-start}
+ .emp201-responsive-actions button{flex:0 0 auto;min-width:80px;width:auto;padding:8px 13px;font-size:12px}
+}
+@media(max-width:360px){
+ .emp201-responsive-card dl{grid-template-columns:minmax(0,1fr)}
+ .emp201-responsive-head{flex-wrap:wrap}
+}
+
+/* Consistent compact launcher cards across HR modules.  Fewer choices should
+   not stretch into oversized full-width tiles on desktop.  Detail forms and
+   data tables deliberately remain fluid. */
+.rev-shortcuts{grid-template-columns:repeat(auto-fill,minmax(min(100%,195px),285px));justify-content:start}
+.pc-card-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),285px));justify-content:start}
+.uc-leave-card-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,215px),300px));justify-content:start}
+@media(max-width:700px){
+ .rev-shortcuts,.pc-card-grid,.uc-leave-card-grid{grid-template-columns:minmax(0,1fr)}
+}
