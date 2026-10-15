@@ -2,14 +2,14 @@
 
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {createPortal} from "react-dom";
-import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,Search,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet} from "lucide-react";
+import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
 import HelpButton from "./HelpButton";
-import {ModuleAlertButton} from "./ModuleAlerts";
 import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
-import {basicRateOnDate,normalizePayrollConfig,type PayRateChange} from "../lib/payrollConfig";
+import {basicRateOnDate,type PayRateChange} from "../lib/payrollConfig";
+import {emptySalaryDestination,salaryChannels,salaryDestinationLabel,type SalaryDestination,type SalaryChannel} from "../lib/salaryDisbursement";
 
 type Action="Evaluate"|"Regularize"|"Promote"|"Transfer"|"Offboard";
 type PersonalDraft=Pick<HRPerson,"name"|"gender"|"email"|"phone"|"birthDate"|"civilStatus"|"address"|"emergencyName"|"emergencyRelationship"|"emergencyPhone">;
@@ -63,18 +63,16 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const [documentFilter,setDocumentFilter]=useState("All");
  const [quick,setQuick]=useState("All");
  const [advancedOpen,setAdvancedOpen]=useState(false);
- useEffect(()=>{if(!advancedOpen)return;const handler=(event:KeyboardEvent)=>{if(event.key==="Escape")setAdvancedOpen(false)};window.addEventListener("keydown",handler);return()=>window.removeEventListener("keydown",handler)},[advancedOpen]);
  const [order,setOrder]=useState("name");
  const [page,setPage]=useState(1);
  const [rows,setRows]=useState<10|20|50>(10);
  const [selected,setSelected]=useState<string|null>(null);
  const [tab,setTab]=useState("Profile");
  const [salaryPeriod,setSalaryPeriod]=useState<"month"|"year"|"all">("year");
- const [editingCompensation,setEditingCompensation]=useState(false);
- const [compType,setCompType]=useState<"Daily"|"Monthly">("Daily");
- const [compAmount,setCompAmount]=useState("");
- const [compReason,setCompReason]=useState("");
- const [compError,setCompError]=useState("");
+ const [disbursementEditing,setDisbursementEditing]=useState(false);
+ const [destinationDraft,setDestinationDraft]=useState<SalaryDestination>({...emptySalaryDestination});
+ const [destinationNote,setDestinationNote]=useState("");
+ const [destinationError,setDestinationError]=useState("");
  const [uploads,setUploads]=useState<Record<string,LocalEmployeeFile[]>>({});
  const [employmentDraft,setEmploymentDraft]=useState<{probation:number;sil:number;vil:number}|null>(null);
  const [historyKind,setHistoryKind]=useState<"branch"|"role"|null>(null);
@@ -186,12 +184,6 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   setSelected(null);setHistoryKind(null);setRequestedMemo(null);setRequestedFolder(null);setDetailKind(null);setAction(null);setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("");setAdd(false);
  };
  const setFilter=(fn:()=>void)=>{fn();setPage(1)};
- const toggleSummary=(kind:"all"|"regular"|"probationary"|"missing")=>{
-  const active=kind==="regular"&&status==="Regular"&&quick==="All" || kind==="probationary"&&quick==="Probationary" || kind==="missing"&&quick==="Missing Documents";
-  resetFilters();
-  if(!active){if(kind==="regular")setStatus("Regular");if(kind==="probationary")setQuick("Probationary");if(kind==="missing")setQuick("Missing Documents");}
- };
- const metricPeople=data.people.filter(p=>branch==="All Shops"||p.branch===branch);
  const resetFilters=()=>{
   setSearch("");setLocalBranch("All");setStatus("All");setDepartment("All");
   setGender("All");setPosition("All");setSalaryType("All");setMinRate("");setMaxRate("");
@@ -206,6 +198,31 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   if(key==="hiredFrom")setHiredFrom("");if(key==="hiredTo")setHiredTo("");
   if(key==="documents")setDocumentFilter("All");if(key==="quick")setQuick("All");
  });
+ const startDisbursementEdit=()=>{
+  if(!person)return;
+  setDestinationDraft(person.salaryDestination?{...person.salaryDestination}:{...emptySalaryDestination});
+  setDestinationNote("");setDestinationError("");setDisbursementEditing(true);
+ };
+ const saveDisbursement=()=>{
+  if(!person)return;
+  const bankName=destinationDraft.channel==="Other Bank"?destinationDraft.bankName.trim():destinationDraft.channel==="BDO Payroll"?"BDO":destinationDraft.channel;
+  if(destinationDraft.channel==="Other Bank"&&!bankName){setDestinationError("Enter the bank name for Other Bank.");return}
+  if(destinationDraft.accountName.trim().length<3){setDestinationError("Enter the sample account holder name.");return}
+  if(!/^\d{4}$/.test(destinationDraft.accountLast4)){setDestinationError("For this browser demo, enter only the last four digits of a DUMMY account reference.");return}
+  const today=new Date().toISOString().slice(0,10);
+  updatePerson(p=>({...p,salaryDestination:{channel:destinationDraft.channel,bankName,accountName:destinationDraft.accountName.trim(),accountLast4:destinationDraft.accountLast4,status:"For Verification",updatedAt:today},timeline:[`${today} · Salary payout channel updated; verification reset`,...p.timeline]}));
+  setDisbursementEditing(false);setDestinationError("");setDestinationNote("");
+  setMessage("Salary destination saved in demo. Verification is required; no funds were sent.");
+ };
+ const checkDisbursement=(status:"Demo Checked"|"Needs Correction")=>{
+  if(!person?.salaryDestination)return;
+  if(destinationNote.trim().length<5){setDestinationError("Enter a verification reference / reason (at least 5 characters).");return}
+  if(status==="Demo Checked"&&!window.confirm("Mark this DUMMY salary destination as checked in the browser prototype? This is NOT real bank account verification."))return;
+  const today=new Date().toISOString().slice(0,10);
+  updatePerson(p=>({...p,salaryDestination:p.salaryDestination?{...p.salaryDestination,status,checkedAt:today,checkNote:destinationNote.trim()}:undefined,timeline:[`${today} · Salary payout reference: ${status} (demo)`,...p.timeline]}));
+  setDestinationError("");setDestinationNote("");
+  setMessage(`Salary destination marked ${status} in this browser demo. No real account verification or bank transfer took place.`);
+ };
  const startEdit=()=>{if(!person)return;setTab("Profile");setPersonal(toPersonalDraft(person));setEmploymentDraft({probation:person.probation,sil:person.sil,vil:person.vil});setEditing(true);setMessage("")};
  const persistProfile=()=>{
   if(!draft||!draft.name.trim()){setMessage("Employee full name is required.");return}
@@ -217,17 +234,6 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const confirmLeavingEdits=()=>!hasUnsavedEdit()||window.confirm("You have unsaved employee changes. Discard them and continue?");
  const openAssetsForPerson=()=>{if(person&&onAssignDevice&&confirmLeavingEdits())onAssignDevice(person.id)};
  const openPayRates=()=>{if(person&&onOpenPayroll&&confirmLeavingEdits())onOpenPayroll(person.id)};
- const beginCompensationEdit=()=>{if(!person||role==="BM")return;setEditingCompensation(true);setCompType(person.salaryType);setCompAmount(String(basicRateOnDate(person.id,person.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[])));setCompReason("");setCompError("")};
- const saveCompensation=()=>{
-  if(!person||role==="BM")return;
-  const amount=Number(compAmount),reason=compReason.trim();
-  if(!Number.isFinite(amount)||amount<=0||!reason){setCompError("Enter a positive salary rate and a required adjustment reason.");return}
-  const today=new Date().toISOString().slice(0,10);
-  const employeeId=person.id;
-  const change:PayRateChange={id:`EMP201-RATE-${Date.now()}`,employeeId,salaryType:compType,amount,effective:today,reason,status:"Applied (Demo)",recordedAt:today};
-  update(previous=>{const config=normalizePayrollConfig(previous.payrollConfig);return {...previous,people:previous.people.map(p=>p.id===employeeId?{...p,rate:amount,salaryType:compType,timeline:[`${today} · HR rate review: ${compType} ${money(amount)} · ${reason}`,...p.timeline]}:p),payrollConfig:{...config,rateChanges:[...config.rateChanges,change]}}});
-  setEditingCompensation(false);setCompReason("");setMessage("Compensation updated in browser review. Previous payslip snapshots were not changed.");
- };
  const startAction=(a:Action)=>{
   if(!person||!confirmLeavingEdits())return;
   setEditing(false);setPersonal(null);setEmploymentDraft(null);
@@ -296,8 +302,8 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
 
  return <div className="rev-stack employee201">
   {!person&&<div className="rev-title">
-   <div><p className="uc-compact-summary">{people.length} employee records · {people.filter(p=>missing(p)>0).length} with missing documents</p></div>
-   <div className="rev-actions"><HelpButton topic="employee" label="Employee 201 Guide"/><ModuleAlertButton module="employees" branch={branch}/>
+   <div><h3>Employee 201 Files</h3></div>
+   <div className="rev-actions"><HelpButton topic="employee" label="Employee 201 Guide"/>
     {!person&&!add&&<button className="primary" onClick={()=>{setAdd(true);setMessage("")}}><Plus size={16}/> Add Employee</button>}
    </div>
   </div>}
@@ -338,41 +344,41 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   </section>}
 
   {!add&&!person&&<>
-   <div className="employee201-summary" role="group" aria-label="Employee directory quick filters">
-    <button type="button" className="uc-quick-stat" aria-label="Show all employees" onClick={()=>toggleSummary("all")}><small>Employees in view</small><strong>{people.length}</strong></button>
-    <button type="button" className={`uc-quick-stat ${status==="Regular"&&quick==="All"?"is-active":""}`} aria-pressed={status==="Regular"&&quick==="All"} onClick={()=>toggleSummary("regular")}><small>Regular employees</small><strong>{metricPeople.filter(p=>p.status==="Regular").length}</strong></button>
-    <button type="button" className={`uc-quick-stat ${quick==="Probationary"?"is-active":""}`} aria-pressed={quick==="Probationary"} onClick={()=>toggleSummary("probationary")}><small>Probationary employees</small><strong>{metricPeople.filter(p=>p.status==="Probationary").length}</strong></button>
-    <button type="button" className={`uc-quick-stat ${quick==="Missing Documents"?"is-active":""}`} aria-pressed={quick==="Missing Documents"} onClick={()=>toggleSummary("missing")}><small>With missing documents</small><strong>{metricPeople.filter(p=>missing(p)>0).length}</strong></button>
+   <div className="employee201-summary">
+    <div><small>Employees in view</small><strong>{people.length}</strong></div>
+    <div><small>Regular employees</small><strong>{people.filter(p=>p.status==="Regular").length}</strong></div>
+    <div><small>Probationary employees</small><strong>{people.filter(p=>p.status==="Probationary").length}</strong></div>
+    <div><small>With missing documents</small><strong>{people.filter(p=>missing(p)>0).length}</strong></div>
    </div>
-   <section className="panel employee201-directory-panel"><div className="rev-title"><div><h3>Employee Directory</h3></div><span className="tag">{people.length} records</span></div>
-    <div className="employee201-toolbar">
-     <label className="employee201-toolbar-search"><Search size={17}/><input aria-label="Search employee name, ID or position" value={search} onChange={e=>setFilter(()=>setSearch(e.target.value))} placeholder="Search employee name, ID or position…"/></label>
-     <button type="button" className={`secondary employee201-filter-toggle ${advancedOpen?"is-open":""}`} aria-expanded={advancedOpen} aria-controls="employee201-advanced-panel" onClick={()=>setAdvancedOpen(v=>!v)}><SlidersHorizontal size={16}/> Filters{activeFilters.filter(x=>x.key!=="search"&&x.key!=="quick").length>0&&<b>{activeFilters.filter(x=>x.key!=="search"&&x.key!=="quick").length}</b>}{advancedOpen?<ChevronUp size={14}/>:<ChevronDown size={14}/>}</button>
-     <label className="employee201-sort">Sort<select aria-label="Sort employee directory" value={order} onChange={e=>setFilter(()=>setOrder(e.target.value))}><option value="name">Name A–Z</option><option value="latest">Newest hires</option><option value="oldest">Earliest hires</option><option value="missing">Least documents verified</option>{salaryType!=="All"&&<><option value="salary-high">Highest basic rate</option><option value="salary-low">Lowest basic rate</option></>}</select></label>
-     {activeFilters.length>0&&<button type="button" className="secondary employee201-clear" onClick={resetFilters}>Clear all</button>}
-     <HelpButton topic="filters" label="Help"/>
-    </div>
+   <section className="panel"><div className="rev-title"><div><h3>Employee Directory</h3></div><span className="tag">{people.length} records</span></div>
+    <div className="employee201-filterhead"><HelpButton topic="filters" label="Filter help"/></div>
     <div className="employee201-quick-presets" role="group" aria-label="Quick employee filters">
      {(["All","Probationary","Missing Documents","Pending Verification","New Hires"] as const).map(x=><button key={x} type="button" className={`employee201-preset ${quick===x?"active":""}`} aria-pressed={quick===x} onClick={()=>setFilter(()=>setQuick(x))}>{x}{x==="New Hires"&&<small> (90 days)</small>}</button>)}
     </div>
+    <div className="rev-filters employee201-filters employee201-quickfilters">
+     <label>Search by name / ID / position<input value={search} onChange={e=>setFilter(()=>setSearch(e.target.value))} placeholder="Employee name, ID, position..."/></label>
+     <label>Branch<select value={localBranch} onChange={e=>setFilter(()=>setLocalBranch(e.target.value))}><option value="All">{branch==="All Shops"?"All branches":"Current branch"}</option>{(branch==="All Shops"?shopNames:[branch]).map(x=><option key={x}>{x}</option>)}</select></label>
+     <label>Employment Status<select value={status} onChange={e=>setFilter(()=>setStatus(e.target.value))}><option>All</option>{employmentStatuses.map(x=><option key={x}>{x}</option>)}</select></label>
+     <label>Department<select value={department} onChange={e=>setFilter(()=>setDepartment(e.target.value))}><option>All</option>{departments.map(x=><option key={x}>{x}</option>)}</select></label>
+    </div>
+    <div className="employee201-filteractions">
+     <button type="button" className="secondary" aria-expanded={advancedOpen} aria-controls="employee201-advanced-panel" onClick={()=>setAdvancedOpen(v=>!v)}><SlidersHorizontal size={15}/> {advancedOpen?"Hide Advanced Filters":"Advanced Filters"} {advancedOpen?<ChevronUp size={15}/>:<ChevronDown size={15}/>}</button>
+     <label className="employee201-sort">Sort By<select value={order} onChange={e=>setFilter(()=>setOrder(e.target.value))}><option value="name">Name A–Z</option><option value="latest">Newest hires</option><option value="oldest">Earliest hires</option><option value="missing">Least documents verified</option>{salaryType!=="All"&&<><option value="salary-high">Highest basic rate</option><option value="salary-low">Lowest basic rate</option></>}</select></label>
+     <button type="button" className="secondary" onClick={resetFilters}>Clear All Filters</button>
+    </div>
     {advancedOpen&&<div id="employee201-advanced-panel" className="employee201-advanced" role="region" aria-label="Advanced employee filters">
-     <div className="employee201-advanced-title"><SlidersHorizontal size={15}/><span>Refine results · rate filters use the selected pay type (daily/monthly).</span></div>
-     <div className="employee201-advanced-groups"><div className="employee201-advanced-group"><strong className="employee201-group-heading">Employee Details</strong><div className="employee201-advanced-grid">
-      <label>Branch<select value={localBranch} onChange={e=>setFilter(()=>setLocalBranch(e.target.value))}><option value="All">{branch==="All Shops"?"All branches":"Current branch"}</option>{(branch==="All Shops"?shopNames:[branch]).map(x=><option key={x}>{x}</option>)}</select></label>
-      <label>Employment Status<select value={status} onChange={e=>setFilter(()=>setStatus(e.target.value))}><option>All</option>{employmentStatuses.map(x=><option key={x}>{x}</option>)}</select></label>
-      <label>Department<select value={department} onChange={e=>setFilter(()=>setDepartment(e.target.value))}><option>All</option>{departments.map(x=><option key={x}>{x}</option>)}</select></label>
+     <div className="employee201-advanced-title"><Info size={15}/><span>Advanced search · Select salary type before filtering by basic rate.</span></div>
+     <div className="employee201-advanced-grid">
       <label>Gender<select value={gender} onChange={e=>setFilter(()=>setGender(e.target.value))}><option>All</option>{genders.map(x=><option key={x}>{x}</option>)}</select></label>
       <label>Job Position<select value={position} onChange={e=>setFilter(()=>setPosition(e.target.value))}><option>All</option>{positions.map(x=><option key={x}>{x}</option>)}</select></label>
-     </div></div><div className="employee201-advanced-group"><strong className="employee201-group-heading">Employment & Compensation</strong><div className="employee201-advanced-grid">
       <label>Salary Type<select value={salaryType} onChange={e=>setFilter(()=>{setSalaryType(e.target.value);setMinRate("");setMaxRate("");if(order.startsWith("salary"))setOrder("name")})}><option>All</option><option>Daily</option><option>Monthly</option></select></label>
-
+      <label>Document Status<select value={documentFilter} onChange={e=>setFilter(()=>setDocumentFilter(e.target.value))}><option>All</option><option>Missing</option><option>Pending Verification</option><option>Complete</option></select></label>
       <label>Hired From<input type="date" value={hiredFrom} max={hiredTo||undefined} onChange={e=>setFilter(()=>setHiredFrom(e.target.value))}/></label>
       <label>Hired To<input type="date" value={hiredTo} min={hiredFrom||undefined} onChange={e=>setFilter(()=>setHiredTo(e.target.value))}/></label>
       <label>Minimum Basic Rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={minRate} onChange={e=>setFilter(()=>setMinRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Minimum rate"}/></label>
       <label>Maximum Basic Rate (₱)<input type="number" inputMode="decimal" min="0" step="any" disabled={salaryType==="All"} value={maxRate} onChange={e=>setFilter(()=>setMaxRate(e.target.value))} placeholder={salaryType==="All"?"Select salary type first":"Maximum rate"}/></label>
-     </div></div><div className="employee201-advanced-group"><strong className="employee201-group-heading">Document Requirements</strong><div className="employee201-advanced-grid"><label>Document Status<select value={documentFilter} onChange={e=>setFilter(()=>setDocumentFilter(e.target.value))}><option>All</option><option>Missing</option><option>Pending Verification</option><option>Complete</option></select></label></div></div></div>
+     </div>
      
-    <div className="employee201-advanced-footer"><button type="button" className="secondary" onClick={resetFilters}>Reset filters</button><button type="button" className="primary" onClick={()=>setAdvancedOpen(false)}>Show {people.length} employee{people.length===1?"":"s"}</button></div>
     </div>}
     <div className="employee201-resultbar"><strong>{people.length} matching employee{people.length===1?"":"s"}</strong><span>{activeFilters.length} active filter{activeFilters.length===1?"":"s"}</span></div>
     {activeFilters.length>0&&<div className="employee201-chips" aria-label="Applied employee filters">{activeFilters.map(x=><button key={x.key} type="button" className="employee201-chip" onClick={()=>removeFilter(x.key)} aria-label={`Remove ${x.label} filter`}>{x.label}<X size={13}/></button>)}</div>}
@@ -453,6 +459,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
          <span className="emp201-card-fact"><small>Salary Type</small><b>{person.salaryType}</b></span>
          <span className="emp201-card-fact"><small>SIL</small><b>{person.sil} days</b></span>
          <span className="emp201-card-fact"><small>VIL</small><b>{person.vil} days</b></span>
+         <span className="emp201-card-fact"><small>Salary Destination</small><b>{person.salaryDestination?person.salaryDestination.channel:"Not recorded"}</b></span>
         </button>
         <button type="button" className="emp201-salary-summary" onClick={()=>setDetailKind("salary")}><span><small>Total Salary Received · {salaryPeriod==="all"?"All Time":salaryPeriod==="month"?"This Month":"This Year"}</small><b>{money(totals.net)}</b></span><span>View History <ArrowRight size={14}/></span></button>
        </section>
@@ -480,7 +487,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
        {detailKind==="employee"&&<>
         <h4>Personal & Contact Information</h4><div className="emp201-dialog-facts">{[["Full Name",person.name],["Employee ID",person.id],["Gender",person.gender],["Birth Date",formatDate(person.birthDate)],["Civil Status",empty(person.civilStatus)],["Phone",empty(person.phone)],["Email",empty(person.email)],["Address",empty(person.address)],["Emergency Contact",empty(person.emergencyName)],["Relationship",empty(person.emergencyRelationship)],["Emergency Phone",empty(person.emergencyPhone)]].map(([label,value])=><div key={label}><small>{label}</small><b>{value}</b></div>)}</div>
         <div className="emp201-dialog-subhead"><h4>Document Logs</h4><button type="button" className="secondary" onClick={()=>goToDocuments("Onboarding Files")}><FileText size={14}/> Open Documents</button></div>
-        {person.documents.length===0&&documentSubmissions.length===0?<p className="muted">No document records available.</p>:<div className="emp201-log-list">{person.documents.map((d,i)=><div key={`req-${i}`}><span><FileText size={15}/> {d.name}{d.fileName?` · ${d.fileName}`:""}</span><span className="tag">{d.status}</span></div>)}{documentSubmissions.map(s=><div key={s.id}><span><FileText size={15}/> {s.type} · {s.fileName}</span><span className="tag">{s.status}</span></div>)}</div>}
+        {person.documents.length===0&&documentSubmissions.length===0?<p className="muted">No document records available.</p>:<div className="emp201-log-list">{person.documents.map((d,i)=><div key={`req-${i}`}><span><FileText size={15}/> {d.name}</span><span className="tag">{d.status}</span></div>)}{documentSubmissions.map(s=><div key={s.id}><span><FileText size={15}/> {s.type} · {s.fileName}</span><span className="tag">{s.status}</span></div>)}</div>}
        </>}
        {detailKind==="employment"&&<>
         <h4>Current Employment</h4><div className="emp201-dialog-facts"><div><small>Branch</small><b>{person.branch}</b></div><div><small>Department & Position</small><b>{person.department} — {person.position}</b></div><div><small>Employment Status</small><b>{person.status}</b></div><div><small>Hire Date (locked)</small><b>{formatDate(person.hire)}</b></div><div><small>Probation Period</small><b>{person.probation} months</b></div></div>
@@ -488,8 +495,25 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         <div className="emp201-dialog-timeline">{[...assignmentHistory].sort((a,b)=>b.effectiveDate.localeCompare(a.effectiveDate)).map((h,i)=><div key={h.id||i}><small>{formatDate(h.effectiveDate)} · {h.kind}</small><b>{h.branch} · {h.department} — {h.position}</b>{h.memoId?<button type="button" className="emp201-memo-link" onClick={()=>{setDetailKind(null);setTab("Documents");setRequestedMemo(h.memoId||null)}}><FileText size={13}/>{h.memoId}</button>:<small>No memo attached</small>}</div>)}</div>
        </>}
        {detailKind==="salary"&&<>
-        <div className="emp201-dialog-facts"><div><small>Basic Rate</small><b>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</b></div>{person.salaryType==="Daily"&&<div><small>Monthly basic reference (26 days)</small><b>{money(basicRateOnDate(person.id,person.rate,new Date().toISOString().slice(0,10),data.payrollConfig?.rateChanges||[])*26)}</b></div>}<div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>SIL</small><b>{person.sil} days</b></div><div><small>VIL</small><b>{person.vil} days</b></div></div>
-        <div className="rev-actions"><button type="button" className="secondary" onClick={beginCompensationEdit}><Pencil size={15}/> Edit Basic Pay Rate</button></div>{editingCompensation&&<div className="panel uc-emp-rate-editor"><h4>Edit Compensation · HR Demo</h4><div className="rev-form"><label>Salary Type<select value={compType} onChange={e=>setCompType(e.target.value as "Daily"|"Monthly")}><option>Daily</option><option>Monthly</option></select></label><label>Basic Rate (₱)<input type="number" min="0.01" step="0.01" value={compAmount} onChange={e=>setCompAmount(e.target.value)}/></label><div className="pc-field">{compType==="Daily"?"Monthly reference (× 26)":"Daily reference (÷ 26)"}<strong>{money((Number(compAmount)||0)*(compType==="Daily"?26:1/26))}</strong></div><label>Effective Date<input type="date" readOnly value={new Date().toISOString().slice(0,10)}/></label></div><label>Reason / Approval Reference<textarea rows={2} value={compReason} onChange={e=>setCompReason(e.target.value)}/></label>{compError&&<p role="alert" className="pay-subtle">{compError}</p>}<p className="muted">Same-day demo changes only. Past finalized payslips stay unchanged; future-dated salary approvals remain in Payroll Rate Management.</p><div className="rev-actions"><button type="button" className="secondary" onClick={()=>setEditingCompensation(false)}>Cancel</button><button type="button" className="primary" onClick={saveCompensation}>Save HR Rate</button></div></div>}
+        <div className="emp201-dialog-facts"><div><small>Basic Rate</small><b>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</b></div><div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>SIL</small><b>{person.sil} days</b></div><div><small>VIL</small><b>{person.vil} days</b></div></div>
+        <section className="emp201-salary-destination" aria-label="Employee salary disbursement reference">
+         <div className="emp201-dialog-subhead"><h4>Salary Disbursement Account</h4>{!disbursementEditing&&<button type="button" className="secondary" onClick={startDisbursementEdit}><Pencil size={14}/> {person.salaryDestination?"Change Destination":"Add Destination"}</button>}</div>
+         <p className="muted">Select where this employee's salary should be sent. Browser demo stores ONLY the last four digits of a fictional account reference. Real banking details and approvals require secure storage.</p>
+         {disbursementEditing?<div className="emp201-destination-form">
+          <div className="rev-form">
+           <label>Salary Payout Channel *<select value={destinationDraft.channel} onChange={e=>{const channel=e.target.value as SalaryChannel;setDestinationDraft(v=>({...v,channel,bankName:channel==="Other Bank"?"":channel==="BDO Payroll"?"BDO":channel}));setDestinationError("")}}>{salaryChannels.map(channel=><option key={channel} value={channel}>{channel}</option>)}</select></label>
+           {destinationDraft.channel==="Other Bank"&&<label>Bank Name *<input value={destinationDraft.bankName} placeholder="e.g. BPI / Metrobank" onChange={e=>setDestinationDraft(v=>({...v,bankName:e.target.value}))}/></label>}
+           <label>Account Holder Name (demo) *<input value={destinationDraft.accountName} onChange={e=>setDestinationDraft(v=>({...v,accountName:e.target.value}))} maxLength={90} placeholder="Sample recipient name"/></label>
+           <label>Last 4 Digits Only (demo) *<input value={destinationDraft.accountLast4} onChange={e=>setDestinationDraft(v=>({...v,accountLast4:e.target.value.replace(/\D/g,"").slice(0,4)}))} maxLength={4} inputMode="numeric" placeholder="0000" autoComplete="off"/></label>
+          </div>
+          <small className="muted">BDO Payroll / Other Bank use account references; GCash / GoTyme use the receiving wallet/account. Never type a full real number in this prototype.</small>
+          {destinationError&&<p className="error" role="alert">{destinationError}</p>}
+          <div className="rev-actions"><button type="button" className="primary" onClick={saveDisbursement}>Save Payout Reference</button><button type="button" className="secondary" onClick={()=>{setDisbursementEditing(false);setDestinationError("")}}>Cancel</button></div>
+         </div>:<>
+          <div className="emp201-dialog-facts"><div><small>Destination</small><b>{salaryDestinationLabel(person.salaryDestination)}</b></div><div><small>Account Holder</small><b>{person.salaryDestination?.accountName||"Not recorded"}</b></div><div><small>Review Status</small><b>{person.salaryDestination?.status||"Not recorded"}</b></div><div><small>Last Updated</small><b>{formatDate(person.salaryDestination?.updatedAt)}</b></div></div>
+          {person.salaryDestination&&<div className="emp201-destination-review"><label>HR Verification Notes / Reference<input value={destinationNote} onChange={e=>setDestinationNote(e.target.value)} placeholder="Confirm dummy recipient details and supporting reference"/></label>{destinationError&&<p className="error" role="alert">{destinationError}</p>}<div className="rev-actions"><button className="secondary" onClick={()=>checkDisbursement("Needs Correction")}>Needs Correction</button><button className="primary" onClick={()=>checkDisbursement("Demo Checked")}>Mark Checked (Demo)</button></div></div>}
+         </>}
+        </section>
         <div className="emp201-dialog-subhead"><h4>Salary Received & Releases</h4><label className="emp201-period-select">Period <select value={salaryPeriod} onChange={e=>setSalaryPeriod(e.target.value as "month"|"year"|"all")}><option value="month">This Month</option><option value="year">This Year</option><option value="all">All Time</option></select></label></div>
         <div className="emp201-dialog-totals"><div><small>Net Salary Received</small><strong>{money(totals.net)}</strong></div><div><small>Gross Earnings</small><b>{money(totals.gross)}</b></div><div><small>Total Deductions</small><b>{money(totals.deductions)}</b></div></div>
         <div className="emp201-dialog-subhead"><h4>Released Payroll History ({paidSalary.length})</h4><div className="rev-actions"><button type="button" className="secondary" onClick={()=>goToDocuments("Payslips")}><FileText size={14}/> View Payslips</button>{onOpenPayroll&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openPayRates()}}>View Pay Rates <ArrowRight size={14}/></button>}</div></div>
