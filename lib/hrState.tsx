@@ -7,7 +7,7 @@ export type EmployeeAssignment={
  id:string;effectiveDate:string;kind:"Initial Assignment"|"Transfer"|"Promotion"|"Reassignment";
  branch:string;department:string;position:string;memoId?:string;memoType?:string;
 };
-export type HRDocument={name:string;status:"Missing"|"Submitted"|"Verified"};
+export type HRDocument={name:string;status:"Missing"|"Submitted"|"Verified";fileName?:string};
 export type HRPerson=Person & {
  email:string;phone:string;hire:string;probation:number;sil:number;vil:number;
  documents:HRDocument[];timeline:string[];assignmentHistory?:EmployeeAssignment[];
