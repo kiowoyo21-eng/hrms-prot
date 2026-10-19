@@ -2,6 +2,8 @@
 import {useMemo,useState} from "react";
 import {ArrowLeft,ArrowRight,CalendarDays,Download,ExternalLink,FileSpreadsheet,FileText,Info,Landmark,Printer,Search,Users} from "lucide-react";
 import ReportsWorkspace from "./ReportsWorkspace";
+import ReportSpreadsheet from "./ReportSpreadsheet";
+import {buildHRReportSheets} from "../lib/reportSheetData";
 import HelpButton from "./HelpButton";
 import {php} from "../lib/people";
 import {useHR} from "../lib/hrState";
@@ -25,7 +27,8 @@ function printSampleReport(template:GovernmentReportTemplate,report:GovernmentRe
 }
 function AgencyIcon({agency}:{agency:GovernmentAgency}){switch(agency){case "DOLE":return <Landmark size={22}/>;case "SSS":return <Users size={22}/>;case "PhilHealth":return <FileText size={22}/>;case "Pag-IBIG":return <FileSpreadsheet size={22}/>;case "BIR":return <FileText size={22}/>;}}
 export default function ReportsLanding({branch,role}:{branch:Branch;role:Role}){
- const {data}=useHR();const [view,setView]=useState<"government"|"employee">("government");
+ const {data}=useHR();const [view,setView]=useState<"government"|"employee"|"workbook">("government");
+ const sheets=useMemo(()=>buildHRReportSheets(data,branch),[data,branch]);
  const [agency,setAgency]=useState<GovernmentAgency|"All">("All");
  const [reportSearch,setReportSearch]=useState("");
  const [selectedId,setSelectedId]=useState<GovernmentReportId|null>(null);
@@ -43,7 +46,8 @@ export default function ReportsLanding({branch,role}:{branch:Branch;role:Role}){
  if(role==="BM")return <section className="panel">Reports containing employee pay and government reporting data are restricted to authorized HR and Super Admin users.</section>;
  return <div className="gr-root">
   <div className="gr-module-head"><div><h2>Reports & Analytics</h2></div><HelpButton topic="reports" label="Info"/></div>
-  <div className="gr-main-tabs"><button type="button" className={view==="government"?"active":""} onClick={()=>setView("government")}><Landmark size={16}/> Government Reports</button><button type="button" className={view==="employee"?"active":""} onClick={()=>setView("employee")}><Users size={16}/> Employee Analytics</button></div>
+  <div className="gr-main-tabs"><button type="button" className={view==="government"?"active":""} onClick={()=>setView("government")}><Landmark size={16}/> Government Reports</button><button type="button" className={view==="employee"?"active":""} onClick={()=>setView("employee")}><Users size={16}/> Employee Analytics</button><button type="button" className={view==="workbook"?"active":""} onClick={()=>setView("workbook")}><FileSpreadsheet size={16}/> Spreadsheet Workspace</button></div>
+  {view==="workbook"&&<ReportSpreadsheet title="HRMS Report Workbook" sheets={sheets}/>}
   {view==="government"&&<>
     {chosen&&sample?<>
       <button type="button" className="gr-back" onClick={()=>setSelectedId(null)}><ArrowLeft size={15}/> Back to Government Reports</button>
@@ -52,6 +56,7 @@ export default function ReportsLanding({branch,role}:{branch:Branch;role:Role}){
         <div className="gr-period-bar"><label>Reporting Year<select aria-label="Reporting year" value={year} onChange={e=>{setYear(Number(e.target.value));setPage(1)}}>{[2025,2026].map(y=><option key={y} value={y}>{y}</option>)}</select></label>{chosen.period!=="Annual"&&<label>Month<select aria-label="Reporting month" value={month} onChange={e=>{setMonth(Number(e.target.value));setPage(1)}}>{months.map((m,i)=><option key={m} value={i+1}>{m}</option>)}</select></label>}<span className="gr-period-tag"><CalendarDays size={15}/>{chosen.period} reference</span></div>
         <div className="gr-metrics">{sample.summary.map(s=><div key={s.label}><small>{s.label}</small><strong>{s.value}</strong></div>)}</div>
         <div className="gr-table-title"><h4>Sample Report Preview</h4><div className="gr-buttons"><button type="button" className="secondary" onClick={()=>exportGovernmentSampleCsv(chosen,sample,year,month)}><Download size={15}/> Export Sample CSV</button><button type="button" className="secondary" onClick={()=>printSampleReport(chosen,sample,branch,year,month)}><Printer size={15}/> Print / PDF Preview</button></div></div>
+        <ReportSpreadsheet title="Government Sample Worksheet" sheets={[{id:`government-${chosen.id}`,title:chosen.title,columns:sample.columns.map(label=>({label})),rows:sample.rows,note:`FICTIONAL SAMPLE — NOT FOR FILING. ${sample.note}`}]}/>
         <div className="gr-data-table"><table><thead><tr>{sample.columns.map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{visible.map((record,index)=><tr key={`${chosen.id}-${(currentPage-1)*pageSize+index}`}>{record.map((cell,i)=><td key={i}>{cell}</td>)}</tr>)}{!visible.length&&<tr><td colSpan={sample.columns.length} className="gr-no-data">No sample entries for the selected branch/period.</td></tr>}</tbody></table></div>
         <div className="gr-pagination"><label>Rows <select aria-label="Rows per page" value={pageSize} onChange={e=>{setPageSize(Number(e.target.value));setPage(1)}}>{[10,20,50].map(n=><option key={n}>{n}</option>)}</select></label><span>{sample.rows.length} rows · Page {currentPage} / {totalPages}</span><button className="secondary" disabled={currentPage===1} onClick={()=>setPage(p=>Math.max(1,p-1))}>Previous</button><button className="secondary" disabled={currentPage===totalPages} onClick={()=>setPage(p=>Math.min(totalPages,p+1))}>Next</button></div>
         <div className="gr-two-info"><div><h4>Data Needed for Actual Filing</h4>{chosen.requires.map(x=><div className="gr-check-row" key={x}><span aria-hidden="true" className="gr-dot"/>{x}</div>)}</div><div><h4>Official Reference</h4><a href={chosen.source} target="_blank" rel="noopener noreferrer">{chosen.sourceName} <ExternalLink size={13}/></a><p>{chosen.notes}</p></div></div>
