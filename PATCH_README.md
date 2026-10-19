@@ -1,26 +1,20 @@
-# HRMS Vercel ExcelJS column-index type fix
+# HRMS Vercel TypeScript Fix — DOCX list bullets
 
-## Issue
-Vercel Next.js 15.5.27 TypeScript build failed in `lib/sheetExcel.ts` at `c.col > GRID_MAX_COLS`:
-`Operator '>' cannot be applied to types 'string' and 'number'.`
+This patch addresses the Vercel build failure at `lib/studio/exportDocx.ts`:
 
-ExcelJS `Cell.col` and `Cell.row` are typed as strings by its address interface. The ExcelJS Row.eachCell callback supplies an additional numeric `colNumber` parameter; `row.number` is a numeric row index.
-
-## What changed
-Only `lib/sheetExcel.ts` is modified:
-- Keeps `row.number` from the prior patch.
-- Reads numeric column index from `row.eachCell({includeEmpty:false}, (c, columnNumber) => ...)`.
-- Uses `columnNumber` for limits and `columnLabel(columnNumber - 1)` for cell references and format keys.
-- Does not change formula evaluation, approved working copies, or payroll records.
-
-## Install
-Extract this ZIP to your existing HRMS project root, overwrite `lib/sheetExcel.ts` and run:
-
-```sh
-npm run build
+```
+Type error: Property 'level' is missing in type '{ indent: number; }'
 ```
 
-Then commit and push if the build succeeds.
+The `docx` library expects `bullet: { level: number }`, not `bullet: { indent: number }`.
+The exporter now sets `bullet: { level: 0 }` for list-item paragraphs.
 
-## Verification
-Source syntax parsed without errors. The numeric callback signature was checked against ExcelJS type declarations. Full Next.js production build was **not** run in this environment (npm registry unavailable).
+## Installation
+1. Extract this ZIP at the root of your current HRMS project.
+2. Overwrite `lib/studio/exportDocx.ts`.
+3. Run `npm run build`, then commit and push after confirming the build passes.
+
+No new dependencies. The patch does not alter HRMS employee, payroll, file-storage or admin permission logic.
+
+## Verification scope
+This corrects the exact TypeScript type mismatch reported by Vercel. The source passed a TypeScript syntax/transpilation check and a targeted option check. A full Next.js build was not available in this environment, so further errors may still surface during Vercel's type check.
