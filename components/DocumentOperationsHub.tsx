@@ -1,6 +1,6 @@
 "use client";
 import {useState} from "react";
-import {ArrowLeft,ArrowRight,Folders,Files,FileCheck2} from "lucide-react";
+import {ArrowLeft,ArrowRight,Folders,Files,FileCheck2,ExternalLink} from "lucide-react";
 import DocumentWorkspace from "./DocumentWorkspace";
 import TemplateLibraryWorkspace from "./TemplateLibraryWorkspace";
 import DocumentIntake from "./DocumentIntake";
@@ -16,7 +16,7 @@ export default function DocumentOperationsHub({role,branch}:{role:Role;branch:Br
  const [section,setSection]=useState<Section|null>(null);
  const selected=spaces.find(s=>s.id===section);
  return <div className="docops-root">
-  {section===null?<><div className="docops-intro"><p>Select a workspace to manage HR records and templates.</p></div><div className="docops-cards">{spaces.map(({id,label,hint,Icon,tone})=><button key={id} type="button" className="docops-card" onClick={()=>setSection(id)}><span className={`docops-visual ${tone}`}><Icon size={34} strokeWidth={1.7}/></span><span className="docops-card-body"><strong>{label}</strong><small>{hint}</small><ArrowRight size={16}/></span></button>)}</div><p className="docops-hint">Employee signing is initiated inside Onboarding, Incident Reports, Asset Accountability, and Payslips—not through a separate signing module.</p></>:
+  {section===null?<><div className="docops-intro"><p>Select a workspace to manage HR records and templates.</p><a className="secondary" href="/studio" target="_blank" rel="noopener noreferrer" onClick={e=>{const win=window.open("/studio","_blank","popup=yes,width=1540,height=960,resizable=yes,scrollbars=yes");if(win){e.preventDefault();win.focus()}}} style={{display:"inline-flex",gap:8,alignItems:"center",marginTop:12}}><ExternalLink size={15}/> Open full Document Studio (separate window)</a></div><div className="docops-cards">{spaces.map(({id,label,hint,Icon,tone})=><button key={id} type="button" className="docops-card" onClick={()=>setSection(id)}><span className={`docops-visual ${tone}`}><Icon size={34} strokeWidth={1.7}/></span><span className="docops-card-body"><strong>{label}</strong><small>{hint}</small><ArrowRight size={16}/></span></button>)}</div><p className="docops-hint">Employee signing is initiated inside Onboarding, Incident Reports, Asset Accountability, and Payslips—not through a separate signing module.</p></>:
   <><div className="docops-backbar"><button className="secondary" type="button" onClick={()=>setSection(null)}><ArrowLeft size={15}/> All Document Workspaces</button><strong>{selected?.label}</strong></div>{section==="library"&&<DocumentWorkspace branch={branch} role={role}/>}{section==="templates"&&<TemplateLibraryWorkspace role={role}/>}{section==="verification"&&<DocumentIntake branch={branch} role={role}/>}</>}
  </div>
 }
