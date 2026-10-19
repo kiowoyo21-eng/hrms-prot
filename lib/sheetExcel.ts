@@ -37,14 +37,14 @@ export async function readExcelFile(file:File):Promise<ImportedTab[]>{
   const cells:ImportedTab["cells"]=[],formats:ImportedTab["formats"]={},warnings:string[]=[];
   ws.eachRow({includeEmpty:false},row=>{
    const rowNumber=row.number; // ExcelJS Row.number is numeric; Cell.row is typed as string.
-   row.eachCell({includeEmpty:false},c=>{
-   if(rowNumber>GRID_MAX_ROWS||c.col>GRID_MAX_COLS)return;
-   const val=parseValue(c.value);if(val){if(val.length>1500)throw Error(`Cell ${c.address} exceeds 1,500 characters.`);cells.push({cell:`${columnLabel(c.col-1)}${rowNumber}`,value:val});}
+   row.eachCell({includeEmpty:false},(c,columnNumber)=>{
+   if(rowNumber>GRID_MAX_ROWS||columnNumber>GRID_MAX_COLS)return;
+   const val=parseValue(c.value);if(val){if(val.length>1500)throw Error(`Cell ${c.address} exceeds 1,500 characters.`);cells.push({cell:`${columnLabel(columnNumber-1)}${rowNumber}`,value:val});}
    const format:CellAppearance={};if(c.font?.bold)format.bold=true;if(c.font?.italic)format.italic=true;if(c.font?.underline)format.underline=true;
    const color=asHex(c.font?.color?.argb);if(color)format.color=color;
    const bg=asHex(c.fill?.type==="pattern"&&c.fill.pattern==="solid"?c.fill.fgColor?.argb:undefined);if(bg)format.background=bg;
    if(c.alignment?.horizontal&&["left","center","right"].includes(c.alignment.horizontal))format.align=c.alignment.horizontal as CellAppearance["align"];
-   if(Object.keys(format).length)formats[`${columnLabel(c.col-1)}${rowNumber}`]=format;
+   if(Object.keys(format).length)formats[`${columnLabel(columnNumber-1)}${rowNumber}`]=format;
    });
   });
   if(cells.length>GRID_BATCH_LIMIT)throw Error(`"${ws.name}" has over ${GRID_BATCH_LIMIT.toLocaleString()} populated cells. Split into smaller imports.`);
