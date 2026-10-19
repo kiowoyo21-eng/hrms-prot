@@ -15,6 +15,9 @@ export type HRPerson=Person & {
  birthDate?:string;civilStatus?:string;address?:string;
  emergencyName?:string;emergencyRelationship?:string;emergencyPhone?:string;
  salaryDestination?:SalaryDestination;
+ /** Optional extended 201 fields; unset values are never replaced with fictional government IDs. */
+ sssNumber?:string;philhealthNumber?:string;pagibigNumber?:string;tinNumber?:string;
+ monthlyWorkDays?:number;hoursPerDay?:number;nationality?:string;placeOfBirth?:string;middleName?:string;suffix?:string;emergencyAddress?:string;
  onboardingApplicantId?:string;
 };
 export type PremiumProfile={ot:number;rdw:number;rdot:number;regular:number;special:number;effective:string;reason:string};

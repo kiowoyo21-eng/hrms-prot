@@ -11,17 +11,18 @@ export const modules = [
  {id:"ir",name:"Incident Reports",icon:"FileWarning",count:4},
  {id:"assets",name:"Assets & Devices",icon:"Laptop",count:2},
  {id:"compliance",name:"Government Compliance",icon:"Landmark",count:7},
- {id:"documents",name:"Documents & Templates",icon:"Files",count:0},
+ {id:"documents",name:"Employee Documents",icon:"Files",count:0},
  {id:"filters",name:"Reports & Analytics",icon:"SlidersHorizontal",count:0},
+ {id:"drive",name:"HRMS Drive",icon:"HardDrive",count:0},
  {id:"spreadsheets",name:"Spreadsheets",icon:"FileSpreadsheet",count:0},
- {id:"studio",name:"Document Studio",icon:"FilePenLine",count:0},
+ {id:"studio",name:"Document Library",icon:"FilePenLine",count:0},
  {id:"audit",name:"Audit Logs",icon:"ScrollText",count:2},
  {id:"settings",name:"Settings",icon:"Settings",count:0}
 ] as const;
 export type ModuleId = typeof modules[number]["id"] | "loans"; // internal legacy alert key; loans workspace now belongs under payroll
 export const permissions: Record<Role, ModuleId[]> = {
  "Super Admin":modules.map(m=>m.id),
- "HR": ["dashboard","employees","lifecycle","payroll","leave","ir","assets","compliance","documents","filters","spreadsheets","studio","audit","settings"],
+ "HR": ["dashboard","employees","lifecycle","payroll","leave","ir","assets","compliance","documents","filters","drive","spreadsheets","studio","audit","settings"],
  "BM": ["dashboard","submissions","lifecycle","leave","ir","settings"]
 };
 export const demoAccounts = [{username:"admin",password:"admin12345",role:"Super Admin" as Role},{username:"hraccount",password:"hraccount12345",role:"HR" as Role},{username:"bmaccount",password:"bm12345",role:"BM" as Role}];

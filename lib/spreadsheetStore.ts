@@ -5,7 +5,7 @@ import {demoAccounts,type Role} from "./mock";
 
 export type SheetActor={username:string;role:Role};
 export type EditRequest={id:string;sheetId:string;sheetTitle:string;requester:string;reason:string;status:"pending"|"approved"|"denied"|"revoked";requestedAt:string;decidedAt?:string;decidedBy?:string;decisionNote?:string;expiresAt?:string};
-export type WorkingSheet={cells:Record<string,string>;extraRows:number;extraCols:number;snapshot?:SheetBaseline&{capturedAt:string}};
+export type WorkingSheet={cells:Record<string,string>;extraRows:number;extraCols:number;snapshot?:SheetBaseline&{capturedAt:string};formats?:Record<string,CellAppearance>};
 export type SheetBaseline={columns:string[];rows:string[][]};
 export type SheetAudit={id:string;date:string;actor:string;action:string;sheetId:string;detail:string};
 export type LocalSheetState={requests:EditRequest[];sheets:Record<string,WorkingSheet>;customSheets:{id:string;title:string}[];audit:SheetAudit[]};
@@ -73,3 +73,12 @@ export function createBlankSheet(actor:SheetActor,title:string){
  const name=title.trim();if(name.length<3||name.length>60)throw Error("Sheet name must be 3–60 characters.");let added="";
  commit(actor,s=>{if(s.customSheets.length>=20)throw Error("Maximum of 20 custom worksheets.");if(s.customSheets.some(x=>x.title.toLowerCase()===name.toLowerCase()))throw Error("A worksheet with this name exists.");added=`custom-${id()}`;s.customSheets.push({id:added,title:name});log(s,actor.username,"Created blank worksheet",added,name)});return added;
 }
+
+/** Per-cell appearance lives in the approved working copy, not HR payroll source. */
+export type CellAppearance={bold?:boolean;italic?:boolean;underline?:boolean;align?:"left"|"center"|"right";background?:string;color?:string};
+export function setCellAppearance(actor:SheetActor,sheetId:string,cell:string,appearance:CellAppearance,baseline?:SheetBaseline){
+ if(!/^[A-Z]{1,2}[1-9]\d{0,3}$/.test(cell))throw Error("Invalid cell address.");
+ return commit(actor,s=>{requireGrant(s,actor,sheetId);const sheet=s.sheets[sheetId]||{cells:{},extraRows:0,extraCols:0};if(!sheet.snapshot&&baseline)sheet.snapshot={columns:baseline.columns,rows:baseline.rows,capturedAt:iso()};sheet.formats={...(sheet.formats||{}),[cell]:{...(sheet.formats?.[cell]||{}),...appearance}};s.sheets[sheetId]=sheet;log(s,actor.username,"Formatted cell",sheetId,`${cell}: ${Object.keys(appearance).join(", ")}`)});
+}
+export function renameCustomSheet(actor:SheetActor,sheetId:string,newName:string){if(actor.role!=="Super Admin")throw Error("Only Super Admin can rename worksheets.");const name=newName.trim();if(name.length<3||name.length>60)throw Error("Name must be 3–60 characters.");commit(actor,s=>{const sheet=s.customSheets.find(x=>x.id===sheetId);if(!sheet)throw Error("Only custom sheets may be renamed.");if(s.customSheets.some(x=>x!==sheet&&x.title.toLowerCase()===name.toLowerCase()))throw Error("Worksheet name exists.");sheet.title=name;log(s,actor.username,"Renamed worksheet",sheetId,name)})}
+export function deleteCustomSheet(actor:SheetActor,sheetId:string){if(actor.role!=="Super Admin")throw Error("Only Super Admin can delete custom worksheets.");commit(actor,s=>{const sheet=s.customSheets.find(x=>x.id===sheetId);if(!sheet)throw Error("Only custom sheets can be deleted.");s.customSheets=s.customSheets.filter(x=>x.id!==sheetId);delete s.sheets[sheetId];s.requests=s.requests.map(r=>r.sheetId===sheetId&&r.status==="approved"?{...r,status:"revoked" as const}:r);log(s,actor.username,"Deleted worksheet",sheetId,sheet.title)})}

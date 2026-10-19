@@ -7,12 +7,13 @@ import type {Branch,Role} from "../lib/mock";
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
 import HelpButton from "./HelpButton";
+import EmployeeFullRecord,{toEmployeeFullDraft,type EmployeeFullDraft} from "./workspace/EmployeeFullRecord";
 import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
 import {basicRateOnDate,type PayRateChange} from "../lib/payrollConfig";
 import {emptySalaryDestination,salaryChannels,salaryDestinationLabel,type SalaryDestination,type SalaryChannel} from "../lib/salaryDisbursement";
 
 type Action="Evaluate"|"Regularize"|"Promote"|"Transfer"|"Offboard";
-type PersonalDraft=Pick<HRPerson,"name"|"gender"|"email"|"phone"|"birthDate"|"civilStatus"|"address"|"emergencyName"|"emergencyRelationship"|"emergencyPhone">;
+type PersonalDraft=EmployeeFullDraft;
 
 const stages:Record<Action,string[]>={
  Evaluate:["Assessment details","Evaluator recommendation","Review & record"],
@@ -30,13 +31,10 @@ const emptyForm={
  name:"",branch:"" as Shop|"",department:"Operations",position:"",gender:"Prefer not to say",
  status:"Probationary",hire:"",salaryType:"Daily" as "Daily"|"Monthly",
  rate:"",probation:"6",sil:"5",vil:"0",email:"",phone:"",birthDate:"",
- civilStatus:"",address:"",emergencyName:"",emergencyRelationship:"",emergencyPhone:""
+ civilStatus:"",address:"",emergencyName:"",emergencyRelationship:"",emergencyPhone:"",
+ monthlyWorkDays:"",hoursPerDay:"",sssNumber:"",philhealthNumber:"",pagibigNumber:"",tinNumber:"",nationality:"",placeOfBirth:"",middleName:"",suffix:"",emergencyAddress:""
 };
-const toPersonalDraft=(p:HRPerson):PersonalDraft=>({
- name:p.name,gender:p.gender,email:p.email,phone:p.phone,birthDate:p.birthDate||"",
- civilStatus:p.civilStatus||"",address:p.address||"",emergencyName:p.emergencyName||"",
- emergencyRelationship:p.emergencyRelationship||"",emergencyPhone:p.emergencyPhone||""
-});
+const toPersonalDraft=toEmployeeFullDraft;
 const empty=(v?:string)=>v?.trim()||"Not recorded";
 const formatDate=(v?:string)=>{
  if(!v)return "Not recorded";
@@ -226,6 +224,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const startEdit=()=>{if(!person)return;setTab("Profile");setPersonal(toPersonalDraft(person));setEmploymentDraft({probation:person.probation,sil:person.sil,vil:person.vil});setEditing(true);setMessage("")};
  const persistProfile=()=>{
   if(!draft||!draft.name.trim()){setMessage("Employee full name is required.");return}
+  if((draft.monthlyWorkDays!==undefined&&(!Number.isFinite(draft.monthlyWorkDays)||draft.monthlyWorkDays<=0||draft.monthlyWorkDays>31))||(draft.hoursPerDay!==undefined&&(!Number.isFinite(draft.hoursPerDay)||draft.hoursPerDay<=0||draft.hoursPerDay>24))){setMessage("Invalid divisor or hours per day.");return}
   updatePerson(p=>({...p,...draft,...(employmentDraft||{}),hire:p.hire,name:draft.name.trim(),timeline:[`${new Date().toISOString().slice(0,10)} · Personal details updated`,...p.timeline]}));
   setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("Employee details saved to this browser.");
  };
@@ -245,6 +244,8 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   if(!form.branch||!form.name.trim()||!form.position.trim()||!form.hire||!(Number(form.rate)>0)){
    setMessage("Complete full name, assigned branch, position, initial hire date and basic salary.");return;
   }
+  if(form.monthlyWorkDays&&!(Number(form.monthlyWorkDays)>0&&Number(form.monthlyWorkDays)<=31)){setMessage("Monthly working-day divisor must be between 1 and 31.");return}
+  if(form.hoursPerDay&&!(Number(form.hoursPerDay)>0&&Number(form.hoursPerDay)<=24)){setMessage("Working hours must be between 1 and 24.");return}
   const prefix=form.branch.startsWith("MM")?"MM":"UC";
   const max=Math.max(0,...data.people.filter(p=>p.id.startsWith(prefix+"-")).map(p=>Number(p.id.split("-")[1])||0));
   const id=`${prefix}-${String(max+1).padStart(4,"0")}`;
@@ -255,7 +256,10 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
    sil:Number(form.sil),vil:Number(form.vil),email:form.email,phone:form.phone,
    birthDate:form.birthDate,civilStatus:form.civilStatus,address:form.address,
    emergencyName:form.emergencyName,emergencyRelationship:form.emergencyRelationship,
-   emergencyPhone:form.emergencyPhone,
+   emergencyPhone:form.emergencyPhone,emergencyAddress:form.emergencyAddress,
+   middleName:form.middleName,suffix:form.suffix,nationality:form.nationality,placeOfBirth:form.placeOfBirth,
+   sssNumber:form.sssNumber,philhealthNumber:form.philhealthNumber,pagibigNumber:form.pagibigNumber,tinNumber:form.tinNumber,
+   monthlyWorkDays:form.monthlyWorkDays?Number(form.monthlyWorkDays):undefined,hoursPerDay:form.hoursPerDay?Number(form.hoursPerDay):undefined,
    documents:["Resume","Medical Clearance","Employment Contract","NDA / Company Policies","Government IDs"].map(name=>({name,status:"Missing"})),
    timeline:[`${form.hire} · Employee registered at ${form.branch}`],assignmentHistory:[{id:`initial-${id}`,effectiveDate:form.hire,kind:"Initial Assignment",branch:form.branch,department:form.department,position:form.position}]
   };
@@ -332,11 +336,17 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      <label>Basic rate ({form.salaryType==="Daily"?"per day":"per month"}) *<input required type="number" min="1" value={form.rate} onChange={e=>setForm(s=>({...s,rate:e.target.value}))}/></label>
      <label>SIL allocation (days)<input type="number" min="0" value={form.sil} onChange={e=>setForm(s=>({...s,sil:e.target.value}))}/></label>
      <label>VIL allocation (days)<input type="number" min="0" value={form.vil} onChange={e=>setForm(s=>({...s,vil:e.target.value}))}/></label>
+     <label>Monthly divisor (working days)<input type="number" min="1" max="31" step="0.5" value={form.monthlyWorkDays} onChange={e=>setForm(s=>({...s,monthlyWorkDays:e.target.value}))}/></label>
+     <label>Working hours per day<input type="number" min="1" max="24" step="0.5" value={form.hoursPerDay} onChange={e=>setForm(s=>({...s,hoursPerDay:e.target.value}))}/></label>
     </div></div>
     <div className="employee201-formsection"><h4>Emergency Contact</h4><div className="rev-form">
      <label>Contact person's name<input value={form.emergencyName} onChange={e=>setForm(s=>({...s,emergencyName:e.target.value}))}/></label>
      <label>Relationship<input value={form.emergencyRelationship} onChange={e=>setForm(s=>({...s,emergencyRelationship:e.target.value}))}/></label>
      <label>Emergency phone<input type="tel" value={form.emergencyPhone} onChange={e=>setForm(s=>({...s,emergencyPhone:e.target.value}))}/></label>
+     <label>Emergency address<input value={form.emergencyAddress} onChange={e=>setForm(s=>({...s,emergencyAddress:e.target.value}))}/></label>
+    </div></div>
+    <div className="employee201-formsection"><h4>Additional Personal & Government Information</h4><div className="rev-form">
+     {([ ["middleName","Middle name"],["suffix","Suffix"],["nationality","Nationality"],["placeOfBirth","Place of birth"],["sssNumber","SSS Number"],["philhealthNumber","PhilHealth Number"],["pagibigNumber","Pag-IBIG MID"],["tinNumber","TIN"] ] as ["middleName"|"suffix"|"nationality"|"placeOfBirth"|"sssNumber"|"philhealthNumber"|"pagibigNumber"|"tinNumber",string][]).map(([key,label])=><label key={key}>{label}<input value={form[key]} maxLength={100} onChange={e=>setForm(s=>({...s,[key]:e.target.value}))}/></label>)}
     </div></div>
     <p className="muted">Personnel records are stored in this browser for frontend review only. Do not enter real private employee data until a secure backend is available.</p>
     <div className="rev-actions"><button type="submit" className="primary">Create Employee Record</button><button type="button" className="secondary" onClick={()=>setAdd(false)}>Cancel</button></div>
@@ -426,43 +436,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      <nav className="rev-tabs employee201-profiletabs" aria-label="Employee 201 tabs">{profileSections.map(({id,label})=><button type="button" key={id} className={tab===id?"active":""} aria-current={tab===id?"page":undefined} onClick={()=>{setTab(id);setMessage("")}}>{label}</button>)}</nav>
      {tab==="Profile"&&<nav className="emp201-jumplinks" aria-label="Jump to employee profile section">{[["Employee Details","personal"],["Employment","employment"],["Salary & Benefits","compensation"],["Reviews","evaluations"],["History","history"],["Clearance & Assets","clearance"],["Employee Actions","actions"]].map(([label,id])=><a key={id} href={`#emp201-${id}`}>{label}</a>)}</nav>}
      <div className="rev-detail employee201-detail">
-      {tab==="Profile"&&<div className="emp201-card-grid">
-       <section className="employee201-profile-section emp201-summary-card" id="emp201-personal">
-        <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("employee")} aria-label="Open full employee details and document logs"><span><UserRound size={17}/> Employee Details</span><span>View Details <ArrowRight size={14}/></span></button>
-        {editing&&draft?<form onSubmit={savePersonal} className="rev-form emp201-summary-edit">
-         <label>Full name *<input required value={draft.name} onChange={e=>setPersonal(p=>p?{...p,name:e.target.value}:p)}/></label>
-         <label>Gender<select value={draft.gender} onChange={e=>setPersonal(p=>p?{...p,gender:e.target.value}:p)}>{["Male","Female","Prefer not to say"].map(x=><option key={x}>{x}</option>)}</select></label>
-         <label>Birth date<input type="date" value={draft.birthDate||""} onChange={e=>setPersonal(p=>p?{...p,birthDate:e.target.value}:p)}/></label>
-         <label>Civil status<select value={draft.civilStatus||""} onChange={e=>setPersonal(p=>p?{...p,civilStatus:e.target.value}:p)}><option value="">Select status</option>{["Single","Married","Widowed","Separated","Other"].map(x=><option key={x}>{x}</option>)}</select></label>
-         <label>Contact number<input type="tel" value={draft.phone} onChange={e=>setPersonal(p=>p?{...p,phone:e.target.value}:p)}/></label>
-         <label>Email address<input type="email" value={draft.email} onChange={e=>setPersonal(p=>p?{...p,email:e.target.value}:p)}/></label>
-         <label className="employee201-wide">Residential address<textarea rows={2} value={draft.address||""} onChange={e=>setPersonal(p=>p?{...p,address:e.target.value}:p)}/></label>
-         <label>Emergency contact name<input value={draft.emergencyName||""} onChange={e=>setPersonal(p=>p?{...p,emergencyName:e.target.value}:p)}/></label>
-         <label>Relationship<input value={draft.emergencyRelationship||""} onChange={e=>setPersonal(p=>p?{...p,emergencyRelationship:e.target.value}:p)}/></label>
-         <label>Emergency phone<input type="tel" value={draft.emergencyPhone||""} onChange={e=>setPersonal(p=>p?{...p,emergencyPhone:e.target.value}:p)}/></label>
-        </form>:<button type="button" className="emp201-cardbody" onClick={()=>setDetailKind("employee")} aria-label="View employee personal, contact and document records"><span className="emp201-card-fact"><small>Gender</small><b>{person.gender}</b></span><span className="emp201-card-fact"><small>Birth Date</small><b>{formatDate(person.birthDate)}</b></span><span className="emp201-card-fact"><small>Phone</small><b>{empty(person.phone)}</b></span><span className="emp201-card-fact"><small>Email</small><b>{empty(person.email)}</b></span></button>}
-       </section>
-       <section className="employee201-profile-section emp201-summary-card" id="emp201-employment">
-        <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("employment")} aria-label="Open full employment details and assignment history"><span><BriefcaseBusiness size={17}/> Employment Details</span><span>View History <ArrowRight size={14}/></span></button>
-        <div className="emp201-cardbody emp201-cardbody-static">
-         <div className="emp201-card-fact"><small>Branch</small><button type="button" className="emp201-inline-link" onClick={()=>setHistoryKind("branch")}>{person.branch}<ArrowRight size={12}/></button></div>
-         <div className="emp201-card-fact"><small>Department & Position</small><button type="button" className="emp201-inline-link" onClick={()=>setHistoryKind("role")}>{person.department} — {person.position}<ArrowRight size={12}/></button></div>
-         <div className="emp201-card-fact"><small>Hire Date <ShieldCheck size={11}/></small><b>{formatDate(person.hire)}</b></div>
-         <div className="emp201-card-fact"><small>Employment Status</small><b>{person.status}</b></div>
-        </div>
-        {editing&&employmentDraft&&<div className="rev-form emp201-edit-inline"><label>Probation Months<input type="number" min="0" max="12" value={employmentDraft.probation} onChange={e=>setEmploymentDraft(v=>v?{...v,probation:Number(e.target.value)}:v)}/></label><label>SIL Days<input type="number" min="0" value={employmentDraft.sil} onChange={e=>setEmploymentDraft(v=>v?{...v,sil:Number(e.target.value)}:v)}/></label><label>VIL Days<input type="number" min="0" value={employmentDraft.vil} onChange={e=>setEmploymentDraft(v=>v?{...v,vil:Number(e.target.value)}:v)}/></label></div>}
-       </section>
-       <section className="employee201-profile-section emp201-summary-card" id="emp201-compensation">
-        <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("salary")} aria-label="Open salary, pay rate and benefits history"><span><Wallet size={17}/> Salary & Benefits</span><span>View Details <ArrowRight size={14}/></span></button>
-        <button type="button" className="emp201-cardbody" onClick={()=>setDetailKind("salary")} aria-label="View full salary and benefits details">
-         <span className="emp201-card-fact"><small>Basic Rate</small><b>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</b></span>
-         <span className="emp201-card-fact"><small>Salary Type</small><b>{person.salaryType}</b></span>
-         <span className="emp201-card-fact"><small>SIL</small><b>{person.sil} days</b></span>
-         <span className="emp201-card-fact"><small>VIL</small><b>{person.vil} days</b></span>
-         <span className="emp201-card-fact"><small>Salary Destination</small><b>{person.salaryDestination?person.salaryDestination.channel:"Not recorded"}</b></span>
-        </button>
-        <button type="button" className="emp201-salary-summary" onClick={()=>setDetailKind("salary")}><span><small>Total Salary Received · {salaryPeriod==="all"?"All Time":salaryPeriod==="month"?"This Month":"This Year"}</small><b>{money(totals.net)}</b></span><span>View History <ArrowRight size={14}/></span></button>
-       </section>
+      {tab==="Profile"&&<><EmployeeFullRecord person={person} editing={editing} draft={personal} onDraft={setPersonal} probation={employmentDraft?.probation??person.probation} sil={employmentDraft?.sil??person.sil} vil={employmentDraft?.vil??person.vil} rateChanges={data.payrollConfig?.rateChanges||[]} rates={data.rates} onOpenPayroll={openPayRates}/><div className="emp201-card-grid">
        <section className="employee201-profile-section emp201-summary-card" id="emp201-evaluations">
         <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("reviews")}><span><ClipboardList size={17}/> Performance Reviews <i className="emp201-heading-count">{evaluations.length}</i></span><span>View Details <ArrowRight size={14}/></span></button>
         <button type="button" className="emp201-card-excerpt" onClick={()=>setDetailKind("reviews")}><small>{evaluations.length?"Latest assessment":"Assessment status"}</small><b>{evaluations[0]||"No performance reviews recorded"}</b></button>
@@ -475,7 +449,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("assets")}><span><Laptop size={17}/> Clearance & Assigned Assets <i className="emp201-heading-count">{assignedAssets.length}</i></span><span>View Assets <ArrowRight size={14}/></span></button>
         <button type="button" className="emp201-card-excerpt" onClick={()=>setDetailKind("assets")}><small>Employee status · {person.status}</small><b>{assignedAssets.length} outstanding device{assignedAssets.length===1?"":"s"}{assignedAssets.length>0?` · ${assignedAssets[0].name}`:""}</b></button>
        </section>
-      </div>}
+      </div></>}
       {tab==="Documents"&&<EmployeeDocumentLibrary person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} requestedFolder={requestedFolder} onFolderHandled={()=>setRequestedFolder(null)} onUpload={(folder,file,memoId)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId}]}));return id}}/>}
      </div>
      {tab==="Profile"&&editing&&<div className="emp201-savebar"><span>Editing employee information · Save changes before leaving this profile</span><div className="rev-actions"><button type="button" className="secondary" onClick={()=>{setEditing(false);setPersonal(null);setEmploymentDraft(null)}}>Cancel</button><button type="button" className="primary" onClick={persistProfile}>Save Profile Changes</button></div></div>}
