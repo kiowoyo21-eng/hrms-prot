@@ -1,22 +1,19 @@
-# Vercel Next.js 15 Spreadsheet PageProps Build Fix
+# HRMS Vercel — ExcelJS TypeScript Build Fix
 
-Incremental patch for HRMS Workspace V3 (after V1 + V2 + V3 patches).
+## Error addressed
 
-## What changed
-- `app/spreadsheets/page.tsx`: simple Next.js route with no custom props.
-- `app/spreadsheets/[id]/page.tsx`: dynamic route renders shared client component, not an app route module.
-- `components/SpreadsheetPageClient.tsx`: migrated original auth/session/UI code; still accepts optional `initialSheetId`.
+`lib/sheetExcel.ts:39` — `Operator '>' cannot be applied to types 'string' and 'number'` during Next.js 15 production type checking.
+
+## Change
+
+Use ExcelJS `row.number` (numeric) rather than `c.row` (typed string) when checking Excel row limits and generating cell addresses/format indexes. No feature, user data, or package.json changes.
 
 ## Apply
-Copy the listed files into the HRMS repository root, preserving paths. Replace both existing page files.
 
-```bash
-npm run build
-git add app/spreadsheets/page.tsx 'app/spreadsheets/[id]/page.tsx' components/SpreadsheetPageClient.tsx
-git commit -m "fix: Next.js spreadsheet route PageProps typing"
-git push
-```
+1. Extract this ZIP into the root of your HRMS repository.
+2. Overwrite `lib/sheetExcel.ts`.
+3. Run `npm run build` locally, then commit and redeploy.
 
-No new dependencies or changes to spreadsheet data or edit permissions.
+## Verification
 
-The Vercel log showed Webpack compilation passed before Next's page prop/type validation rejected `initialSheetId` on the route entry. CSS Autoprefixer warnings are separate, non-fatal warnings.
+Source checked for consistent row-index usage, and static syntax checked. The full Next.js build was **not** verified in the testing environment because dependency installation timed out. This patch addresses the **current** Vercel error, not a guaranteed clean build of all remaining files.
