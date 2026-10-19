@@ -47,7 +47,7 @@ export default function ReportsLanding({branch,role}:{branch:Branch;role:Role}){
  return <div className="gr-root">
   <div className="gr-module-head"><div><h2>Reports & Analytics</h2></div><HelpButton topic="reports" label="Info"/></div>
   <div className="gr-main-tabs"><button type="button" className={view==="government"?"active":""} onClick={()=>setView("government")}><Landmark size={16}/> Government Reports</button><button type="button" className={view==="employee"?"active":""} onClick={()=>setView("employee")}><Users size={16}/> Employee Analytics</button><button type="button" className={view==="workbook"?"active":""} onClick={()=>setView("workbook")}><FileSpreadsheet size={16}/> Spreadsheet Workspace</button></div>
-  {view==="workbook"&&<ReportSpreadsheet title="HRMS Report Workbook" sheets={sheets}/>}
+  {view==="workbook"&&<><div className="sw-launch"><div><b>Open the editable spreadsheet workspace</b><p>Google Sheets–style grid in a separate browser tab. Editing requires an HR request approved by Super Admin; source reports remain unchanged.</p></div><a href="/spreadsheets" target="_blank" rel="noopener noreferrer"><FileSpreadsheet size={16}/> Open Spreadsheets ↗</a></div><ReportSpreadsheet title="Read-only report preview" sheets={sheets}/></>}
   {view==="government"&&<>
     {chosen&&sample?<>
       <button type="button" className="gr-back" onClick={()=>setSelectedId(null)}><ArrowLeft size={15}/> Back to Government Reports</button>
