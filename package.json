@@ -38,7 +38,8 @@
     "pdfjs-dist": "^4.10.38",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "exceljs": "^4.4.0"
   },
   "devDependencies": {
     "typescript": "^5.8.0",

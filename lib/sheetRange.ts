@@ -1,0 +1,25 @@
+/** Spreadsheet rectangular operations. No access to payroll source data. */
+import {columnLabel,decodeCell} from "./sheetFormulas";
+export type GridPoint={row:number;col:number};
+export type GridRange={top:number;left:number;bottom:number;right:number};
+export const GRID_MAX_ROWS=4000,GRID_MAX_COLS=52,GRID_BATCH_LIMIT=2000;
+export function normalizeRange(a:GridPoint,b:GridPoint):GridRange{return {top:Math.min(a.row,b.row),left:Math.min(a.col,b.col),bottom:Math.max(a.row,b.row),right:Math.max(a.col,b.col)}}
+export function rangeSize(r:GridRange){return (r.bottom-r.top+1)*(r.right-r.left+1)}
+export function rangeAddress(r:GridRange){const start=`${columnLabel(r.left)}${r.top+1}`,end=`${columnLabel(r.right)}${r.bottom+1}`;return start===end?start:`${start}:${end}`}
+export function rangeUpdates(r:GridRange,values:(row:number,col:number)=>string){if(rangeSize(r)>GRID_BATCH_LIMIT)throw Error(`Maximum ${GRID_BATCH_LIMIT.toLocaleString()} cells per operation.`);const result:{cell:string;value:string}[]=[];for(let row=r.top;row<=r.bottom;row++)for(let col=r.left;col<=r.right;col++)result.push({cell:`${columnLabel(col)}${row+1}`,value:values(row,col)});return result}
+/** Apply ordinary relative and $absolute references when copying a cell. */
+export function shiftFormulaReferences(value:string,rowDelta:number,colDelta:number){if(!value.startsWith("="))return value;
+ return value.replace(/(^|[^A-Z0-9_."'])((\$?)([A-Z]{1,2})(\$?)([1-9]\d{0,3}))(?=$|[^A-Z0-9_."'])/gi,(full,prefix,ref,absoluteCol,colLetters,absoluteRow,rowDigits)=>{
+  const pos=decodeCell(`${colLetters}${rowDigits}`);if(!pos)return full;
+  const row=pos.row+(absoluteRow?0:rowDelta),col=pos.col+(absoluteCol?0:colDelta);
+  if(row<0||col<0||row>=GRID_MAX_ROWS||col>=GRID_MAX_COLS)return `${prefix}#REF!`;
+  return `${prefix}${absoluteCol?'$':''}${columnLabel(col)}${absoluteRow?'$':''}${row+1}`;
+ });
+}
+export function parseTabularPaste(text:string):string[][]{const lines=text.replace(/\r/g,"").replace(/\n$/,"").split("\n");return lines.map(line=>line.split("\t"))}
+/** Safe formula subset supported by the browser evaluator. Others remain text on import. */
+export function supportedImportFormula(value:string){if(!value.startsWith("=")||value.length>1500)return false;
+ if(!/^=[\sA-Z0-9().,:+\-*/$]+$/i.test(value))return false;
+ const names=value.slice(1).match(/\$?[A-Z]{1,2}\$?[1-9]\d{0,3}|[A-Z]+/gi)||[];
+ return names.every(name=>/^(SUM|AVERAGE|MIN|MAX|COUNT|\$?[A-Z]{1,2}\$?[1-9]\d{0,3})$/i.test(name));
+}

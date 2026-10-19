@@ -62,7 +62,7 @@ export function writeSheetCells(actor:SheetActor,sheetId:string,updates:{cell:st
  if(updates.length>2000)throw Error("Paste up to 2,000 cells at a time.");
  return commit(actor,s=>{requireGrant(s,actor,sheetId);const sheet=s.sheets[sheetId]||{cells:{},extraRows:0,extraCols:0};for(const u of updates){if(!/^[A-Z]{1,2}(?:[1-9]\d{0,3})$/.test(u.cell)||u.value.length>1500)throw Error("Invalid cell or value exceeds 1,500 characters.");}
  if(!sheet.snapshot&&baseline)sheet.snapshot={columns:baseline.columns,rows:baseline.rows,capturedAt:iso()};
- for(const u of updates){const before=sheet.cells[u.cell]??"(source/blank)";sheet.cells[u.cell]=u.value;log(s,actor.username,"Edited cell",sheetId,`${u.cell}: ${before.slice(0,70)} → ${u.value.slice(0,70)}`)}s.sheets[sheetId]=sheet;
+ for(const u of updates){const before=sheet.cells[u.cell]??"(source/blank)";sheet.cells[u.cell]=u.value;if(updates.length===1)log(s,actor.username,"Edited cell",sheetId,`${u.cell}: ${before.slice(0,70)} → ${u.value.slice(0,70)}`)}if(updates.length>1)log(s,actor.username,"Edited range",sheetId,`${updates.length} cells, ${updates[0].cell} through ${updates[updates.length-1].cell}`);s.sheets[sheetId]=sheet;
  });
 }
 export function growSheet(actor:SheetActor,sheetId:string,kind:"row"|"col",baseline?:SheetBaseline){
@@ -82,3 +82,18 @@ export function setCellAppearance(actor:SheetActor,sheetId:string,cell:string,ap
 }
 export function renameCustomSheet(actor:SheetActor,sheetId:string,newName:string){if(actor.role!=="Super Admin")throw Error("Only Super Admin can rename worksheets.");const name=newName.trim();if(name.length<3||name.length>60)throw Error("Name must be 3–60 characters.");commit(actor,s=>{const sheet=s.customSheets.find(x=>x.id===sheetId);if(!sheet)throw Error("Only custom sheets may be renamed.");if(s.customSheets.some(x=>x!==sheet&&x.title.toLowerCase()===name.toLowerCase()))throw Error("Worksheet name exists.");sheet.title=name;log(s,actor.username,"Renamed worksheet",sheetId,name)})}
 export function deleteCustomSheet(actor:SheetActor,sheetId:string){if(actor.role!=="Super Admin")throw Error("Only Super Admin can delete custom worksheets.");commit(actor,s=>{const sheet=s.customSheets.find(x=>x.id===sheetId);if(!sheet)throw Error("Only custom sheets can be deleted.");s.customSheets=s.customSheets.filter(x=>x.id!==sheetId);delete s.sheets[sheetId];s.requests=s.requests.map(r=>r.sheetId===sheetId&&r.status==="approved"?{...r,status:"revoked" as const}:r);log(s,actor.username,"Deleted worksheet",sheetId,sheet.title)})}
+
+/** One approved, atomic operation for importing a single Excel worksheet into an independent blank working copy. */
+export function importWorkingSheet(actor:SheetActor,sheetId:string,tabName:string,updates:{cell:string;value:string}[],formats:Record<string,CellAppearance>){
+ if(sheetId!=="working-sheet"&&!sheetId.startsWith("custom-"))throw Error("Import into a blank or custom working sheet, never an official HRMS report sheet.");
+ if(updates.length>2000||Object.keys(formats).length>2000)throw Error("Import supports at most 2,000 populated/styled cells.");
+ return commit(actor,s=>{
+  requireGrant(s,actor,sheetId);
+  if(sheetId!=="working-sheet"&&!s.customSheets.some(x=>x.id===sheetId))throw Error("Worksheet not found.");
+  const cells:Record<string,string>={};let maxRow=0,maxCol=0;
+  for(const {cell,value} of updates){const m=/^([A-Z]{1,2})([1-9]\d{0,3})$/.exec(cell);if(!m||value.length>1500)throw Error("Invalid imported cell.");let col=0;for(const c of m[1])col=col*26+c.charCodeAt(0)-64;const row=Number(m[2]);if(col>52||row>4000)throw Error("Imported cell exceeds current grid limits.");cells[cell]=value;maxRow=Math.max(maxRow,row);maxCol=Math.max(maxCol,col)}
+  const sanitized:Record<string,CellAppearance>={};for(const [cell,format] of Object.entries(formats)){const m=/^([A-Z]{1,2})([1-9]\d{0,3})$/.exec(cell);if(!m)continue;let col=0;for(const c of m[1])col=col*26+c.charCodeAt(0)-64;if(col>52||Number(m[2])>4000)continue;sanitized[cell]={bold:!!format.bold,italic:!!format.italic,underline:!!format.underline,align:format.align,background:/^#[0-9A-F]{6}$/i.test(format.background||"")?format.background:undefined,color:/^#[0-9A-F]{6}$/i.test(format.color||"")?format.color:undefined};maxRow=Math.max(maxRow,Number(m[2]));maxCol=Math.max(maxCol,col)}
+  s.sheets[sheetId]={cells,formats:sanitized,extraRows:Math.max(0,maxRow-1200),extraCols:Math.max(0,maxCol-26),snapshot:{columns:[],rows:[],capturedAt:iso()}};
+  log(s,actor.username,"Imported Excel worksheet",sheetId,`${tabName.slice(0,70)} · ${updates.length} populated cells · replaced old working copy`);
+ });
+}
