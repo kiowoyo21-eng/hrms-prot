@@ -2,6 +2,7 @@
  * A server must verify session, grant, version, and write permissions in production.
  */
 import {demoAccounts,type Role} from "./mock";
+import {writeAuditEvent} from "./auditTrail";
 
 export type SheetActor={username:string;role:Role};
 export type EditRequest={id:string;sheetId:string;sheetTitle:string;requester:string;reason:string;status:"pending"|"approved"|"denied"|"revoked";requestedAt:string;decidedAt?:string;decidedBy?:string;decisionNote?:string;expiresAt?:string};
@@ -38,8 +39,10 @@ export function latestRequest(state:LocalSheetState,user:string,sheetId:string){
 function log(state:LocalSheetState,actor:string,action:string,sheetId:string,detail:string){state.audit.unshift({id:id(),date:iso(),actor,action,sheetId,detail:detail.slice(0,320)});state.audit=state.audit.slice(0,450)}
 function commit(actor:SheetActor,update:(state:LocalSheetState)=>void):LocalSheetState{
  const session=activeDemoUser();if(!session||session.username!==actor.username||session.role!==actor.role)throw Error("Session changed or expired. Sign in again.");
- const state=readSheetState();update(state);
+ const state=readSheetState();const previousLog=state.audit[0]?.id;update(state);
  try{localStorage.setItem(KEY,JSON.stringify(state));}catch{throw Error("Browser storage is full. Changes were not saved.")}
+ const recent=state.audit[0];
+ if(recent&&recent.id!==previousLog&&recent.actor===actor.username){writeAuditEvent({module:"Spreadsheets",action:recent.action,recordId:recent.sheetId,summary:"Action recorded for worksheet (sensitive values and request reasons withheld)"})}
  window.dispatchEvent(new Event(EVENT));return state;
 }
 export function subscribeSheetChanges(callback:()=>void){window.addEventListener(EVENT,callback);const onStorage=(e:StorageEvent)=>{if(e.key===KEY||e.key===SESSION_KEY)callback()};window.addEventListener("storage",onStorage);return ()=>{window.removeEventListener(EVENT,callback);window.removeEventListener("storage",onStorage)}}

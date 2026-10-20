@@ -3,7 +3,7 @@ import {useMemo,useState} from "react";
 import {ArrowLeft,ArrowRight,CalendarDays,Download,ExternalLink,FileSpreadsheet,FileText,Info,Landmark,Printer,Search,Users} from "lucide-react";
 import ReportsWorkspace from "./ReportsWorkspace";
 import ReportSpreadsheet from "./ReportSpreadsheet";
-import {buildHRReportSheets} from "../lib/reportSheetData";
+import {WORKBOOKS} from "../lib/workbookRegistry";
 import HelpButton from "./HelpButton";
 import {php} from "../lib/people";
 import {useHR} from "../lib/hrState";
@@ -28,7 +28,7 @@ function printSampleReport(template:GovernmentReportTemplate,report:GovernmentRe
 function AgencyIcon({agency}:{agency:GovernmentAgency}){switch(agency){case "DOLE":return <Landmark size={22}/>;case "SSS":return <Users size={22}/>;case "PhilHealth":return <FileText size={22}/>;case "Pag-IBIG":return <FileSpreadsheet size={22}/>;case "BIR":return <FileText size={22}/>;}}
 export default function ReportsLanding({branch,role}:{branch:Branch;role:Role}){
  const {data}=useHR();const [view,setView]=useState<"government"|"employee"|"workbook">("government");
- const sheets=useMemo(()=>buildHRReportSheets(data,branch),[data,branch]);
+
  const [agency,setAgency]=useState<GovernmentAgency|"All">("All");
  const [reportSearch,setReportSearch]=useState("");
  const [selectedId,setSelectedId]=useState<GovernmentReportId|null>(null);
@@ -47,7 +47,7 @@ export default function ReportsLanding({branch,role}:{branch:Branch;role:Role}){
  return <div className="gr-root">
   <div className="gr-module-head"><div><h2>Reports & Analytics</h2></div><HelpButton topic="reports" label="Info"/></div>
   <div className="gr-main-tabs"><button type="button" className={view==="government"?"active":""} onClick={()=>setView("government")}><Landmark size={16}/> Government Reports</button><button type="button" className={view==="employee"?"active":""} onClick={()=>setView("employee")}><Users size={16}/> Employee Analytics</button><button type="button" className={view==="workbook"?"active":""} onClick={()=>setView("workbook")}><FileSpreadsheet size={16}/> Spreadsheet Workspace</button></div>
-  {view==="workbook"&&<><div className="sw-launch"><div><b>Open the editable spreadsheet workspace</b><p>Google Sheets–style grid in a separate browser tab. Editing requires an HR request approved by Super Admin; source reports remain unchanged.</p></div><a href="/spreadsheets" target="_blank" rel="noopener noreferrer"><FileSpreadsheet size={16}/> Open Spreadsheets ↗</a></div><ReportSpreadsheet title="Read-only report preview" sheets={sheets}/></>}
+  {view==="workbook"&&<section className="panel"><div className="panel-head"><div><h3>Module-specific spreadsheets</h3><p>Select a workbook. Each opens in its own browser tab with relevant worksheets only.</p></div></div><div className="hrms-workbook-cards">{WORKBOOKS.map(w=><a key={w.id} href={`/spreadsheets/${w.id}?branch=${encodeURIComponent(branch)}`} target="_blank" rel="noopener noreferrer"><FileSpreadsheet size={19}/><strong>{w.name}</strong><small>{w.description}</small><span>Open workbook ↗</span></a>)}</div></section>}
   {view==="government"&&<>
     {chosen&&sample?<>
       <button type="button" className="gr-back" onClick={()=>setSelectedId(null)}><ArrowLeft size={15}/> Back to Government Reports</button>

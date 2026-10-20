@@ -1,20 +1,23 @@
-# HRMS Vercel TypeScript Fix — DOCX list bullets
+# HRMS Workspace V2 Resumed — Install Guide
 
-This patch addresses the Vercel build failure at `lib/studio/exportDocx.ts`:
+**This is an incremental PATCH ONLY**, not the full HRMS project. Requires the existing Workspace V1, V2, and V3 code. The previously reported DOCX bullet type fix is included in this ZIP.
 
-```
-Type error: Property 'level' is missing in type '{ indent: number; }'
-```
+1. Backup your current project/commit.
+2. Extract all files from this ZIP into the project root (where `package.json`, `app/`, `lib/`, and `components/` exist). Keep folder structure and overwrite matching files.
+3. No new npm packages are required by this patch. Ensure Vercel **Install Command** is `npm install` (or default), **Build Command** is `npm run build`.
+4. Run `npm install`, then `npm run build`, then test `/spreadsheets`, `/docs`, and `/drive` locally.
+5. Check HRMS Employee 201, Payroll, Assets, Leave, Recruitment and Compliance screens for the **Spreadsheet reports** launch links; test new-tab behavior.
+6. Log in as HR, request worksheet edit approval; log in as Super Admin on the same demo browser to approve; verify the audit feed.
+7. Deploy only after successful production build and smoke testing.
 
-The `docx` library expects `bullet: { level: number }`, not `bullet: { indent: number }`.
-The exporter now sets `bullet: { level: 0 }` for list-item paragraphs.
+### Routes
+- `/spreadsheets` — workbook home.
+- `/spreadsheets/employees`, `/attendance`, `/payroll`, `/assets`, `/leave`, `/loans`, `/recruitment`, `/compliance`, `/incidents`, `/working` — dedicated workbooks.
+- `/docs` — Docs home; `/docs/[id]` — Docs editor; existing `/studio/docs/[id]` links still work.
+- `/drive` — view-only file browser; existing documents and uploaded assets remain available.
 
-## Installation
-1. Extract this ZIP at the root of your current HRMS project.
-2. Overwrite `lib/studio/exportDocx.ts`.
-3. Run `npm run build`, then commit and push after confirming the build passes.
-
-No new dependencies. The patch does not alter HRMS employee, payroll, file-storage or admin permission logic.
-
-## Verification scope
-This corrects the exact TypeScript type mismatch reported by Vercel. The source passed a TypeScript syntax/transpilation check and a targeted option check. A full Next.js build was not available in this environment, so further errors may still surface during Vercel's type check.
+### Guardrails
+- Browser-only prototype. Do not upload real HR confidential data or rely on demo permissions as real security.
+- Spreadsheet source reports are snapshot/working-copy overlays; they DO NOT post edits back to official HRMS data.
+- DO NOT interpret the consolidated payroll workbook as already batch-isolated; that is next-stage work.
+- Read `CHANGELOG.md` for all implemented behavior and pending scope.

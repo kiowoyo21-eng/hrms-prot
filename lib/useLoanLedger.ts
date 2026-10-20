@@ -1,6 +1,7 @@
 "use client";
 import {useEffect,useState,type Dispatch,type SetStateAction} from "react";
 import {demoLoans,type LoanRecord} from "./loanLedger";
+import {writeAuditEvent} from "./auditTrail";
 const KEY="uc-hr-ui-loans";
 const EVENT="ucmm-demo-loans-changed";
 /** Shared, browser-local preview only. Do not enter confidential loans or use as an accounting ledger. */
@@ -19,7 +20,7 @@ export function useLoanLedger():[LoanRecord[],Dispatch<SetStateAction<LoanRecord
   if(!ready)return;
   try{
    const next=JSON.stringify(loans);
-   if(window.localStorage.getItem(KEY)!==next){window.localStorage.setItem(KEY,next);window.dispatchEvent(new Event(EVENT))}
+   if(window.localStorage.getItem(KEY)!==next){const previous=window.localStorage.getItem(KEY);window.localStorage.setItem(KEY,next);if(previous!==null)writeAuditEvent({module:"Loans & Advances",action:"Updated loan ledger",summary:"Loan record(s) updated; amounts and details withheld"});window.dispatchEvent(new Event(EVENT))}
   }catch{}
  },[loans,ready]);
  return [loans,setLoans];

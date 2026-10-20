@@ -1,8 +1,9 @@
 "use client";
-import {createContext,useContext,useEffect,useMemo,useState,type ReactNode} from "react";
+import {createContext,useContext,useEffect,useMemo,useRef,useState,type ReactNode} from "react";
 import {employees as samples,type Person} from "./people";
 import {initialPayrollConfig,normalizePayrollConfig,type PayrollConfig} from "./payrollConfig";
 import type {SalaryDestination} from "./salaryDisbursement";
+import {writeAuditEvent,changedFields} from "./auditTrail";
 export type EmployeeAssignment={
  id:string;effectiveDate:string;kind:"Initial Assignment"|"Transfer"|"Promotion"|"Reassignment";
  branch:string;department:string;position:string;memoId?:string;memoType?:string;
@@ -58,8 +59,30 @@ type ContextValue={data:HRState;update:(fn:(state:HRState)=>HRState)=>void;reset
 const HRContext=createContext<ContextValue|null>(null);
 export function HRProvider({children}:{children:ReactNode}){
  const [data,setData]=useState<HRState>(initialState);const [ready,setReady]=useState(false);
+ const previousSaved=useRef<string|null>(null);
  useEffect(()=>{try{const raw=window.localStorage.getItem(KEY);if(raw){const loaded=JSON.parse(raw) as Partial<HRState>;if(Array.isArray(loaded.people)&&Array.isArray(loaded.assets))setData({...initialState,...loaded,earnings:loaded.earnings||{},deductions:loaded.deductions||{},payrollReleases:loaded.payrollReleases||initialState.payrollReleases,payrollConfig:normalizePayrollConfig(loaded.payrollConfig)});}}catch{}setReady(true)},[]);
- useEffect(()=>{if(ready){try{window.localStorage.setItem(KEY,JSON.stringify(data))}catch{}}},[data,ready]);
+ useEffect(()=>{if(!ready)return;
+  const next=JSON.stringify(data),prior=previousSaved.current;
+  if(next===prior)return;
+  try{window.localStorage.setItem(KEY,next)}catch{return}
+  previousSaved.current=next;
+  if(prior===null)return; // initial loading of stored or seeded data is not a user change
+  try{const before=JSON.parse(prior) as HRState;
+   const groups:[keyof HRState,string][]=[["people","Employee 201"],["assets","Assets"],["payrollReleases","Payroll Releases"],["submissions","Document Intake"],["rates","Compensation Rates"],["earnings","Payroll Earnings"],["deductions","Payroll Deductions"],["payrollConfig","Payroll Configuration"]];
+   for(const [key,module] of groups){
+    if(JSON.stringify(before[key])===JSON.stringify(data[key]))continue;
+    const oldVal=before[key],newVal=data[key];
+    if(Array.isArray(oldVal)&&Array.isArray(newVal)){
+     const toMap=(items:unknown[])=>new Map(items.filter((x):x is {id:string}=>typeof x==="object"&&x!==null&&"id" in x).map(x=>[String(x.id),x]));
+     const oldRecords=toMap(oldVal),newRecords=toMap(newVal),ids=[...new Set([...oldRecords.keys(),...newRecords.keys()])];
+     const changed=ids.filter(id=>JSON.stringify(oldRecords.get(id))!==JSON.stringify(newRecords.get(id)));
+     if(changed.length<=12)for(const id of changed){const oldRow=oldRecords.get(id)||{},newRow=newRecords.get(id)||{};
+      writeAuditEvent({module,action:!oldRecords.has(id)?"Added record":!newRecords.has(id)?"Removed record":"Updated record",recordId:id,summary:`Changed field names: ${changedFields(oldRow,newRow).join(", ")||"record"}; values redacted`});
+     }else writeAuditEvent({module,action:"Bulk record change",summary:`${changed.length} records affected; values redacted`});
+    }else writeAuditEvent({module,action:"Updated configuration",summary:"Values redacted; open the associated HRMS module to review"});
+   }
+  }catch{/* Never include raw sensitive values in fallback logs. */}
+ },[data,ready]);
  const value=useMemo<ContextValue>(()=>({data,update:(fn)=>setData(previous=>fn(previous)),reset:()=>setData(initialState),ready}),[data,ready]);
  return <HRContext.Provider value={value}>{children}</HRContext.Provider>
 }
