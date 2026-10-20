@@ -1,23 +1,28 @@
-# QA Report — Main Module UI & Data Integrity V2
+# QA Report — HRMS Main V3
 
-### Verified
-- 25 focused regression checks passed, including branch visibility, asset home-branch precedence, Payroll batch selection, signing request counts and Incident portal presence.
-- `lib/branchRecordViews.ts` passed `tsc --noEmit --strict` using ES2022/DOM libs.
-- 112 TypeScript/TSX source files passed TypeScript syntax parsing in the reconstructed project with this patch overlaid.
-- No unresolved **relative source/style imports** in that reconstructed project.
-- No project record or storage schema changes.
+## Checks run in this environment
+- **28 / 28 focused Node.js assertions passed** for asset-status transition permissions, request reason validation, custody retention, return receipt, inspection closure, reinpection, damaged-asset handling, unique IDs, employee/asset branch compatibility, and incident Employee 201 branch-specific links.
+- **4 source files changed/new**, based on Main Modules V2 and Universal Notifications V2/V3 reconstructed source.
+- **114 TS/TSX project source files passed TypeScript syntax transpilation** (not semantic project typechecking).
+- **0 missing relative imports** across the reconstructed source.
+- **2 new lifecycle/rules helpers passed strict standalone TypeScript checking** with structural declaration stubs for their existing project types.
 
-### Not verified here
-- Full `npm run build` for Next.js 15 (dependencies not installed in the local snapshot).
-- Browser interaction tests on Vercel; screen sizes, clipping and focus management in a live page.
-- Exact compatibility with GitHub `main` after any unshared edits.
-- Production backend role/branch security and cross-device data synchronization.
+## Not verified
+- Full `next build` / Vercel production deployment: dependencies were not installed in this environment. No claim of full project semantic TypeScript success.
+- Actual browser click-through, visual scrolling, mobile layout and popup layering.
+- Persistence or signatures across devices, concurrency, tamper-evident audit logs and backend authorization.
 
-### Manual browser regression checklist
-1. Employee 201: open profile in Shop A, switch to Shop B; old profile must close; visible directory must show Shop B only.
-2. Assets: compare header and status counts under each branch; old selected device/process must close when switching branches. Check new device default branch.
-3. Payroll: create/view batch in Shop A, switch to Shop B; old selected batch, drafts, history rows and review counts must not persist in Shop B. Verify approved payroll records remain unchanged.
-4. Incident: open a case from a scrollable table; dialog must remain in front at narrow/desktop widths. Test backdrop close and Escape. Switch branch then submit a report; branch should match current selection.
-5. Run Vercel build; if a TypeScript error appears, share the new commit hash and error log before applying more patches.
+## Required deployment smoke tests
+1. Use an HR/Super Admin demo account and select one branch; check that only that branch's assets and incident case people appear.
+2. For an Assigned asset, click **Request Return**, enter a reason, confirm For Return; verify employee custody remains visible.
+3. Choose **Receive Return**; verify it cannot advance without both form review and physical receipt confirmation.
+4. Finish **Inspect**, choose Available and a Good condition; verify the employee ID and temporary signature status are cleared and the history is retained.
+5. Set a Damaged condition: verify Available is rejected; choose Maintenance, then **Reinspect** after repair.
+6. Check Retired assets have no Assign button and serial duplicates are rejected on Add Device.
+7. In Incident Reports as HR with All Shops, switch the new-case branch. Verify Employee 201 dropdown values follow the case branch and previous selected IDs are cleared.
+8. Open an incident case with another branch selected; verify verified-ID choices are restricted to that case's branch.
+9. Confirm unrelated/duplicate Employee 201 IDs do not satisfy closure, and raw note text is not repeated in the case action timeline.
+10. Check Leave, Payroll, Sheets, Docs, and the global notification bell for unexpected regressions before any further core revision.
 
-**Scope limitation:** This is a targeted main-module revision, not a claim that every HRMS bug has been removed.
+## Note on prototype use
+Actions in this patch remain browser-local. An on-screen checked box is a demonstration record, **not** independent physical custody verification. Incident notes in localStorage are not encrypted or role-isolated at the server; do not enter genuine sensitive reports.

@@ -1,22 +1,25 @@
-# Installation — HRMS Main Module UI & Data Integrity V2
+# HRMS Main V3 — GitHub Website Installation
 
-This ZIP contains **five source files only**, plus documentation. This is NOT a full project.
+This ZIP contains **changed/new source files only**, not a full project.
 
-**Required base:** Latest HRMS project including Employee 201 V2, Payroll Batches, Docs V6, Universal UI V1 and Universal Notifications V2/V3. The patch was developed against the latest source snapshot available in this conversation, not pulled live from your GitHub repository.
+## Required base
+Latest HRMS project with **Main Modules V2 — UI & Data Integrity** already applied, together with Universal Notifications V2 and V3. This patch was assembled against source files available in this conversation; it was not pulled from your current live GitHub `main` branch.
 
-Use the GitHub website (`kiowoyo21-eng/hrms-prot`, `main` branch):
+## Files to upload together
+- `components/AssetWorkspace.tsx` (replace existing)
+- `components/IncidentWorkspace.tsx` (replace existing)
+- `lib/assetLifecycle.ts` (new)
+- `lib/incidentCaseRules.ts` (new)
 
-1. Extract the ZIP on your device. Do NOT upload the ZIP file itself.
-2. Create a new `lib/branchRecordViews.ts` in the repository and paste/upload the file.
-3. Replace these four files at their exact matching paths:
-   - `components/EmployeeWorkspace.tsx`
-   - `components/PayrollOperationsHub.tsx`
-   - `components/AssetWorkspace.tsx`
-   - `components/IncidentWorkspace.tsx`
-4. Commit **all five changes together** to `main`.
-5. Wait for Vercel to build commit and hard-refresh browser (`Cmd+Shift+R` on Mac).
-6. Confirm the Employee 201, Payroll, Asset, and Incident flows described in `QA_REPORT.md`.
+## Installation through the GitHub website
+1. Extract this ZIP locally; DO NOT upload the ZIP itself to the repository.
+2. Open `github.com/kiowoyo21-eng/hrms-prot`, branch `main`.
+3. Upload the two new `lib` files into `lib/`.
+4. Replace the two existing files in `components/` with the patch copies. Make sure folder paths are exact.
+5. Commit all four source files in **one commit**.
+6. Wait for the Vercel production deployment; if the build fails, send the error log before applying another major revision.
+7. Once deployed, perform the manual smoke tests in QA_REPORT.md (branch switching, asset custody stages, incident links, document review).
 
-**Merge warning:** If these four existing components were separately edited in your GitHub repo after the Universal Notifications V2 baseline, review and merge conflicting changes instead of overwriting blindly. Universal Notifications V3 changed `components/ModuleAlerts.tsx` only and is not touched by this patch.
+**Merge caution:** If AssetWorkspace or IncidentWorkspace has been edited in GitHub since Main V2, merge those new changes into these replacements rather than overwriting later work.
 
-**Safety:** These checks improve UI scoping, not secure backend authorization. All underlying HRMS data remains browser-local. A successful syntax check does not establish a successful Next.js/Vercel build.
+**Security:** This frontend-only localStorage prototype MUST NOT contain real confidential complaints, real handover signatures or legally significant employee/asset records without a secure backend, authenticated permissions and verified storage.

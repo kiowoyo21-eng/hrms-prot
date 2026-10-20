@@ -4,6 +4,7 @@ import {useEffect,useMemo,useRef,useState,type FormEvent,type PointerEvent} from
 import {Laptop,Plus,ArrowLeft,ArrowRight,FileSignature,ClipboardCheck,FileText,Info,RotateCcw} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
 import {assetVisible} from "../lib/branchRecordViews";
+import {canStartAssetAction,canAssignAssetToEmployee,nextAssetId,requestAssetReturn,receiveAssetReturn,closeAssetInspection} from "../lib/assetLifecycle";
 import {useHR,type AssetRecord,type AssetStatus} from "../lib/hrState";
 import HelpButton from "./HelpButton";
 import {ModuleAlertButton} from "./ModuleAlerts";
@@ -17,7 +18,7 @@ const processSteps:Record<Process,string[]>={
  inspect:["Device Condition","Inspection Findings","Inventory Status","Confirm Inspection"]
 };
 const methodName:Record<SignMethod,string>={phone:"Phone / QR Code",onsite:"Sign on This Device",print:"Printed Form"};
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`};
 const ACCOUNTABILITY_TERMS="I acknowledge receipt of the company-issued equipment and listed accessories in the stated condition. I understand my responsibility to exercise reasonable care, use the equipment in accordance with company policies, promptly report any damage or loss, and return company property when requested. This form documents accountability and does not establish automatic financial liability for loss or damage.";
 
 function SignaturePad({onChange}:{onChange:(signed:boolean)=>void}){
@@ -54,39 +55,42 @@ export default function AssetWorkspace({branch,role,prefillEmployeeId}:{branch:B
  const [officer,setOfficer]=useState("");
  const [handedOver,setHandedOver]=useState(false);
  const [reviewed,setReviewed]=useState(false);
+ const [physicallyReceived,setPhysicallyReceived]=useState(false);
  const [outcome,setOutcome]=useState<"Free"|"Maintenance"|"Retired">("Free");
  const [message,setMessage]=useState("");
+ const [returnTarget,setReturnTarget]=useState<string|null>(null);
+ const [returnReason,setReturnReason]=useState("");
+ const returnPanelRef=useRef<HTMLDivElement|null>(null);
+ useEffect(()=>{if(returnTarget&&selected===returnTarget)returnPanelRef.current?.scrollIntoView({behavior:"smooth",block:"nearest"})},[returnTarget,selected]);
  const [adding,setAdding]=useState(false);
  const [newDevice,setNewDevice]=useState<{name:string;serial:string;condition:string;accessories:string;homeBranch:string}>({name:"",serial:"",condition:"Good",accessories:"",homeBranch:branch==="All Shops"?"UC Mandaluyong":branch});
  const priorBranch=useRef(branch);
  useEffect(()=>{if(priorBranch.current===branch)return;priorBranch.current=branch;
-  setSelected(null);setProcess(null);setStage(0);setAdding(false);setBranchFilter("All");setEmployeeId("");setNewDevice(p=>({...p,homeBranch:branch==="All Shops"?p.homeBranch:branch}));setMessage("");
+  setSelected(null);setProcess(null);setStage(0);setAdding(false);setReturnTarget(null);setReturnReason("");setBranchFilter("All");setEmployeeId("");setNewDevice(p=>({...p,homeBranch:branch==="All Shops"?p.homeBranch:branch}));setMessage("");
  },[branch]);
  useEffect(()=>{if(!prefillEmployeeId||!editable)return;const found=people.find(p=>p.id===prefillEmployeeId);if(!found||(branch!=="All Shops"&&found.branch!==branch))return;setEmployeeId(found.id);setProcess(null);setSelected(null);setAdding(false);setFilter("Free");setSearch("");setBranchFilter(found.branch);setMessage(`Assign Device · ${found.name} preselected. Choose an available device from the list.`)},[prefillEmployeeId,editable,branch]);
 const asset=assets.find(a=>a.id===selected&&assetVisible(a,people,branch));
  const employee=people.find(p=>p.id===employeeId);
  const visibleAssets=useMemo(()=>assets.filter(a=>(filter==="All"||a.status===filter)&&(branchFilter==="All"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branchFilter)&&assetVisible(a,people,branch)&&`${a.id} ${a.name} ${a.serial} ${people.find(p=>p.id===a.employeeId)?.name||""}`.toLowerCase().includes(search.toLowerCase())),[assets,people,filter,search,branchFilter,branch]);
- const employeeMatches=people.filter(p=>(branch==="All Shops"||p.branch===branch)&&`${p.id} ${p.name}`.toLowerCase().includes(employeeSearch.toLowerCase()));
+ const employeeMatches=people.filter(p=>(branch==="All Shops"||p.branch===branch)&&(!asset||canAssignAssetToEmployee(asset,p))&&`${p.id} ${p.name}`.toLowerCase().includes(employeeSearch.toLowerCase()));
  const scopedAssets=assets.filter(a=>assetVisible(a,people,branch));
  const count=(status:AssetStatus)=>scopedAssets.filter(a=>a.status===status).length;
- const resetProcess=()=>{setProcess(null);setSelected(null);setStage(0);setMessage("")};
+ const resetProcess=()=>{setProcess(null);setSelected(null);setReturnTarget(null);setReturnReason("");setStage(0);setMessage("")};
  const begin=(id:string,type:Process)=>{
   const a=assets.find(x=>x.id===id);
   if(!a||!editable||!assetVisible(a,people,branch))return;
-  if(type==="assign"&&a.status!=="Free"&&a.status!=="Pending Turnover")return;
-  if(type==="retrieve"&&a.status!=="Assigned")return;
-  if(type==="inspect"&&a.status!=="Inspection")return;
-  setSelected(id);setProcess(type);setStage(a.status==="Pending Turnover"&&type==="assign"?1:0);
+  if(!canStartAssetAction(a.status,type))return;
+  setSelected(id);setReturnTarget(null);setReturnReason("");setProcess(type);setStage(a.status==="Pending Turnover"&&type==="assign"?1:0);
   setEmployeeId(a.employeeId||prefillEmployeeId||"");setEmployeeSearch("");setCondition(a.condition);setAccessories(a.accessories);
   setNotes(a.notes||"");setAssignmentDate(a.assignmentDate||today());setSignMethod(a.signingMethod||"phone");
-  setDocumentPreview(false);setSignatureDrawn(false);setSignedCopy(null);setOfficer(a.assignedBy||"");setHandedOver(false);setReviewed(false);setMessage("");
+  setDocumentPreview(false);setSignatureDrawn(false);setSignedCopy(null);setOfficer(a.assignedBy||"");setHandedOver(false);setReviewed(false);setPhysicallyReceived(false);setMessage("");
  };
- const editSelected=(fields:Partial<AssetRecord>)=>setAssets(prev=>prev.map(x=>x.id===selected?{...x,...fields}:x));
+ const editSelected=(fields:Partial<AssetRecord>)=>setAssets(prev=>prev.map(x=>x.id===selected&&assetVisible(x,people,branch)?{...x,...fields}:x));
  const addDevice=(e:FormEvent)=>{
   e.preventDefault();if(!editable)return;
   if(branch!=="All Shops"&&newDevice.homeBranch!==branch){setMessage("Device branch must match your selected authorized branch.");return}
-  const serial=newDevice.serial.trim();if(assets.some(a=>a.serial.trim().toLowerCase()===serial.toLowerCase())){setMessage("Serial number already exists. Please enter a unique serial number.");return}
-  setAssets(prev=>[{id:`AST-${1+Math.max(1000,...prev.map(a=>Number(a.id.replace(/\D/g,""))||0))}`,name:newDevice.name.trim(),homeBranch:newDevice.homeBranch,serial,status:"Free",employeeId:"",condition:newDevice.condition,accessories:newDevice.accessories,notes:"",history:[`${today()}: Device registered`],date:today(),signed:false},...prev]);
+  const serial=newDevice.serial.trim();if(!newDevice.name.trim()||!serial){setMessage("Enter a device name and serial number.");return}if(assets.some(a=>a.serial.trim().toLowerCase()===serial.toLowerCase())){setMessage("Serial number already exists. Please enter a unique serial number.");return}
+  setAssets(prev=>[{id:nextAssetId(prev),name:newDevice.name.trim(),homeBranch:newDevice.homeBranch,serial,status:"Free",employeeId:"",condition:newDevice.condition,accessories:newDevice.accessories,notes:"",history:[`${today()}: Device registered`],date:today(),signed:false},...prev]);
   setNewDevice({name:"",serial:"",condition:"Good",accessories:"",homeBranch:branch==="All Shops"?"UC Mandaluyong":branch});setFilter("All");setAdding(false);setMessage("Device added to available inventory in this browser.")
  };
  const formFields=():[string,unknown][]=>[
@@ -101,14 +105,16 @@ const asset=assets.find(a=>a.id===selected&&assetVisible(a,people,branch));
   if(!asset||!process)return;
   if(process==="assign"){
    if(stage===0&&!employeeId){setMessage("Select a specific employee before continuing.");return}
+   if(stage===0&&!canAssignAssetToEmployee(asset,employee)){setMessage("The selected employee must belong to this asset’s registered branch.");return}
    if(stage===0&&!assignmentDate){setMessage("Enter the assignment date.");return}
    setMessage("");setStage(s=>Math.min(s+1,2));return;
   }
   if(stage===2&&!reviewed){setMessage("Review the form or inspection findings before continuing.");return}
+  if(process==="retrieve"&&stage===2&&!physicallyReceived){setMessage("Confirm the device was physically received before continuing.");return}
   setMessage("");setStage(s=>Math.min(s+1,3));
  };
  const recordAssignment=(complete:boolean)=>{
-  if(!asset||!employeeId)return;
+  if(!asset||!employeeId||!canStartAssetAction(asset.status,"assign")||!canAssignAssetToEmployee(asset,employee)){setMessage("Cannot assign: check the device status and employee branch.");return}
   if(complete&&(!handedOver||!officer.trim()||(signMethod==="onsite"&&!signatureDrawn)||(signMethod==="print"&&!signedCopy)||signMethod==="phone")){
    setMessage("To complete turnover, choose on-device or printed signing, record the acknowledgment, enter the issuing officer, and confirm physical handover. Phone/QR signing remains pending without a backend.");return;
   }
@@ -117,11 +123,20 @@ const asset=assets.find(a=>a.id===selected&&assetVisible(a,people,branch));
   setFilter(status);setProcess(null);setSelected(null);setStage(0);
   setMessage(complete?"Turnover recorded for frontend review. Signature/file data is NOT saved or verified; do not use for real asset release.":"Saved as Pending Turnover. Device stays unavailable for reassignment until signature and handover are completed.");
  };
+ const submitReturnRequest=()=>{
+  if(!editable||!asset||asset.id!==returnTarget||!assetVisible(asset,people,branch)){setMessage("Select an accessible assigned device first.");return}
+  const next=requestAssetReturn(asset,returnReason,today());
+  if(!next){setMessage("Enter a return reason of at least three characters.");return}
+  setAssets(prev=>prev.map(x=>x.id===asset.id&&assetVisible(x,people,branch)?requestAssetReturn(x,returnReason,today())||x:x));
+  setFilter("For Return");setReturnTarget(null);setReturnReason("");setMessage("Return requested. Employee custody remains until the device is physically received.");
+ };
  const completeOther=()=>{
-  if(!asset||!process)return;
-  const status:AssetStatus=process==="retrieve"?"Inspection":outcome;
-  editSelected({status,condition,accessories,notes,date:today(),employeeId:process==="inspect"&&outcome==="Free"?"":asset.employeeId,history:[`${today()}: ${process==="retrieve"?"Retrieved for inspection":"Inspection completed — "+outcome}. ${notes}`,...asset.history]});
-  setFilter(status);setProcess(null);setSelected(null);setStage(0);setMessage("Record updated in this browser for review. Physical receipt and signatures require verification.");
+  if(!asset||!process||!editable||!reviewed||(process==="retrieve"&&!physicallyReceived)){setMessage("Confirm the form review and physical receipt before continuing.");return}
+  const fields={condition,accessories,notes};
+  const updated=process==="retrieve"?receiveAssetReturn(asset,fields,today()):process==="inspect"?closeAssetInspection(asset,outcome,fields,today()):null;
+  if(!updated){setMessage("Check the device status and condition. Damaged or uninspected items cannot be marked Available.");return}
+  setAssets(prev=>prev.map(x=>x.id===asset.id&&assetVisible(x,people,branch)?(process==="retrieve"?receiveAssetReturn(x,fields,today()):closeAssetInspection(x,outcome,fields,today()))||x:x));
+  setFilter(updated.status);setProcess(null);setSelected(null);setStage(0);setMessage("Record updated locally. Return and inspection require independent physical verification.");
  };
  const canConfirmAssignment=Boolean(employeeId&&officer.trim()&&handedOver&&(signMethod==="onsite"&&signatureDrawn||signMethod==="print"&&signedCopy));
  return <div className="rev-stack">
@@ -134,11 +149,15 @@ const asset=assets.find(a=>a.id===selected&&assetVisible(a,people,branch));
     <div className="table-wrap"><table><thead><tr><th>Device / Serial</th><th>Branch / Location</th><th>Accountable Employee</th><th>Condition</th><th>Status</th><th>Actions</th></tr></thead><tbody>{visibleAssets.map(a=><tr key={a.id}><td><b>{a.name}</b><small className="pay-small">{a.id} · {a.serial}</small></td><td>{a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"Not set"}</td><td>{a.employeeId?people.find(p=>p.id===a.employeeId)?.name||a.employeeId:"Not assigned"}</td><td>{a.condition}</td><td><span className="tag">{a.status==="Free"?"Available":a.status}</span></td><td><div className="rev-actions">
     {a.status==="Free"&&editable&&<button className="primary" type="button" onClick={()=>begin(a.id,"assign")}>Assign</button>}
     {a.status==="Pending Turnover"&&<><button className="secondary" onClick={()=>setSelected(a.id)}>View</button>{editable&&<button className="primary" onClick={()=>begin(a.id,"assign")}>Continue Turnover</button>}</>}
-    {a.status==="Assigned"&&<><button className="secondary" onClick={()=>setSelected(a.id)}>View</button>{editable&&<button className="secondary" onClick={()=>begin(a.id,"retrieve")}>Retrieve</button>}</>}
+    {a.status==="Assigned"&&<><button className="secondary" onClick={()=>setSelected(a.id)}>View</button>{editable&&<><button className="secondary" onClick={()=>{setSelected(a.id);setReturnTarget(a.id);setReturnReason("");setMessage("")}}>Request Return</button><button className="secondary" onClick={()=>begin(a.id,"retrieve")}>Receive Return</button></>}</>}
+    {a.status==="For Return"&&editable&&<button className="primary" onClick={()=>begin(a.id,"retrieve")}>Receive Return</button>}
     {a.status==="Inspection"&&editable&&<button className="primary" onClick={()=>begin(a.id,"inspect")}>Inspect</button>}
+    {a.status==="Maintenance"&&editable&&<button className="secondary" onClick={()=>begin(a.id,"inspect")}>Reinspect</button>}
     {!(["Free","Pending Turnover","Assigned","Inspection"] as string[]).includes(a.status)&&<button className="secondary" onClick={()=>setSelected(a.id)}>View</button>}
     </div></td></tr>)}</tbody></table>{visibleAssets.length===0&&<div className="empty">No devices found. Try another status or search.</div>}</div></section>
-   {asset&&<section className="panel"><div className="rev-title"><h3>{asset.name} · Assignment History</h3><button className="secondary" onClick={()=>setSelected(null)}>Close</button></div><p>Registered branch: {asset.homeBranch||people.find(x=>x.id===asset.employeeId)?.branch||"Not set"} · Accountable employee: {people.find(x=>x.id===asset.employeeId)?.name||"Unassigned"} · Status: {asset.status} · Signing: {asset.signingMethod?methodName[asset.signingMethod]:"Not recorded"}</p><p className="muted">Acknowledgment records in this frontend are review-only; no signed file is stored.</p>{asset.history.map((h,i)=><div className="rev-row" key={i}>{h}</div>)}</section>}
+   {asset&&<section className="panel"><div className="rev-title"><h3>{asset.name} · Assignment History</h3><button className="secondary" onClick={()=>{setSelected(null);setReturnTarget(null);setReturnReason("")}}>Close</button></div><p>Registered branch: {asset.homeBranch||people.find(x=>x.id===asset.employeeId)?.branch||"Not set"} · Accountable employee: {people.find(x=>x.id===asset.employeeId)?.name||"Unassigned"} · Status: {asset.status} · Signing: {asset.signingMethod?methodName[asset.signingMethod]:"Not recorded"}</p><p className="muted">Acknowledgment records in this frontend are review-only; no signed file is stored.</p>
+   {returnTarget===asset.id&&asset.status==="Assigned"&&editable&&<div className="acc-stack" ref={returnPanelRef}><h4>Request Equipment Return</h4><p className="muted">This marks the device For Return; the employee remains accountable until physical receipt and inspection.</p><label>Reason for return *<textarea rows={2} value={returnReason} onChange={e=>setReturnReason(e.target.value)} placeholder="Reason for return (at least 3 characters)"/></label><div className="rev-actions"><button type="button" className="primary" disabled={returnReason.trim().length<3} onClick={submitReturnRequest}>Record Return Request</button><button type="button" className="secondary" onClick={()=>{setReturnTarget(null);setReturnReason("")}}>Cancel</button></div></div>}
+   {asset.history.map((h,i)=><div className="rev-row" key={i}>{h}</div>)}</section>}
   </>}
   {asset&&process&&<section className="panel acc-process"><div className="rev-title"><div><h3>{process==="assign"?"Assign Device":process==="retrieve"?"Retrieve Device":"Inspect Returned Device"}</h3><p>{asset.name} · {asset.id} · {asset.serial}</p></div><HelpButton topic="asset" label="Procedure guide"/></div>
    <div className="rev-steps acc-steps" style={{gridTemplateColumns:`repeat(${processSteps[process].length},minmax(0,1fr))`}}>{processSteps[process].map((t,i)=><span key={t} className={i<=stage?"active":""}>{i+1}. {t}</span>)}</div>
@@ -179,12 +198,12 @@ const asset=assets.find(a=>a.id===selected&&assetVisible(a,people,branch));
     {signMethod==="phone"&&<div className="rev-note">Individual link/QR signing is pending backend implementation; this device cannot be marked Assigned through that route yet.</div>}
     <label className="rev-check"><input type="checkbox" checked={handedOver} onChange={e=>setHandedOver(e.target.checked)}/> I confirm physical handover to the selected employee has been reviewed. (Frontend record only)</label>
     <div className="acc-footer-note"><Info size={17}/><span>This preview does not transmit, store or verify signed forms. For a real company turnover, verify the signed document and physical handover outside this prototype.</span></div>
-    <div className="rev-actions"><button className="secondary" type="button" onClick={()=>recordAssignment(false)}>Save Pending Turnover</button><button className="primary" type="button" disabled={!canConfirmAssignment} onClick={()=>recordAssignment(true)}>Complete Turnover (Local Preview)</button></div>
+    <div className="rev-actions"><button className="secondary" type="button" onClick={()=>recordAssignment(false)}>Save Pending Turnover</button><button className="primary" type="button" disabled={!canConfirmAssignment||!canAssignAssetToEmployee(asset,employee)} onClick={()=>recordAssignment(true)}>Complete Turnover (Local Preview)</button></div>
    </div>}
    {process!=="assign"&&<>
     {stage===0&&<p>Current accountable employee: <strong>{employee?.name||"Not recorded"}</strong> ({employee?.id||""})</p>}
     {(stage===1||stage===0&&process==="inspect")&&<div className="acc-two-col"><label>Device condition<select value={condition} onChange={e=>setCondition(e.target.value)}>{["New","Good","Used","For Inspection","Damaged"].map(x=><option key={x}>{x}</option>)}</select></label><label>Accessories returned<input value={accessories} onChange={e=>setAccessories(e.target.value)}/></label><label>Notes<textarea rows={3} value={notes} onChange={e=>setNotes(e.target.value)}/></label></div>}
-    {stage===2&&process==="retrieve"&&<div className="rev-document"><h4>Device Return Acknowledgment</h4><p>Employee: {employee?.name||"—"} · Device: {asset.name} · Condition: {condition}</p><button className="secondary" type="button" onClick={()=>printHRDocument("Device Return Acknowledgment",formFields(),notes||"Employee has returned the described equipment and accessories for inspection.",["Returning Employee","Receiving Officer"])}>Preview / Print Return Document</button><label className="rev-check"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}/> Return form reviewed for preparation (not signed or verified)</label></div>}
+    {stage===2&&process==="retrieve"&&<div className="rev-document"><h4>Device Return Acknowledgment</h4><p>Employee: {employee?.name||"—"} · Device: {asset.name} · Condition: {condition}</p><button className="secondary" type="button" onClick={()=>printHRDocument("Device Return Acknowledgment",formFields(),notes||"Employee has returned the described equipment and accessories for inspection.",["Returning Employee","Receiving Officer"])}>Preview / Print Return Document</button><label className="rev-check"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}/> Return form reviewed for preparation (not signed or verified)</label><label className="rev-check"><input type="checkbox" checked={physicallyReceived} onChange={e=>setPhysicallyReceived(e.target.checked)}/> I confirm the device and listed accessories were physically received (browser-local record; independent verification required)</label></div>}
     {stage===2&&process==="inspect"&&<div className="rev-document"><label>Inspection outcome<select value={outcome} onChange={e=>setOutcome(e.target.value as typeof outcome)}><option>Free</option><option>Maintenance</option><option>Retired</option></select></label><label className="rev-check"><input type="checkbox" checked={reviewed} onChange={e=>setReviewed(e.target.checked)}/> I reviewed the inspection findings and status.</label></div>}
     {stage===3&&<div className="rev-document"><h4>Review & Confirm</h4><p>{asset.name} · Employee: {employee?.name||"—"}</p><p>Condition: {condition} · Next status: {process==="retrieve"?"Inspection":outcome}</p><button className="primary" onClick={completeOther}>Confirm {process==="retrieve"?"Retrieval":"Inspection"} (Local Preview)</button></div>}
    </>}
