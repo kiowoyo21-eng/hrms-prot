@@ -3,6 +3,7 @@
 import {useEffect,useMemo,useRef,useState,type FormEvent,type PointerEvent} from "react";
 import {Laptop,Plus,ArrowLeft,ArrowRight,FileSignature,ClipboardCheck,FileText,Info,RotateCcw} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
+import {assetVisible} from "../lib/branchRecordViews";
 import {useHR,type AssetRecord,type AssetStatus} from "../lib/hrState";
 import HelpButton from "./HelpButton";
 import {ModuleAlertButton} from "./ModuleAlerts";
@@ -57,17 +58,21 @@ export default function AssetWorkspace({branch,role,prefillEmployeeId}:{branch:B
  const [message,setMessage]=useState("");
  const [adding,setAdding]=useState(false);
  const [newDevice,setNewDevice]=useState<{name:string;serial:string;condition:string;accessories:string;homeBranch:string}>({name:"",serial:"",condition:"Good",accessories:"",homeBranch:branch==="All Shops"?"UC Mandaluyong":branch});
- useEffect(()=>{if(!prefillEmployeeId||!editable)return;const found=people.find(p=>p.id===prefillEmployeeId);if(!found)return;setEmployeeId(found.id);setProcess(null);setSelected(null);setAdding(false);setFilter("Free");setSearch("");setBranchFilter(found.branch);setMessage(`Assign Device · ${found.name} preselected. Choose an available device from the list.`)},[prefillEmployeeId,editable]);
- const asset=assets.find(a=>a.id===selected);
+ const priorBranch=useRef(branch);
+ useEffect(()=>{if(priorBranch.current===branch)return;priorBranch.current=branch;
+  setSelected(null);setProcess(null);setStage(0);setAdding(false);setBranchFilter("All");setEmployeeId("");setNewDevice(p=>({...p,homeBranch:branch==="All Shops"?p.homeBranch:branch}));setMessage("");
+ },[branch]);
+ useEffect(()=>{if(!prefillEmployeeId||!editable)return;const found=people.find(p=>p.id===prefillEmployeeId);if(!found||(branch!=="All Shops"&&found.branch!==branch))return;setEmployeeId(found.id);setProcess(null);setSelected(null);setAdding(false);setFilter("Free");setSearch("");setBranchFilter(found.branch);setMessage(`Assign Device · ${found.name} preselected. Choose an available device from the list.`)},[prefillEmployeeId,editable,branch]);
+const asset=assets.find(a=>a.id===selected&&assetVisible(a,people,branch));
  const employee=people.find(p=>p.id===employeeId);
- const visibleAssets=useMemo(()=>assets.filter(a=>(filter==="All"||a.status===filter)&&(branchFilter==="All"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branchFilter)&&(branch==="All Shops"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branch)&&`${a.id} ${a.name} ${a.serial} ${people.find(p=>p.id===a.employeeId)?.name||""}`.toLowerCase().includes(search.toLowerCase())),[assets,people,filter,search,branchFilter,branch]);
+ const visibleAssets=useMemo(()=>assets.filter(a=>(filter==="All"||a.status===filter)&&(branchFilter==="All"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branchFilter)&&assetVisible(a,people,branch)&&`${a.id} ${a.name} ${a.serial} ${people.find(p=>p.id===a.employeeId)?.name||""}`.toLowerCase().includes(search.toLowerCase())),[assets,people,filter,search,branchFilter,branch]);
  const employeeMatches=people.filter(p=>(branch==="All Shops"||p.branch===branch)&&`${p.id} ${p.name}`.toLowerCase().includes(employeeSearch.toLowerCase()));
- const scopedAssets=assets.filter(a=>branch==="All Shops"||(a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"")===branch);
+ const scopedAssets=assets.filter(a=>assetVisible(a,people,branch));
  const count=(status:AssetStatus)=>scopedAssets.filter(a=>a.status===status).length;
  const resetProcess=()=>{setProcess(null);setSelected(null);setStage(0);setMessage("")};
  const begin=(id:string,type:Process)=>{
   const a=assets.find(x=>x.id===id);
-  if(!a||!editable)return;
+  if(!a||!editable||!assetVisible(a,people,branch))return;
   if(type==="assign"&&a.status!=="Free"&&a.status!=="Pending Turnover")return;
   if(type==="retrieve"&&a.status!=="Assigned")return;
   if(type==="inspect"&&a.status!=="Inspection")return;
@@ -120,12 +125,12 @@ export default function AssetWorkspace({branch,role,prefillEmployeeId}:{branch:B
  };
  const canConfirmAssignment=Boolean(employeeId&&officer.trim()&&handedOver&&(signMethod==="onsite"&&signatureDrawn||signMethod==="print"&&signedCopy));
  return <div className="rev-stack">
-  <div className="rev-title mu-section-head"><div><h3>Device Inventory</h3><small className="mu-compact-sub">{assets.length} devices · {assets.filter(a=>a.status==="Pending Turnover").length} pending turnover</small></div><div className="rev-actions"><ModuleAlertButton module="assets" branch={branch} onOpen={a=>setSelected(a.id.replace("asset-",""))}/><HelpButton topic="asset" label="Info"/>{editable&&<button className="primary" type="button" onClick={()=>{setAdding(true);resetProcess()}}><Plus size={16}/> Add Device</button>}</div></div>
+  <div className="rev-title mu-section-head"><div><h3>Device Inventory</h3><small className="mu-compact-sub">{scopedAssets.length} accessible devices · {scopedAssets.filter(a=>a.status==="Pending Turnover").length} pending turnover</small></div><div className="rev-actions"><ModuleAlertButton module="assets" branch={branch} onOpen={a=>setSelected(a.id.replace("asset-",""))}/><HelpButton topic="asset" label="Info"/>{editable&&<button className="primary" type="button" onClick={()=>{setAdding(true);resetProcess()}}><Plus size={16}/> Add Device</button>}</div></div>
   {message&&<div className="rev-note" role="status">{message}</div>}
   {adding&&<section className="panel"><div className="rev-title"><h3>Add Device</h3><button className="secondary" onClick={()=>setAdding(false)}>Cancel</button></div><form className="rev-form" onSubmit={addDevice}><label>Device name<input required value={newDevice.name} onChange={e=>setNewDevice(x=>({...x,name:e.target.value}))}/></label><label>Unique serial number<input required value={newDevice.serial} onChange={e=>setNewDevice(x=>({...x,serial:e.target.value}))}/></label><label>Registered Branch<select value={newDevice.homeBranch} onChange={e=>setNewDevice(x=>({...x,homeBranch:e.target.value}))}>{(["UC Mandaluyong","UC Las Piñas","UC Quezon City","MM Mandaluyong"] as const).filter(x=>branch==="All Shops"||x===branch).map(x=><option key={x} value={x}>{x}</option>)}</select></label><label>Initial condition<select value={newDevice.condition} onChange={e=>setNewDevice(x=>({...x,condition:e.target.value}))}>{["New","Good","Used","Damaged"].map(x=><option key={x}>{x}</option>)}</select></label><label>Included accessories<input value={newDevice.accessories} onChange={e=>setNewDevice(x=>({...x,accessories:e.target.value}))}/></label><button className="primary" type="submit">Save Device</button></form></section>}
   {!process&&<>
    <div className="rev-pills">{(["Free","Pending Turnover","Assigned","For Return","Inspection","Maintenance","Retired","All"] as const).map(s=><button type="button" key={s} className={filter===s?"active":""} onClick={()=>{setFilter(filter===s?"All":s);setSelected(null)}} aria-pressed={filter===s}>{s==="Free"?"Available":s} ({s==="All"?scopedAssets.length:count(s)})</button>)}</div>
-   <section className="panel"><div className="rev-filters mu-filterbar"><label>Find device<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Device, serial, employee..."/></label><label>Branch<select value={branchFilter} onChange={e=>setBranchFilter(e.target.value)}><option value="All">All Branches</option>{(["UC Mandaluyong","UC Las Piñas","UC Quezon City","MM Mandaluyong"] as const).filter(x=>branch==="All Shops"||x===branch).map(x=><option key={x} value={x}>{x}</option>)}</select></label></div>
+   <section className="panel"><div className="rev-filters mu-filterbar"><label>Find device<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Device, serial, employee..."/></label><label>Branch<select value={branchFilter} onChange={e=>setBranchFilter(e.target.value)}><option value="All">All accessible branches</option>{(["UC Mandaluyong","UC Las Piñas","UC Quezon City","MM Mandaluyong"] as const).filter(x=>branch==="All Shops"||x===branch).map(x=><option key={x} value={x}>{x}</option>)}</select></label></div>
     <div className="table-wrap"><table><thead><tr><th>Device / Serial</th><th>Branch / Location</th><th>Accountable Employee</th><th>Condition</th><th>Status</th><th>Actions</th></tr></thead><tbody>{visibleAssets.map(a=><tr key={a.id}><td><b>{a.name}</b><small className="pay-small">{a.id} · {a.serial}</small></td><td>{a.homeBranch||people.find(p=>p.id===a.employeeId)?.branch||"Not set"}</td><td>{a.employeeId?people.find(p=>p.id===a.employeeId)?.name||a.employeeId:"Not assigned"}</td><td>{a.condition}</td><td><span className="tag">{a.status==="Free"?"Available":a.status}</span></td><td><div className="rev-actions">
     {a.status==="Free"&&editable&&<button className="primary" type="button" onClick={()=>begin(a.id,"assign")}>Assign</button>}
     {a.status==="Pending Turnover"&&<><button className="secondary" onClick={()=>setSelected(a.id)}>View</button>{editable&&<button className="primary" onClick={()=>begin(a.id,"assign")}>Continue Turnover</button>}</>}

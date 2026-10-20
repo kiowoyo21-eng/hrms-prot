@@ -4,6 +4,7 @@ import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {createPortal} from "react-dom";
 import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet,FileSpreadsheet} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
+import {inBranch} from "../lib/branchRecordViews";
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
 import HelpButton from "./HelpButton";
@@ -94,6 +95,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const [decision,setDecision]=useState("Approved");
  const [separationType,setSeparationType]=useState("Resignation");
  const [message,setMessage]=useState("");
+ useEffect(()=>{setSelected(null);setEditing(false);setPersonal(null);setDetailKind(null);setHistoryKind(null);setAction(null);setAdd(false)},[branch]);
 
  useEffect(()=>{if(!historyKind)return;const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setHistoryKind(null)};window.addEventListener("keydown",onKey);return ()=>window.removeEventListener("keydown",onKey)},[historyKind]);
  const positions=useMemo(()=>[...new Set(data.people.filter(p=>branch==="All Shops"||p.branch===branch).map(p=>p.position))].sort(),[data.people,branch]);
@@ -153,7 +155,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const pageCount=Math.max(1,Math.ceil(people.length/rows));
  const current=Math.min(page,pageCount);
  const shown=people.slice((current-1)*rows,current*rows);
- const person=data.people.find(p=>p.id===selected);
+ const person=data.people.find(p=>p.id===selected&&(inBranch(p.branch,branch)));
  const verified=(p:HRPerson)=>p.documents.filter(x=>x.status==="Verified").length;
  const missing=(p:HRPerson)=>p.documents.filter(x=>x.status==="Missing").length;
  const paidSalary=person?(data.payrollReleases||[]).filter(r=>r.employeeId===person.id&&r.status==="Released"&&r.kind==="Salary"&&(
@@ -172,7 +174,8 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   update(s=>({...s,people:s.people.map(p=>p.id===person.id?fn(p):p)}));
  };
  const openProfile=(id:string,edit=false)=>{
-  const target=data.people.find(p=>p.id===id);
+  const target=data.people.find(p=>p.id===id&&(inBranch(p.branch,branch)));
+  if(!target)return;
   setSelected(id);setTab("Profile");setAction(null);setEditing(edit);setPersonal(edit&&target?toPersonalDraft(target):null);
   setEmploymentDraft(edit&&target?{probation:target.probation,sil:target.sil,vil:target.vil}:null);
   setHistoryKind(null);setRequestedMemo(null);setRequestedFolder(null);setDetailKind(null);
