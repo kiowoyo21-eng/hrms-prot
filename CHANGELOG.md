@@ -1,15 +1,12 @@
-# HRMS Deploy Hotfix — Missing mergePreview Module
+# HRMS Patch Changelog
 
-## Changed source files
-- `lib/studio/mergePreview.ts` — restored the V3 Document Automation merge-preview/preflight helper that `app/studio/page.tsx` already imports.
+## 2026-10-20 — Spreadsheet workbook ID type fix
 
-## Behavior
-- Maintains existing document merging and missing-field preflight logic.
-- No changes to the UI, login, payroll, or data storage.
-- No new dependencies.
+- **Changed** `components/SpreadsheetPageClient.tsx`.
+- Replaced `initialSheetId && LEGACY_SHEET_WORKBOOK[initialSheetId]` with an explicit conditional and `WorkbookId | undefined` annotation. This prevents the empty string from being inferred as a possible workbook ID in the Next.js 15 TypeScript build.
+- Kept existing workbook routes, legacy sheet redirects, Drive import handling, UI, and access checks unchanged.
 
-## Validation
-- Confirmed file matches the original V3 delivered patch (identical SHA-256).
-- Confirmed `app/studio/page.tsx` imports `../../lib/studio/mergePreview`, which resolves to this added file.
-- Confirmed related local imports (`lib/hrState.tsx`, `lib/payrollConfig.ts`, `lib/studio/variables.ts`) exist in the reconstructed project.
-- Source-only TypeScript syntax validation passed. Production `next build` and Vercel deployment are not verified.
+### Verification
+- Targeted TypeScript strict type check of the expression: passed.
+- TSX syntax parsing: passed.
+- Full Next.js production build: not run/verified in this environment; rerun on Vercel after committing.

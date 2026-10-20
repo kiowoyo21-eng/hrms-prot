@@ -1,16 +1,19 @@
-# Installation: HRMS Missing Module Fix
+# HRMS Vercel Spreadsheet Workbook Type Fix — Patch Only
 
-This is an incremental patch for the Vercel build error:
+**Target:** Vercel build commit `b9fe8ec` (`components/SpreadsheetPageClient.tsx:17`).
 
-`./app/studio/page.tsx Module not found: Can't resolve '../../lib/studio/mergePreview'`
+**Only source file to update:** `components/SpreadsheetPageClient.tsx`.
 
-1. Extract this ZIP into the **HRMS repository root** (not into an extra nested folder). The ZIP contains `lib/studio/mergePreview.ts`.
-2. Verify the file exists at `lib/studio/mergePreview.ts` and its filename capitalization matches exactly (Vercel runs on Linux).
-3. Run `npm run build` locally to check for further errors.
-4. Commit and push the restored source file:
+## GitHub Web UI installation
+1. Open your HRMS repository on GitHub and select the `main` branch.
+2. Navigate to `components/SpreadsheetPageClient.tsx` and edit the file (pencil icon).
+3. Replace this line:
+   `const legacy=initialSheetId&&LEGACY_SHEET_WORKBOOK[initialSheetId];`
+   with:
+   `const legacy:WorkbookId|undefined=initialSheetId?LEGACY_SHEET_WORKBOOK[initialSheetId]:undefined;`
+4. Commit changes directly to `main`.
+5. Review the **new** Vercel deployment for the new commit.
 
-   git add lib/studio/mergePreview.ts
-   git commit -m "fix: restore document merge preflight helper"
-   git push
+Alternatively, replace the entire matching file using the one in this ZIP, **after confirming your repo file matches the reported version**. Do not upload the ZIP itself to the repository.
 
-If you already have this file locally, verify it is tracked by Git and that it is not excluded by `.gitignore`.
+No new dependencies. Contains only one changed source file plus documentation.

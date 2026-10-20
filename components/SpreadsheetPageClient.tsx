@@ -13,7 +13,7 @@ export default function SpreadsheetPageClient({initialSheetId}:{initialSheetId?:
  if(!ready)return <main className="sw-auth"><p>Loading spreadsheet workspace…</p></main>;
  if(!actor)return <main className="sw-auth"><h1>Sign in to HRMS first</h1><p>The spreadsheet requires an active HRMS demo session.</p><Link href="/">Go to HRMS login</Link></main>;
  if(actor.role==="BM")return <main className="sw-auth"><h1>Restricted workspace</h1><p>Employee and payroll spreadsheets are limited to HR and Super Admin.</p><Link href="/">Back to HRMS</Link></main>;
- const legacy=initialSheetId&&LEGACY_SHEET_WORKBOOK[initialSheetId];
+ const legacy:WorkbookId|undefined=initialSheetId?LEGACY_SHEET_WORKBOOK[initialSheetId]:undefined;
  const workbook:WorkbookId|undefined=initialSheetId?(isWorkbookId(initialSheetId)?initialSheetId:legacy):driveImport?"working":undefined;
  if(initialSheetId&&!workbook)return <main className="sw-auth"><h1>Workbook not found</h1><p>Choose a valid workbook from the spreadsheet library.</p><Link href="/spreadsheets">Spreadsheet Home</Link></main>;
  if(!workbook)return <main className="sw-home"><header><h1>HRMS Spreadsheets</h1><p>Choose a dedicated workbook. HRMS records are loaded only after opening the file; editing working copies requires admin approval.</p><Link href="/">← Back to HRMS</Link></header><div className="sw-home-grid">{WORKBOOKS.map(w=><Link key={w.id} href={`/spreadsheets/${w.id}`} className="sw-home-card"><strong>{w.name}</strong><span>{w.description}</span><small>Open workbook ↗</small></Link>)}</div><footer>Local demo records only · Each workbook contains related worksheets, not every HRMS module.</footer></main>;
