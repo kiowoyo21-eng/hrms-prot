@@ -1,16 +1,16 @@
-# HRMS Demo Accounts UI Patch
+# Installation: HRMS Missing Module Fix
 
-Included files:
-- app/page.tsx
-- app/globals.css
+This is an incremental patch for the Vercel build error:
 
-What changed:
-- Replaced the plain-text demo credentials box on the login page with clickable role cards.
-- Cards are generated from the existing `demoAccounts` array, so every configured demo role appears automatically.
-- Clicking a card auto-fills the username and password fields.
-- Kept the normal sign-in flow unchanged.
+`./app/studio/page.tsx Module not found: Can't resolve '../../lib/studio/mergePreview'`
 
-Installation:
-1. Extract this patch into your HRMS project root.
-2. Overwrite the matching files.
-3. Run `npm run dev` or `npm run build`.
+1. Extract this ZIP into the **HRMS repository root** (not into an extra nested folder). The ZIP contains `lib/studio/mergePreview.ts`.
+2. Verify the file exists at `lib/studio/mergePreview.ts` and its filename capitalization matches exactly (Vercel runs on Linux).
+3. Run `npm run build` locally to check for further errors.
+4. Commit and push the restored source file:
+
+   git add lib/studio/mergePreview.ts
+   git commit -m "fix: restore document merge preflight helper"
+   git push
+
+If you already have this file locally, verify it is tracked by Git and that it is not excluded by `.gitignore`.
