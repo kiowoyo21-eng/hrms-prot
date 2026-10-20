@@ -95,3 +95,31 @@
 .studio-scope .doc-review-reply{border-left:2px solid #b6c8e5;padding:6px 0 6px 10px;display:flex;flex-direction:column;gap:5px}
 .studio-scope .doc-review-actions button{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;color:#1d4e89;font-size:11px}
 .studio-scope .doc-review-reply-box{display:flex;flex-direction:column;gap:5px}
+
+/* Docs V6 + Universal UI QA: true viewport-layer dialogs, never inline below content. */
+.studio-overlay-root{position:fixed;inset:0;width:100%;height:100dvh;z-index:2147483000;background:transparent;pointer-events:none;min-height:0}
+.studio-overlay-root>.studio-modal-shade{z-index:1;pointer-events:auto;overflow-y:auto;align-items:safe center;overscroll-behavior:contain}
+.studio-overlay-root .studio-dialog{max-height:calc(100dvh - 36px);width:min(100%,980px);min-width:0;overscroll-behavior:contain}
+.studio-scope .studio-form-builder{background:white;border:1px solid #cbdcf3;border-radius:14px;padding:22px;margin:20px 0;box-shadow:0 8px 22px #19355c12}
+.studio-scope .studio-form-head,.studio-scope .studio-form-row-head,.studio-scope .studio-form-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.studio-scope .studio-form-head h2{margin:0 0 5px;font-size:19px}
+.studio-scope .studio-form-head p{margin:0;line-height:1.55;color:#5d6d82;font-size:12px}
+.studio-scope .studio-form-alert{padding:10px 12px;background:#fff8e7;border:1px solid #f0d7a7;border-radius:9px;font-size:12px;line-height:1.5;color:#81510c}
+.studio-scope .studio-form-row{border:1px solid #e1e8f2;padding:15px;border-radius:10px;margin:12px 0;display:grid;gap:12px}
+.studio-scope .studio-form-row-head code{border-radius:5px;padding:4px 7px;background:#f0f5ff;font-size:12px;color:#32609d}
+.studio-scope .studio-form-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.studio-scope .studio-form-columns label{display:grid;gap:5px;font-size:12px;font-weight:600;min-width:0}
+.studio-scope .studio-form-columns .studio-form-required{display:flex;flex-direction:row;align-items:center;gap:9px}
+.studio-scope .studio-form-required input{width:auto}
+.studio-scope .studio-form-builder .studio-secondary{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.studio-scope .studio-form-actions{justify-content:flex-end;margin:18px 0 10px}
+.studio-scope .studio-generated-form{display:grid;gap:9px;padding:12px;border:1px solid #dae5f3;background:#f8fbff;border-radius:9px;margin:12px 0}
+.studio-scope .studio-generated-form h3{font-size:14px;margin:0 0 5px}
+.studio-scope .studio-mapped-field{padding:10px 12px;border:1px dashed #bacbe0;border-radius:8px;background:#fff;font-size:12px;color:#48658a}
+.studio-scope .studio-dialog-grid>.studio-generated-form,.studio-scope .studio-dialog-grid>div{min-width:0}
+.studio-scope .studio-field{min-width:0;overflow-wrap:anywhere}
+.studio-scope .studio-employee-picker label{cursor:pointer}
+.studio-scope .studio-employee-picker input[type=checkbox]{min-width:16px;flex:0 0 auto}
+.studio-scope .doc-header{position:relative;z-index:120}
+.studio-scope .doc-menu>div{z-index:250;max-height:min(75dvh,540px);overflow-y:auto}
+@media(max-width:700px){.studio-overlay-root>.studio-modal-shade{padding:0;align-items:stretch}.studio-overlay-root .studio-dialog{width:100vw;max-width:100vw;max-height:100dvh;min-height:100dvh;border-radius:0;padding:15px}.studio-scope .studio-form-columns{grid-template-columns:1fr}.studio-scope .studio-form-builder{padding:14px}}
