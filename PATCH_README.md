@@ -1,16 +1,14 @@
-# Installation: HRMS Missing Module Fix
+# Install via GitHub website (no terminal required)
 
-This is an incremental patch for the Vercel build error:
+This ZIP contains only the two missing source files and documentation. Do **not** upload the ZIP itself to GitHub.
 
-`./app/studio/page.tsx Module not found: Can't resolve '../../lib/studio/mergePreview'`
+1. Extract the ZIP to your computer.
+2. Open https://github.com/kiowoyo21-eng/hrms-prot on branch `main`.
+3. Open the `components` directory and click **Add file → Upload files**.
+4. Upload `IncidentWorkspace.tsx` and `DocumentWorkspace.tsx` from the ZIP's `components` folder. Ensure both appear at `components/<filename>.tsx` (not at the repository root and not nested inside another folder).
+5. Choose **Commit changes** directly to `main`.
+6. Wait for Vercel's new deployment and verify that the Source Commit changed from `2acbf6a`.
 
-1. Extract this ZIP into the **HRMS repository root** (not into an extra nested folder). The ZIP contains `lib/studio/mergePreview.ts`.
-2. Verify the file exists at `lib/studio/mergePreview.ts` and its filename capitalization matches exactly (Vercel runs on Linux).
-3. Run `npm run build` locally to check for further errors.
-4. Commit and push the restored source file:
+If one or both files already exist in GitHub at the exact case-sensitive path, compare the latest commit and do not blindly overwrite newer work. Ask for a fresh deployment log instead.
 
-   git add lib/studio/mergePreview.ts
-   git commit -m "fix: restore document merge preflight helper"
-   git push
-
-If you already have this file locally, verify it is tracked by Git and that it is not excluded by `.gitignore`.
+The patch does not add dependencies. Next.js build success still needs confirmation.
