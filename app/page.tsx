@@ -1,6 +1,6 @@
 "use client";
 import {useEffect,useMemo,useState} from "react";
-import {LayoutDashboard,FolderOpen,Workflow,Wallet,CalendarCheck,HandCoins,FileWarning,Laptop,Landmark,ListTodo,Files,SlidersHorizontal,ScrollText,Settings,ClipboardList,Menu,X,LogOut,Search,Bell,ChevronRight,Users,CheckCircle2,Clock3,ShieldCheck,Download,Filter,LockKeyhole,Building2,Eye,EyeOff,Info,ClipboardCheck,FileUp} from "lucide-react";
+import {LayoutDashboard,FolderOpen,Workflow,Wallet,CalendarCheck,HandCoins,FileWarning,Laptop,Landmark,ListTodo,Files,SlidersHorizontal,ScrollText,Settings,ClipboardList,Menu,X,LogOut,Search,Bell,ChevronRight,Users,CheckCircle2,Clock3,ShieldCheck,Download,Filter,LockKeyhole,Building2,Eye,EyeOff,Info,ClipboardCheck,FileUp,HardDrive,FileSpreadsheet,FilePenLine} from "lucide-react";
 import EmployeeWorkspace from "../components/EmployeeWorkspace";
 import {HRProvider,useHR} from "../lib/hrState";
 import AssetWorkspace from "../components/AssetWorkspace";
@@ -17,7 +17,7 @@ import IncidentWorkspace from "../components/IncidentWorkspace";
 import ComplianceWorkspace from "../components/ComplianceWorkspace";
 import {activity,branches,demoAccounts,modules,permissions,type Branch,type ModuleId,type Role} from "../lib/mock";
 import {ModuleAlertsProvider,ModuleAlertButton,ModuleAlertSummary,DashboardModuleAlerts,useModuleAlerts} from "../components/ModuleAlerts";
-const icons={LayoutDashboard,FolderOpen,Workflow,Wallet,CalendarCheck,HandCoins,FileWarning,Laptop,Landmark,ListTodo,Files,SlidersHorizontal,ScrollText,Settings,ClipboardList,ClipboardCheck,FileUp};
+const icons={LayoutDashboard,FolderOpen,Workflow,Wallet,CalendarCheck,HandCoins,FileWarning,Laptop,Landmark,ListTodo,Files,SlidersHorizontal,ScrollText,Settings,ClipboardList,ClipboardCheck,FileUp,HardDrive,FileSpreadsheet,FilePenLine};
 type User={username:string;role:Role};
 const DEMO_SESSION_KEY="ucmm-hr-demo-login-v1";
 const DEMO_SESSION_MAX_MS=7*24*60*60*1000;
