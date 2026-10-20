@@ -1,19 +1,21 @@
-# HRMS Employee 201 Revision — 2026-10-20
+# HRMS Spreadsheet Advanced Tools — Changelog
+2026-10-20 — Advanced Sheets Incremental Revision
 
-## Changed/new source files
+## Source changes
+- `components/SpreadsheetWorkspace.tsx` — add Data Tools panel, actual view-only sorting/filtering of grid rows (canonical cell references retained), range formatting, list/number validation controls, conditional formatting rules, and expanded formula help. Protect official report rows from editing.
+- `lib/sheetFormulas.ts` — extend safe non-eval formula parser with conditionals, comparisons, text and lookup functions, rounding and aggregate conditions; return spreadsheet-style errors for unsupported operations.
+- `lib/sheetRange.ts` — allow safe import/export of supported formula subset, reject external references and unsupported formulas (preserve as text).
+- `lib/sheetDataTools.ts` (new) — pure helpers for validation, conditional rules, spreadsheet-range inclusion and natural sorting.
+- `lib/spreadsheetStore.ts` — require active admin-approved edit grants before saving validation, formatting and conditional rules; validate incoming cell values atomically, audit actions without recording cell contents.
+- `app/spreadsheets/spreadsheet.css` — extend route-scoped Google Sheets-style layout with responsive Data Tools panel.
+- `app/spreadsheets/layout.tsx` — include previous route-scoped stylesheet import to prevent the previously reported unstyled spreadsheet UI.
 
-- `lib/employee201Rates.ts` **new** — one shared, read-only calculation of effective basic/daily/hourly/OT/HP/SHP/RDW/RDOT values. Explicit divisor/hour settings are required for derived rates. Provides masked government identifier preview for workbook exports.
-- `lib/workbookRegistry.ts` **updated** — 8 Employee 201-specific worksheets: Directory, Personal & Emergency, Employment, Compensation & Premiums, Recorded Rate Changes, Masked Government Details, Document Checklist, Assignment History; source-linked and branch-scoped.
-- `lib/reportSheetData.ts` **updated** — Employee Directory now shows effective basic rate after applicable recorded changes instead of the stale original rate.
-- `components/EmployeeWorkspace.tsx` **updated** — "Open in Spreadsheet" button in Employee 201; opens new browser tab with the active HRMS branch filter.
-- `components/workspace/EmployeeFullRecord.tsx` **updated** — profile rate preview uses the shared calculator and shows the rate-effective date; pay controls stay in Payroll.
-- `lib/studio/variables.ts` **updated** — Docs auto-fill uses the same rate preview as Employee 201 and exposes more personnel/emergency/leave allocation and rate-effective-date tokens.
+## Key invariants
+- HRMS Employee 201, Payroll, Payslips, Loan, Incident, and other official source records are NEVER modified through this spreadsheet editor.
+- Module-specific workbooks, batch isolation, existing sheets, and original approval requests remain intact.
+- Data sorting/filtering is a view operation, not a write or an irreversible row reordering.
+- Protected sheet changes still require an active approver grant. Revocation blocks writes.
+- Browser-local permissions and audit logs are demo-only. Secure production enforcement requires backend authorization.
 
-## No changes
-
-- No changes to payroll approvals, released payslips, batch IDs, the login demo accounts, Drive edit restrictions, or back-end authorization.
-- Excel workbooks remain read-only source references; approved working-copy edits do not update the master Employee 201 source.
-
-## Not yet production-ready
-
-This is frontend-only. Government IDs are masked for spreadsheet rows, but browser storage and the existing Employee 201 interface are not secure storage. Never enter real employee PII until authenticated backend controls and encrypted storage are implemented. Real DOCX/Sheets parity remains separate work.
+## Not in this incremental revision
+- Pivot tables, charts, cross-sheet formulas, named ranges, true multiuser collaboration, server-backed storage and Google Sheets feature parity.

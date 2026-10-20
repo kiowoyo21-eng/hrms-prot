@@ -184,3 +184,17 @@
 .sw-workspace .sw-grid .sw-corner{background:#e9eef5}
 .sw-workspace .sw-actions button:disabled,.sw-workspace .sw-dropdown button:disabled{cursor:not-allowed;opacity:.5}
 @media(max-width:700px){.sw-workspace .sw-menus{overflow-x:auto;white-space:nowrap;padding:4px 8px}.sw-workspace .sw-formatbar{padding:6px 8px}.sw-workspace .sw-top{flex-wrap:wrap}.sw-workspace .sw-grid td input{min-width:112px}.sw-workspace .sw-scroller{height:calc(100dvh - 375px);min-height:300px}}
+/* Advanced worksheet tools, scoped to the dedicated spreadsheet workspace. */
+.sw-advanced-tools{background:#fff;border-top:1px solid #dfe5ee;border-bottom:1px solid #dfe5ee;padding:13px 18px;color:#243044}
+.sw-advanced-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:11px}
+.sw-advanced-heading button,.sw-tool-row button,.sw-conditional-item button,.sw-advanced-grid>div>button{border:1px solid #ccd5e1;border-radius:6px;padding:7px 10px;background:#fff;font:inherit;font-size:12px;cursor:pointer}
+.sw-advanced-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.sw-advanced-grid>div{border:1px solid #e5eaf1;border-radius:10px;padding:12px;min-width:0}
+.sw-advanced-grid h3{margin:0 0 4px;font-size:13px}.sw-advanced-grid p{font-size:11px;color:#657181;margin:0 0 10px}
+.sw-advanced-grid label{display:flex;flex-direction:column;gap:4px;font-size:11px;margin:7px 0;color:#536174}
+.sw-advanced-grid input:not([type=color]),.sw-advanced-grid select{border:1px solid #cdd7e3;border-radius:6px;background:#fff;padding:7px;min-width:0;max-width:100%;width:100%;color:#263548}
+.sw-advanced-grid input[type=color]{width:45px;height:30px;border:0;background:transparent}
+.sw-tool-row{display:flex;gap:7px;flex-wrap:wrap;align-items:flex-end;margin:8px 0}.sw-tool-row label{flex:1;min-width:90px}
+.sw-conditional-item{display:flex;justify-content:space-between;gap:6px;align-items:center;border-top:1px solid #edf0f5;padding-top:7px;margin-top:7px;font-size:11px;overflow-wrap:anywhere}
+.sw-advanced-tools button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:980px){.sw-advanced-grid{grid-template-columns:1fr}}

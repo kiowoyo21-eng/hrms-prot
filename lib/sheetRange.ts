@@ -17,9 +17,13 @@ export function shiftFormulaReferences(value:string,rowDelta:number,colDelta:num
  });
 }
 export function parseTabularPaste(text:string):string[][]{const lines=text.replace(/\r/g,"").replace(/\n$/,"").split("\n");return lines.map(line=>line.split("\t"))}
-/** Safe formula subset supported by the browser evaluator. Others remain text on import. */
-export function supportedImportFormula(value:string){if(!value.startsWith("=")||value.length>1500)return false;
- if(!/^=[\sA-Z0-9().,:+\-*/$]+$/i.test(value))return false;
- const names=value.slice(1).match(/\$?[A-Z]{1,2}\$?[1-9]\d{0,3}|[A-Z]+/gi)||[];
- return names.every(name=>/^(SUM|AVERAGE|MIN|MAX|COUNT|\$?[A-Z]{1,2}\$?[1-9]\d{0,3})$/i.test(name));
+/** Import only the browser evaluator's supported formulas (no external workbook references). */
+export function supportedImportFormula(value:string){
+ if(!value.startsWith("=")||value.length>1500||/[!\[\]{};\\]/.test(value))return false;
+ const body=value.slice(1).replace(/"(?:[^"]|"")*"/g,'""');
+ if(!/^[\sA-Z0-9_.(),:%+\-*/^&$<>=" ]+$/i.test(body))return false;
+ const noRefs=body.replace(/\$?[A-Z]{1,2}\$?[1-9]\d{0,3}/gi,"").replace(/(?:\d+(?:\.\d*)?|\.\d+)/g,"");
+ const names=noRefs.match(/\b[A-Z_][A-Z_0-9]*\b/gi)||[];
+ const allowed=new Set(["TRUE","FALSE","SUM","AVERAGE","MIN","MAX","COUNT","COUNTA","COUNTBLANK","IF","IFS","IFERROR","AND","OR","NOT","ROUND","ROUNDUP","ROUNDDOWN","ABS","MOD","POWER","SQRT","LEN","UPPER","LOWER","TRIM","CONCAT","CONCATENATE","LEFT","RIGHT","MID","COUNTIF","SUMIF","MATCH","INDEX","VLOOKUP","XLOOKUP"]);
+ return names.every(name=>allowed.has(name.toUpperCase()));
 }
