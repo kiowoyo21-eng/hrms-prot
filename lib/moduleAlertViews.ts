@@ -2,6 +2,14 @@ import type {Branch,ModuleId} from "./mock";
 
 export type ModuleAlert={id:string;title:string;detail:string;branch?:Branch|string;level?:"urgent"|"normal";action?:string};
 export type AlertRegistry=Partial<Record<ModuleId,ModuleAlert[]>>;
+/** Keep independent publishers for a module (e.g. payroll cutoff + payroll approval) without overwrites. */
+export type AlertSources=Partial<Record<ModuleId,Record<string,ModuleAlert[]>>>;
+export function mergeAlertSources(sources:AlertSources):AlertRegistry{
+ const combined:AlertRegistry={};
+ for(const module of Object.keys(sources) as ModuleId[])combined[module]=Object.values(sources[module]||{}).flat();
+ return combined;
+}
+
 
 /** Only alerts visible in the selected branch are counted; legacy loan alerts live under Payroll. */
 export function visibleAlerts(registry:AlertRegistry,module:ModuleId,branch:Branch):ModuleAlert[]{

@@ -52,6 +52,6 @@ export default function PayrollCutoffAlertPublisher(){
   const person=data.people.find(p=>p.id===release.employeeId);
   alerts.push({id:`signature-${release.id}`,title:'Payslip Acknowledgment Not Prepared',detail:`${person?.name||release.employeeId} · ${release.periodEnd}`,level:'normal',branch:person?.branch,action:'payroll:history'});
  }
- usePublishModuleAlerts('payroll',alerts);
+ usePublishModuleAlerts('payroll',alerts,'cutoff-monitor');
  return null;
 }

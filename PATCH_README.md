@@ -1,14 +1,18 @@
-# Installing HRMS Universal UI V1 (GitHub website)
+# Installing HRMS Universal Notifications V2 through GitHub website
 
-**Prerequisite:** Latest consolidated HRMS plus the previous Docs V6 / Advanced Sheets patches applied to the same `main` branch. This is **NOT** a full project.
+**Base required:** Apply the HRMS Universal UI V1 patch first, plus your prior HRMS employee/payroll/docs/sheets patches. This ZIP is **incremental**, not the entire app.
 
-1. Download and extract the ZIP. The folder structure inside the ZIP starts at `app/`, `components/`, and `lib/`.
-2. Open your HRMS GitHub repository and update/replace each file at its matching path. For new directories create `components/ui/` and add `useFloatingPopover.ts`.
-3. Ensure both new helper files exist in `lib/`: `moduleAlertViews.ts` and `floatingPosition.ts`.
-4. Ensure `app/universal-ui.css` exists and that `app/layout.tsx` imports it after `globals.css`.
-5. Commit **all 11 source files together** to `main`. Vercel will build the new commit. Do not upload the ZIP as a single repository file.
-6. Review the fresh build log. After successful deployment, hard-refresh (`Cmd+Shift+R` on Mac) and test dashboard counts, notification bells, date calendars and the Leave / Recruitment / Compliance modal workflows.
+1. Download and extract this ZIP locally.
+2. Open your `hrms-prot` repository on GitHub, `main` branch.
+3. Update the contents of these exact paths, preserving folder names:
+   - `app/page.tsx`
+   - `app/globals.css`
+   - `components/ModuleAlerts.tsx`
+   - `components/PayrollCutoffAlertPublisher.tsx`
+   - `lib/moduleAlertViews.ts`
+4. Commit all five source files together; don't upload the ZIP itself and don't put files in duplicate nested folders.
+5. Wait for the Vercel deployment on that new commit. In browser, hard-refresh (Mac: Cmd+Shift+R).
+6. Log in with an authorized test role. Confirm the bell appears beside the branch selector on Dashboard and other modules. Test **This module**/**All modules**, Escape, click-outside, changing branches, and module navigation.
+7. Open Payroll and confirm cutoff-monitor alerts and pending Payroll Operations alerts can coexist, rather than replacing each other.
 
-**Warning:** `app/page.tsx` and the five edited component files must reflect your latest repository edits. If your GitHub versions have been independently modified since Docs V6, merge instead of blindly replacing them; the patch was developed against the available Docs V6 source snapshot, not fetched from your live repository.
-
-Changed files only; no `node_modules` or full project files are included.
+Do not claim the patch is production-deployed until the new Vercel build succeeds and basic interactions are browser-tested. See `QA_REPORT.md` and `NOTIFICATION_COVERAGE.md`.
