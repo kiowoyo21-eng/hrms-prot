@@ -11,5 +11,8 @@ export type PdfField={id:string;page:number;label:string;mapping:string;type:"te
 export type ApprovalRequest={id:string;itemId:string;itemTitle:string;requester:string;reason:string;status:"pending"|"approved"|"denied"|"revoked";requestedAt:string;decidedAt?:string;decidedBy?:string;expiresAt?:string;note?:string};
 export type StudioRevision={id:string;itemId:string;version:number;date:string;actor:string;snapshot:StudioItem};
 export type StudioLog={id:string;itemId:string;date:string;actor:string;action:string;detail:string};
-export type StudioState={items:StudioItem[];approvals:ApprovalRequest[];revisions:StudioRevision[];logs:StudioLog[]};
+/** Review comments are separate from document HTML/version history. Anchors are quoted text, not persistent cursor positions. */
+export type StudioCommentReply={id:string;actor:string;date:string;text:string};
+export type StudioComment={id:string;itemId:string;actor:string;date:string;quote:string;text:string;resolved:boolean;resolvedBy?:string;resolvedAt?:string;replies:StudioCommentReply[]};
+export type StudioState={items:StudioItem[];approvals:ApprovalRequest[];revisions:StudioRevision[];logs:StudioLog[];comments?:StudioComment[]};
 export type StudioActor={username:string;role:"HR"|"Super Admin"|"BM"};

@@ -1,15 +1,9 @@
-# HRMS Docs V4 — Verification
+# Docs V5 — QA Results
 
-| Check | Result |
-|---|---|
-| TS/TSX source parse across reconstructed HRMS (includes latest Sheet V4 overlay) | PASS: 105 files |
-| Local relative imports | PASS: none missing |
-| Docs route `/docs` stylesheet scope | PASS: route layout file created, matching selector scope |
-| CSS stylesheet parse | PASS: 219 top-level rules, 0 syntax errors |
-| DOCX/Print mocked functional assertions | PASS: 14 assertions (page size, landscape, headers/footers, lists, page breaks, normal tab print) |
-| Edit approval/import guard and save audit path source assertions | PASS |
-| Full TypeScript dependency-aware typecheck | NOT RUN: npm packages unavailable in environment |
-| Full Next.js production build | NOT VERIFIED |
-| Real browser end-to-end and DOCX fidelity testing | NOT VERIFIED |
-
-**Do not assume bug-free production behavior from source-level checks alone.** Check Vercel and desktop Chrome after committing.
+- TypeScript/TSX source syntax: 107 files passed parsing checks in reconstructed HRMS source.
+- Relative import resolution: 0 missing relative imports detected.
+- CSS: 237 style rules parsed with 0 stylesheet parse errors (tinycss2).
+- Focused state tests: passed for comment creation/reply/resolve/reopen, document scoping, invalid inputs, HR unapproved write denial, approved writes, revoked write denial, legacy data migration, audit event redaction, and unchanged document versions/content.
+- Next.js production build: **NOT verified**; npm dependencies for the full project are unavailable in this runtime.
+- Browser-based UI interaction: **NOT verified**; must be tested after deploying.
+- Known limitation: comments are quote snapshots, not persistent inline anchored decorations or live collaboration; data and permissions remain browser-local.

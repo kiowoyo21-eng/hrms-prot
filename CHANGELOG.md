@@ -1,23 +1,19 @@
-# HRMS Docs V4 — Incremental editor improvements (2026-10-20)
+# HRMS Docs V5 — Review Comments (2026-10-20)
 
-## Modified/created files
+## Modified source files (5)
+- `lib/studio/types.ts`: Added document-specific review comment and reply types. Kept comments optional for backward compatibility with older browser data.
+- `lib/studio/store.ts`: Added create/reply/resolve/reopen operations with in-transaction edit approval, record validation, limits, and audit events. Existing persisted documents migrate without losing records when they lack a comments array.
+- `app/studio/docs/[id]/page.tsx`: Added Comments side panel, selected-text quote snapshot, review threads, replies, and resolution controls. Review-only users can read comments, but mutations require an active editing grant.
+- `app/studio/page.tsx`: Added open review-comment counts to Docs cards in Document Library.
+- `app/studio/studio.css`: Styled review comments, replies, and edit controls inside the full-page editor.
 
-- `app/docs/layout.tsx` (NEW): consistent route-scoped Docs styles for `/docs` and `/docs/[id]`, without the HRMS dashboard chrome.
-- `app/docs/page.tsx`: rely on the Docs route layout for stylesheet imports.
-- `app/studio/docs/[id]/page.tsx`: paragraph line spacing, indentation, contextual table tools (insert before/after, merge/split, toggle header, delete), explicit page-break command, HTML/TXT import, HTML export, Format menu. DOCX export receives layout and header/footer settings. HTML imports are sanitized, size-limited, confirmed before replacement, and locked without active editing access.
-- `app/studio/studio.css`: Docs home styles, contextual table tools, selection/row styling, responsive controls.
-- `lib/studio/exportDocx.ts`: DOCX page orientation, paper size, margins, headers/footers, page breaks, heading/paragraph formatting, distinct bulleted and numbered lists.
-- `lib/studio/print.ts`: opens a normal browser tab (not a popup-size window) for browser printing; aligns page-break CSS with serialized editor HTML.
+## Unchanged
+- Official Employee 201 and payroll data
+- Original Docs/PDF content and versioning logic
+- Existing approval queue and document generation
+- Drive view-only configuration
 
-## Preserved
-
-- Browser-local HRMS documents and existing saved document format; no schema migration.
-- Document-scoped Super Admin approval, expiry/revocation, version-conflict protection and audited saves.
-- Employee 201/Payroll values and templates not changed; docs import/edit cannot silently write back to source records.
-- Existing `/studio/docs/[id]` links and `/docs/[id]` routing.
-
-## Known limitations
-
-- Not full Google Docs feature parity: no realtime collaboration or cross-device sync, no suggestion mode, comments, exact paginated on-screen layout, or rich DOCX import. HTML/TXT import is supported in this pass.
-- DOCX export is best-effort for supported text/table/list formatting; complex images/styles and intricate page layouts may not round-trip perfectly.
-- Frontend/browser-local approval and audit are not production-secure. Server-side authorization and persistent storage are still required.
+## Boundaries
+- Comments are anchored to a **snapshot of selected text**; they do not track moving document offsets or add Word-style inline markup.
+- Audit activity **does not include comment bodies**; comment text is stored only in the existing local browser demo store.
+- A genuine cross-user comments/audit system requires backend authentication, access controls, and durable storage.

@@ -1,29 +1,26 @@
-# HRMS Docs V4 Patch Installation
+# HRMS Docs V5 Incremental Patch
 
-## Requirements
+## Prerequisites
+Apply this **after Docs V4** (`hrms-docs-v4-editor-incremental-patch-only.zip`) on the HRMS project. Existing `/docs` and `/docs/[id]` routes must be present.
 
-Apply over the current HRMS project with Docs/Document Studio already installed. This is **NOT** a full HRMS project. No new npm dependencies are added.
+## GitHub web installation
+1. Extract the ZIP to a local folder.
+2. Open your HRMS GitHub repository, branch `main`.
+3. In GitHub, update each of the five source files while preserving its relative path. Do not commit this ZIP as a repo file.
+4. Commit all five files together.
+5. Check Vercel Build Logs and manually test the Docs editor.
 
-## File paths (exact)
+## Testing steps
+1. Login as **Super Admin** demo role. Open `/docs`, select a document, add a comment to selected text, reply, resolve, reopen.
+2. Check Document Library card: open comment count must update.
+3. Login as **HR** without edit permission: comments are readable, but no new/reply/resolve writes are allowed.
+4. HR requests edit access. Admin approves. HR can now leave review comments.
+5. Admin revokes access. Further HR comment writes must fail.
+6. Check Audit Logs for comment action events; comment text must not appear in audit summaries.
+7. Save a document and check document versions and template generation still work.
 
-1. `app/docs/layout.tsx` — add
-2. `app/docs/page.tsx` — replace
-3. `app/studio/docs/[id]/page.tsx` — replace
-4. `app/studio/studio.css` — replace
-5. `lib/studio/exportDocx.ts` — replace
-6. `lib/studio/print.ts` — replace
+## Dependencies
+No new npm dependencies.
 
-## GitHub website only
-
-1. Extract the ZIP on your computer. Do **not** upload the ZIP itself as a file in GitHub.
-2. On repository branch `main`, upload/replace the six source files to their exact paths. Preserve the literal `[id]` folder name.
-3. Commit all six files together. Check that the deployed commit contains `app/docs/layout.tsx` and the updated styles.
-4. Watch the Vercel log for a complete `npm run build`. Source-level checks here are not a production build.
-5. Test `/docs`, `/docs/starter-employment`, printing, imports, tables and the HR → request approval → Super Admin approve workflow.
-
-## User behavior
-
-- Access Docs using `/docs`; documents open in `/docs/[id]` as a normal browser tab.
-- HR users remain view-only until approved; Super Admin retains edit privileges.
-- Only HTML and TXT import are added in V4. PDF export uses your browser's Print / Save as PDF.
-- Imported changes are saved through the normal document version/audit path, not into official payroll or employee records.
+## Security
+This is for the **frontend-only demonstration**. Client localStorage and role flags are not secure cross-device authorization; do not use real employee/confidential records in this demo environment.

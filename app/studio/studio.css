@@ -75,3 +75,23 @@
 .studio-scope .docs-home-item span{display:inline-flex;align-items:center;gap:6px;color:#1b5eac;font-size:12px;font-weight:700;margin-top:auto}
 .studio-scope .docs-home footer{max-width:1280px;margin:0 auto}
 @media(max-width:700px){.studio-scope .docs-home-head{flex-direction:column}.studio-scope .docs-home{padding:20px 12px}.studio-scope .docs-home-head h1{font-size:24px}}
+
+/* Docs V5: document-scoped review and comment threads. */
+.studio-scope .doc-review-panel{padding:14px 12px 28px;display:flex;flex-direction:column;gap:12px}
+.studio-scope .doc-review-hint{font-size:12px;line-height:1.5;color:#5f6c80;margin:0}
+.studio-scope .doc-review-compose,.studio-scope .doc-review-thread{display:flex;flex-direction:column;gap:9px;padding:13px;border:1px solid #dce3ef;border-radius:11px;background:#fff}
+.studio-scope .doc-review-compose label{font-size:13px;font-weight:700}
+.studio-scope .doc-review-compose textarea,.studio-scope .doc-review-reply-box textarea{width:100%;min-height:65px;resize:vertical;padding:9px;font:inherit;font-size:12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#1e293b}
+.studio-scope .doc-review-compose button,.studio-scope .doc-review-reply-box button{align-self:flex-end;border-radius:8px;padding:8px 11px;font-size:12px}
+.studio-scope .doc-review-quote{background:#f1f5fa;border-left:3px solid #3b82f6;padding:9px;font-size:12px;overflow-wrap:anywhere;color:#38465a}
+.studio-scope .doc-review-quote button{float:right;border:0;background:transparent;cursor:pointer}
+.studio-scope .doc-review-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:#526278}
+.studio-scope .doc-review-thread.resolved{opacity:.77}
+.studio-scope .doc-review-thread-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:5px}
+.studio-scope .doc-review-thread-head b{font-size:13px}
+.studio-scope .doc-review-thread-head small,.studio-scope .doc-review-reply small{font-size:10px;color:#718096}
+.studio-scope .doc-review-thread blockquote{border-left:3px solid #94a3b8;padding:8px;margin:0;background:#f8fafc;color:#526278;font-size:12px;overflow-wrap:anywhere}
+.studio-scope .doc-review-thread p{font-size:12px;line-height:1.5;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.studio-scope .doc-review-reply{border-left:2px solid #b6c8e5;padding:6px 0 6px 10px;display:flex;flex-direction:column;gap:5px}
+.studio-scope .doc-review-actions button{display:inline-flex;align-items:center;gap:5px;padding:6px 8px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;color:#1d4e89;font-size:11px}
+.studio-scope .doc-review-reply-box{display:flex;flex-direction:column;gap:5px}

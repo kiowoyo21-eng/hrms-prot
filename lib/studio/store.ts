@@ -1,6 +1,6 @@
 import {writeAuditEvent} from "../auditTrail";
 import {activeDemoUser} from "../spreadsheetStore";
-import type {ApprovalRequest,StudioActor,StudioItem,StudioLog,StudioState,StudioKind,TemplateCategory} from "./types";
+import type {ApprovalRequest,StudioActor,StudioItem,StudioLog,StudioState,StudioKind,TemplateCategory,StudioComment} from "./types";
 const KEY="uc-hr-document-studio-v1";
 const EVENT="uc-hr-document-studio-change";
 const GRANT_TIME=60*60*1000;
@@ -9,9 +9,9 @@ const now=()=>new Date().toISOString();
 const starter:StudioState={items:[
  {id:"starter-employment",kind:"docs",title:"Certificate of Employment",category:"Employment",template:true,html:'<h1 style="text-align:center">CERTIFICATE OF EMPLOYMENT</h1><p>This is to certify that <strong>{{employee.name}}</strong> (Employee ID: {{employee.id}}) is employed by <strong>{{company.name}}</strong> as <strong>{{employee.position}}</strong> under the {{employee.department}} department.</p><p>The employee has been with the company since {{employee.hire_date}} and is assigned to {{employee.branch}}.</p><p>This certificate is issued on {{document.date}} for {{custom.purpose}}.</p><p><br></p><p>_______________________________<br>Authorized HR Representative</p>',pageSize:"A4",landscape:false,owner:"system",createdAt:"2026-10-19T00:00:00.000Z",updatedAt:"2026-10-19T00:00:00.000Z",version:1,status:"Approved Template"},
  {id:"starter-memo",kind:"docs",title:"Employee Memorandum",category:"Disciplinary",template:true,html:'<h1>INTERNAL MEMORANDUM</h1><p><strong>Date:</strong> {{document.date}}</p><p><strong>To:</strong> {{employee.name}} — {{employee.position}}</p><p><strong>Branch:</strong> {{employee.branch}}</p><p><strong>Subject:</strong> {{custom.subject}}</p><p>Dear {{employee.name}},</p><p>{{custom.message}}</p><p>Sincerely,</p><p>Human Resources Department</p>',pageSize:"A4",landscape:false,owner:"system",createdAt:"2026-10-19T00:00:00.000Z",updatedAt:"2026-10-19T00:00:00.000Z",version:1,status:"Approved Template"}
- ],approvals:[],revisions:[],logs:[]};
+ ],approvals:[],revisions:[],logs:[],comments:[]};
 export const blankState=():StudioState=>JSON.parse(JSON.stringify(starter)) as StudioState;
-export function readStudio():StudioState{if(typeof window==="undefined")return blankState();try{const x=JSON.parse(localStorage.getItem(KEY)||"null");return x&&Array.isArray(x.items)&&Array.isArray(x.approvals)&&Array.isArray(x.revisions)&&Array.isArray(x.logs)?x:blankState()}catch{return blankState()}}
+export function readStudio():StudioState{if(typeof window==="undefined")return blankState();try{const x=JSON.parse(localStorage.getItem(KEY)||"null");return x&&Array.isArray(x.items)&&Array.isArray(x.approvals)&&Array.isArray(x.revisions)&&Array.isArray(x.logs)?{...x,comments:Array.isArray(x.comments)?x.comments:[]}:blankState()}catch{return blankState()}}
 export function studioActor():StudioActor|null{return activeDemoUser()}
 export function canRead(a:StudioActor|null){return !!a&&(a.role==="HR"||a.role==="Super Admin")}
 export function canEdit(s:StudioState,a:StudioActor|null,itemId:string,at=Date.now()):boolean{if(!a||!canRead(a))return false;if(a.role==="Super Admin")return true;return s.approvals.some(r=>r.itemId===itemId&&r.requester===a.username&&r.status==="approved"&&!!r.expiresAt&&Date.parse(r.expiresAt)>at)}
@@ -28,6 +28,50 @@ export function saveStudioItem(a:StudioActor,itemId:string,update:Partial<Studio
 export function restoreStudioRevision(a:StudioActor,itemId:string,revisionId:string,expectedVersion:number){return changeStudio(a,s=>{if(!canEdit(s,a,itemId))throw Error("Editing locked.");const item=s.items.find(x=>x.id===itemId),r=s.revisions.find(x=>x.id===revisionId&&x.itemId===itemId);if(!item||!r)throw Error("Version not found.");if(item.version!==expectedVersion)throw Error("Newer version exists. Reload first.");s.revisions.unshift({id:id(),itemId,version:item.version,date:now(),actor:a.username,snapshot:JSON.parse(JSON.stringify(item))});Object.assign(item,{...r.snapshot,id:item.id,owner:item.owner,version:item.version+1,updatedAt:now()});audit(s,a.username,itemId,"Restored version",`From version ${r.version}`)})}
 export function duplicateForEmployee(a:StudioActor,source:StudioItem,title:string,html?:string){if(!canRead(a))throw Error("Not authorized.");if(source.kind!=="docs")throw Error("Use PDF generation for PDF forms.");const item:StudioItem={...source,id:id(),title,html:html??source.html,template:false,parentId:source.id,owner:a.username,status:"Draft",version:1,createdAt:now(),updatedAt:now()};changeStudio(a,s=>{s.items.unshift(item);audit(s,a.username,item.id,"Generated document from template",`Source ${source.title}`)});return item}
 export function noteGenerated(a:StudioActor,itemId:string,summary:string){return changeStudio(a,s=>{if(!s.items.some(x=>x.id===itemId))throw Error("Missing source document.");audit(s,a.username,itemId,"Generated output",summary)})}
+
+/** Permission checks are repeated inside the storage transaction, not only in the UI. */
+function requireCommentAccess(s:StudioState,a:StudioActor,itemId:string){
+ const item=s.items.find(x=>x.id===itemId&&x.kind==="docs");
+ if(!item)throw Error("Docs file not found.");
+ if(!canEdit(s,a,itemId))throw Error("Document editing approval is required to change review comments.");
+}
+function commentBody(body:string){const content=body.trim();if(content.length<2||content.length>1200)throw Error("Review comments must be 2–1,200 characters.");return content}
+export function addStudioComment(a:StudioActor,itemId:string,body:string,quote=""){
+ const content=commentBody(body);
+ const selection=quote.trim().slice(0,240);
+ return changeStudio(a,s=>{
+  requireCommentAccess(s,a,itemId);
+  const comments=s.comments??(s.comments=[]);
+  if(comments.length>=500)throw Error("Review comment limit reached. Archive older documents or move to server storage.");
+  const thread:StudioComment={id:id(),itemId,actor:a.username,date:now(),quote:selection,text:content,resolved:false,replies:[]};
+  comments.push(thread);
+  audit(s,a.username,itemId,"Review comment added",`Review thread ${thread.id}; comment text not logged`);
+ });
+}
+export function replyStudioComment(a:StudioActor,itemId:string,commentId:string,body:string){
+ const content=commentBody(body);
+ return changeStudio(a,s=>{
+  requireCommentAccess(s,a,itemId);
+  const thread=s.comments?.find(c=>c.id===commentId&&c.itemId===itemId);
+  if(!thread)throw Error("Review thread not found for this document.");
+  if(thread.resolved)throw Error("Reopen the thread before replying.");
+  if(thread.replies.length>=50)throw Error("This review thread has reached the reply limit.");
+  thread.replies.push({id:id(),actor:a.username,date:now(),text:content});
+  audit(s,a.username,itemId,"Review comment replied",`Review thread ${thread.id}; reply text not logged`);
+ });
+}
+export function setStudioCommentResolved(a:StudioActor,itemId:string,commentId:string,resolved:boolean){
+ return changeStudio(a,s=>{
+  requireCommentAccess(s,a,itemId);
+  const thread=s.comments?.find(c=>c.id===commentId&&c.itemId===itemId);
+  if(!thread)throw Error("Review thread not found for this document.");
+  if(thread.resolved===resolved)throw Error(resolved?"Already resolved.":"Already open.");
+  thread.resolved=resolved;
+  thread.resolvedBy=resolved?a.username:undefined;
+  thread.resolvedAt=resolved?now():undefined;
+  audit(s,a.username,itemId,resolved?"Review comment resolved":"Review comment reopened",`Review thread ${thread.id}`);
+ });
+}
 
 export function archiveStudioItem(a:StudioActor,itemId:string){if(a.role!=="Super Admin")throw Error("Only Super Admin can archive templates.");return changeStudio(a,s=>{const item=s.items.find(x=>x.id===itemId);if(!item)throw Error("Document not found.");s.revisions.unshift({id:id(),itemId:item.id,version:item.version,date:now(),actor:a.username,snapshot:JSON.parse(JSON.stringify(item))});s.revisions=s.revisions.slice(0,24);item.status=item.status==="Archived"?"Draft":"Archived";item.version++;item.updatedAt=now();audit(s,a.username,itemId,item.status==="Archived"?"Archived document":"Restored archived document",item.title)})}
 export function duplicateStudioTemplate(a:StudioActor,itemId:string){if(a.role!=="Super Admin")throw Error("Only Super Admin can duplicate source templates.");const s=readStudio(),item=s.items.find(x=>x.id===itemId);if(!item||item.kind!=="docs")throw Error("Only Docs templates can be duplicated here.");return addStudioItem(a,"docs",`Copy of ${item.title}`.slice(0,120),item.category,{html:item.html,pageSize:item.pageSize,landscape:item.landscape,headerText:item.headerText,footerText:item.footerText,marginMm:item.marginMm})}
