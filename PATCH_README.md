@@ -1,39 +1,29 @@
-# HRMS Advanced Spreadsheets V4 — Incremental Patch
+# HRMS Docs V4 Patch Installation
 
-## Installation baseline
+## Requirements
 
-Requires the current HRMS project **with Advanced Sheets V3 applied**, including `/app/spreadsheets/layout.tsx` and its route-scoped styles. Do not apply over the original unpatched HRMS ZIP.
+Apply over the current HRMS project with Docs/Document Studio already installed. This is **NOT** a full HRMS project. No new npm dependencies are added.
 
-This archive is a patch (not a full project). It contains exactly **5 new/modified source files** and three documentation files.
+## File paths (exact)
 
-### Exact source paths
+1. `app/docs/layout.tsx` — add
+2. `app/docs/page.tsx` — replace
+3. `app/studio/docs/[id]/page.tsx` — replace
+4. `app/studio/studio.css` — replace
+5. `lib/studio/exportDocx.ts` — replace
+6. `lib/studio/print.ts` — replace
 
-1. `components/SpreadsheetWorkspace.tsx` — replace
-2. `lib/sheetFormulas.ts` — replace
-3. `lib/sheetRange.ts` — replace
-4. `lib/sheetInsights.ts` — **add new**
-5. `app/spreadsheets/spreadsheet.css` — replace
+## GitHub website only
 
-## GitHub website installation
+1. Extract the ZIP on your computer. Do **not** upload the ZIP itself as a file in GitHub.
+2. On repository branch `main`, upload/replace the six source files to their exact paths. Preserve the literal `[id]` folder name.
+3. Commit all six files together. Check that the deployed commit contains `app/docs/layout.tsx` and the updated styles.
+4. Watch the Vercel log for a complete `npm run build`. Source-level checks here are not a production build.
+5. Test `/docs`, `/docs/starter-employment`, printing, imports, tables and the HR → request approval → Super Admin approve workflow.
 
-1. Open `kiowoyo21-eng/hrms-prot` on branch `main`.
-2. Extract the ZIP on your computer. **Do not upload the ZIP as a repository file.**
-3. Upload/replace each file into the **exact directory** listed above. GitHub's web upload can also be used by opening each folder and choosing `Add file → Upload files`.
-4. Confirm all **five source files** are present on `main` (especially new `lib/sheetInsights.ts`).
-5. Commit changes. Wait for Vercel deployment.
-6. Open `/spreadsheets/<workbook-id>` → **Pivot & Charts**. For cross-sheet formulas, type a supported expression in a **working sheet after admin approval**.
+## User behavior
 
-## Examples
-
-- `=Sheet2!B2`
-- `='Compensation & Premiums'!B2`
-- `=SUM('Earnings'!C2:C20)`
-- `=VLOOKUP("BM",Sheet2!A2:B3,2,FALSE)`
-
-The referenced sheet must be in the **same workbook**; if absent, expect `#REF!`.
-
-This release intentionally does **not** add dependencies or modify payroll batches, employee source data, Drive security, Docs, or admin approvals.
-
-## Verification
-
-Run `npm install` and `npm run build` in a full Node/Next.js environment, or inspect Vercel build logs. Targeted tests and source validation are summarized in `QA_REPORT.md`.
+- Access Docs using `/docs`; documents open in `/docs/[id]` as a normal browser tab.
+- HR users remain view-only until approved; Super Admin retains edit privileges.
+- Only HTML and TXT import are added in V4. PDF export uses your browser's Print / Save as PDF.
+- Imported changes are saved through the normal document version/audit path, not into official payroll or employee records.

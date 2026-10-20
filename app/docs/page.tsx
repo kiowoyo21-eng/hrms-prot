@@ -4,7 +4,6 @@ import Link from "next/link";
 import {FileText,FilePlus2,Search,ExternalLink,HardDrive,Library,ArrowLeft} from "lucide-react";
 import {useStudio} from "../../lib/studio/useStudio";
 import {addStudioItem} from "../../lib/studio/store";
-import "../studio/studio.css";
 /** Dedicated Docs home, separate from Document Library (template automation). */
 export default function DocsHome(){
  const {actor,state,ready,refresh}=useStudio();const [query,setQuery]=useState(""),[message,setMessage]=useState("");

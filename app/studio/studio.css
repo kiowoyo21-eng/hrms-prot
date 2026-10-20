@@ -40,3 +40,38 @@
 
 .doc-menu{position:relative;font-size:12px}.doc-menu summary{list-style:none;cursor:pointer;padding:2px 3px}.doc-menu summary:hover{color:#1d62b8}.doc-menu>div{z-index:80;position:absolute;top:100%;left:0;display:flex;flex-direction:column;min-width:200px;box-shadow:0 10px 35px #1c2e4f33;border:1px solid #dee6f1;padding:7px;background:#fff;border-radius:7px}.doc-menu button,.doc-menu a{font-size:12px;padding:9px 11px;text-align:left;border:0;background:none;white-space:nowrap;color:#364861}.doc-menu button:hover,.doc-menu a:hover{background:#eff4fa}.doc-page-hf{margin-top:-45px;margin-bottom:42px;border-bottom:1px dashed #e4e9f1;padding-bottom:5px}.doc-page-hf input{border:0;width:100%;color:#7b8490;font-size:10pt;background:transparent}.doc-page-hf input:disabled{opacity:1}.doc-page-hf.footer{margin-top:35px;margin-bottom:-48px;border:0;border-top:1px dashed #e4e9f1}.doc-paper .tiptap .doc-page-break{border-top:2px dashed #a1b5d5;margin:32px 0;position:relative;height:25px;break-before:page;page-break-before:always}.doc-paper .tiptap .doc-page-break::before{content:"Page break";display:block;color:#8292a8;font:11px Arial;padding:3px 0}
 .studio-library-links{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0 18px}.studio-library-links a{background:white;color:#1b5c9c;border:1px solid #bdd4eb;border-radius:8px;padding:12px;font-size:13px;font-weight:600}
+
+/* Docs V4: contextual table tools and consistent long-document controls. */
+.studio-scope .doc-table-tools{display:flex;flex-wrap:wrap;align-items:center;gap:3px;padding:3px 5px;background:#f1f5fc;border:1px solid #d9e3f2;border-radius:8px}
+.studio-scope .doc-table-tools button{font-size:11px;color:#344967;padding:5px 7px;border:0;border-radius:5px;background:transparent;white-space:nowrap}
+.studio-scope .doc-table-tools button:hover:not(:disabled){background:#dce9f9}
+.studio-scope .doc-subtoolbar{overflow-x:auto}
+.studio-scope .doc-page-scroll{align-items:center}
+.studio-scope .doc-paper .tiptap table{border-collapse:collapse;table-layout:fixed;width:100%}
+.studio-scope .doc-paper .tiptap th,.studio-scope .doc-paper .tiptap td{position:relative;border:1px solid #94a3b8;padding:6px;vertical-align:top;min-width:35px}
+.studio-scope .doc-paper .tiptap th{background:#eef3fb}
+.studio-scope .doc-paper .tiptap .selectedCell:after{content:"";position:absolute;inset:0;pointer-events:none;background:#86b6ef44}
+.studio-scope .doc-paper .tiptap [data-page-break]{break-before:page;page-break-before:always}
+@media(max-width:700px){.studio-scope .doc-subtoolbar{gap:6px;padding:6px 9px}.studio-scope .doc-table-tools{min-width:300px}}
+
+/* Docs Home under /docs, styled independently from the HRMS dashboard. */
+.studio-scope .docs-home{min-height:100vh;padding:32px clamp(18px,5vw,72px);background:#f7f9fc;color:#24334c}
+.studio-scope .docs-home-head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;max-width:1280px;margin:0 auto 25px}
+.studio-scope .docs-home-head h1{display:flex;align-items:center;gap:12px;font-size:28px;margin:18px 0 10px}
+.studio-scope .docs-home-head p{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:0;color:#576982;font-size:13px}
+.studio-scope .docs-home-head p a{display:inline-flex;align-items:center;gap:5px;color:#1c5eab}
+.studio-scope .docs-home-head span,.studio-scope .docs-home footer{color:#758398;font-size:13px}
+.studio-scope .docs-create{display:inline-flex;align-items:center;gap:8px;border:0;background:#2566ca;color:#fff;padding:12px 18px;border-radius:10px;font-weight:700;white-space:nowrap}
+.studio-scope .docs-home-search{max-width:1280px;margin:0 auto 25px;display:flex;align-items:center;gap:12px;background:white;border:1px solid #d9e2ef;border-radius:12px;padding:3px 16px;color:#798ba0}
+.studio-scope .docs-home-search input{border:0;outline:0;flex:1;background:transparent;min-height:45px;box-shadow:none}
+.studio-scope .docs-home-files{max-width:1280px;margin:0 auto 30px}
+.studio-scope .docs-home-files h2{font-size:16px;margin:0 0 16px}
+.studio-scope .docs-home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:16px}
+.studio-scope .docs-home-item{display:flex;flex-direction:column;align-items:flex-start;gap:12px;background:white;border:1px solid #e0e6f0;border-radius:12px;padding:20px;min-height:190px;transition:box-shadow .15s ease,border-color .15s ease}
+.studio-scope .docs-home-item:hover{border-color:#a9c4ed;box-shadow:0 9px 22px #21314d16}
+.studio-scope .docs-home-item>svg{color:#2566ca}
+.studio-scope .docs-home-item strong{overflow-wrap:anywhere;font-size:14px}
+.studio-scope .docs-home-item small{color:#76859b;font-size:11px;line-height:1.4}
+.studio-scope .docs-home-item span{display:inline-flex;align-items:center;gap:6px;color:#1b5eac;font-size:12px;font-weight:700;margin-top:auto}
+.studio-scope .docs-home footer{max-width:1280px;margin:0 auto}
+@media(max-width:700px){.studio-scope .docs-home-head{flex-direction:column}.studio-scope .docs-home{padding:20px 12px}.studio-scope .docs-home-head h1{font-size:24px}}
