@@ -1,27 +1,25 @@
-# HRMS Advanced Spreadsheet — QA Report
+# HRMS Advanced Sheets V4 — QA Report
 
-| Verification | Result |
-|---|---|
-| Pure formula, data tools, sheet range, spreadsheet store + dependencies TypeScript strict check | PASS |
-| Source TS/TSX parser checks | PASS: 104 source files |
-| Relative import paths | PASS: 0 missing |
-| Spreadsheet stylesheet parsing | PASS: 0 errors |
-| Targeted logic tests: formula, lookup, import formula gate, validation, format, approval, audit | PASS: 43 |
-| Full Next.js production build | NOT VERIFIED — npm packages could not be installed from the available local cache |
-| Browser layout and end-to-end workflows | NOT VERIFIED — test in deployed browser |
+## Passed checks in source environment
 
-## Manual verification checklist
-1. Employee 201 spreadsheet opens at `/spreadsheets/employees` in its own tab, with horizontal menus, compact grid and module-only worksheets.
-2. Data → Filter and validation tools shows correctly. Sorting a column changes view only, while row labels keep original worksheet addresses.
-3. In `/spreadsheets/working`, HR cannot edit before Super Admin approval.
-4. After approval, apply a dropdown list to a cell; allowed values save and invalid/formula values are rejected.
-5. Numeric min/max rule and conditional formatting reflect entered cell values.
-6. After revoke/expiry, cell edits, formatting and validation saves are blocked.
-7. Payroll batch workbook remains isolated; exported report data contains only the selected batch.
-8. Docs/PDF and Drive routes still open; no unrelated navigation changes.
+- All **106 TypeScript/TSX files** parsed successfully (syntax checks only; not full Next.js type-check).
+- Relative module references across source files: **0 missing imports**.
+- Spreadsheet stylesheet parsing (tinycss2): **0 errors**.
+- **25 focused automated checks** passed, including cross-sheet arithmetic, quoted sheet names, SUM/AVERAGE, VLOOKUP, missing sheets, safe XLSX formula recognition, external-workbook rejection, copy/fill shifting, pivot counts, sums, averages, non-numeric values, group limits, and 4,000-row cap.
+- Strict `tsc` type-check and transpilation passed for the four pure calculation/helper modules (`sheetFormulas`, `sheetRange`, `sheetDataTools`, `sheetInsights`).
 
-## Known limitations
-- Basic formula subset, not complete Excel / Google Sheets formula compatibility.
-- Conditional rules and validation are stored in browser-local sheet copies, not exported into XLSX metadata.
-- Sorting/filtering are view-only and not persisted; original cell coordinates remain canonical.
-- Browser-local audit entries are demonstrative, not tamper-proof.
+## Unverified
+
+- Full Next.js production build (`npm run build`): dependencies unavailable locally.
+- Real browser render, chart layout and mobile testing: not completed.
+- Actual Excel file round-trip and performance on large workbooks: not fully tested.
+- Production authorization and cross-device storage: browser-only prototype, no backend enforcement.
+
+## Suggested smoke checks after deployment
+
+1. Open Employee 201 workbook; click **Pivot & Charts**, group by branch, aggregate COUNT; confirm each branch and row count.
+2. Switch chart between Bar and Line; ensure the grid/formula bar remains styled when switching back.
+3. Filter a column, then reopen Pivot & Charts; confirm summaries use only visible filtered rows.
+4. Open two worksheets in the same working workbook and (with approved edit access) evaluate `=Sheet2!B2` and a quoted-sheet reference. Missing sheet should show `#REF!`.
+5. Import an XLSX containing a supported same-workbook formula, then export. Confirm external-book references remain unsupported and do not execute.
+6. Verify Super Admin approval/revocation and Payroll/Employee 201 report read-only rules remain intact.

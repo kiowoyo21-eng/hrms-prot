@@ -4,7 +4,7 @@ export function decodeCell(ref:string):{row:number;col:number}|null{const m=/^(\
 export type CellResult=string|number;
 type Scalar=string|number|boolean;
 type Value=Scalar|Value[];
-type Node={kind:"literal";value:Value}|{kind:"ref";ref:string}|{kind:"range";from:string;to:string}|{kind:"unary";op:string;right:Node}|{kind:"binary";op:string;left:Node;right:Node}|{kind:"call";name:string;args:Node[]};
+type Node={kind:"literal";value:Value}|{kind:"ref";ref:string;sheet?:string}|{kind:"range";from:string;to:string;sheet?:string}|{kind:"unary";op:string;right:Node}|{kind:"binary";op:string;left:Node;right:Node}|{kind:"call";name:string;args:Node[]};
 const err=(v:Value):boolean=>typeof v==="string"&&/^#(?:REF!|VALUE!|DIV\/0!|N\/A|CYCLE!|ERROR!|NUM!)/.test(v);
 const flatten=(v:Value):Value[]=>Array.isArray(v)?v.flatMap(flatten):[v];
 const scalar=(v:Value):Scalar=>Array.isArray(v)?scalar(v[0]??""):v;
@@ -14,11 +14,11 @@ const truth=(v:Value):boolean=>{const x=scalar(v);return typeof x==="boolean"?x:
 const comparison=(a:Value,b:Value):number=>{const x=scalar(a),y=scalar(b),nx=Number(x),ny=Number(y);if(x!==""&&y!==""&&Number.isFinite(nx)&&Number.isFinite(ny))return Math.sign(nx-ny);return text(x).localeCompare(text(y),undefined,{sensitivity:"base"})};
 const round=(n:number,d:number)=>{const digits=Math.max(-12,Math.min(12,Math.trunc(d)));const factor=10**digits;return Math.round((n+Number.EPSILON)*factor)/factor};
 
-export function evaluateSheetFormula(input:string,get:(ref:string)=>CellResult):CellResult{
+export function evaluateSheetFormula(input:string,get:(ref:string,sheetName?:string)=>CellResult):CellResult{
  if(!input.startsWith("="))return input;
  try{
   const body=input.slice(1);if(body.length>4000)return "#ERROR!";
-  const pattern=/\s*("(?:[^"]|"")*"|\$?[A-Z]{1,2}\$?[1-9]\d{0,3}|[A-Z_][A-Z_0-9]*|(?:\d+(?:\.\d*)?|\.\d+)|<>|<=|>=|[=<>+\-*/^&(),:%])/iy;
+  const pattern=/\s*("(?:[^"]|"")*"|'(?:[^']|'')*'!|[A-Z_][A-Z_0-9]*!|\$?[A-Z]{1,2}\$?[1-9]\d{0,3}|[A-Z_][A-Z_0-9]*|(?:\d+(?:\.\d*)?|\.\d+)|<>|<=|>=|[=<>+\-*/^&(),:%])/iy;
   const tokens:string[]=[];let index=0;
   while(index<body.length){pattern.lastIndex=index;const m=pattern.exec(body);if(!m||m.index!==index)throw Error("syntax");tokens.push(m[1]);index=pattern.lastIndex;if(tokens.length>1500)throw Error("complex")}
   let pos=0;const peek=()=>tokens[pos],consume=(s:string)=>{if(peek()!==s)throw Error("syntax");pos++};let depth=0;
@@ -28,7 +28,20 @@ export function evaluateSheetFormula(input:string,get:(ref:string)=>CellResult):
     if(t==="("){pos++;const x=parseComparison();consume(")");return x}
     if(t.startsWith('"')){pos++;return {kind:"literal",value:t.slice(1,-1).replace(/""/g,'"')}}
     if(/^(?:\d|\.)/.test(t)){pos++;return {kind:"literal",value:Number(t)}}
-    if(/^\$?[A-Z]{1,2}\$?[1-9]\d{0,3}$/i.test(t)){pos++;if(!decodeCell(t))throw Error("ref");if(peek()===":"){pos++;const to=peek();if(!to||!decodeCell(to))throw Error("ref");pos++;return {kind:"range",from:t,to}}return {kind:"ref",ref:t}}
+    // A sheet prefix is scoped to the current workbook. Quoted names may contain spaces
+    // and escaped apostrophes: ='Compensation & Premiums'!B2.
+    let sheetName:string|undefined;
+    if(t.endsWith("!")){
+     sheetName=t.startsWith("'")?t.slice(1,-2).replace(/''/g,"'"):t.slice(0,-1);
+     if(!sheetName||sheetName.length>100)throw Error("ref");pos++;
+    }
+    const cell=peek();
+    if(cell&&/^\$?[A-Z]{1,2}\$?[1-9]\d{0,3}$/i.test(cell)){
+     pos++;if(!decodeCell(cell))throw Error("ref");
+     if(peek()===":"){pos++;const to=peek();if(!to||!decodeCell(to))throw Error("ref");pos++;return {kind:"range",from:cell,to,sheet:sheetName}}
+     return {kind:"ref",ref:cell,sheet:sheetName}
+    }
+    if(sheetName)throw Error("ref");
     if(/^[A-Z_][A-Z_0-9]*$/i.test(t)){pos++;const name=t.toUpperCase();if(name==="TRUE"||name==="FALSE")return {kind:"literal",value:name==="TRUE"};consume("(");const args:Node[]=[];if(peek()!==")"){while(true){args.push(parseComparison());if(peek()!==",")break;pos++;if(args.length>100)throw Error("complex")}}consume(")");return {kind:"call",name,args}}
     throw Error("syntax")
    }finally{depth--}
@@ -43,8 +56,8 @@ export function evaluateSheetFormula(input:string,get:(ref:string)=>CellResult):
   const evalNode=(node:Node):Value=>{
    if(--budget<0)return "#ERROR!";
    if(node.kind==="literal")return node.value;
-   if(node.kind==="ref"){const ref=node.ref.replace(/\$/g,"").toUpperCase();const v=get(ref);return err(v)?v:v}
-   if(node.kind==="range"){const a=decodeCell(node.from),b=decodeCell(node.to);if(!a||!b)return "#REF!";const startRow=Math.min(a.row,b.row),endRow=Math.max(a.row,b.row),startCol=Math.min(a.col,b.col),endCol=Math.max(a.col,b.col);const size=(endRow-startRow+1)*(endCol-startCol+1);if(size>2000)return "#REF!";const vals:Value[]=[];for(let row=startRow;row<=endRow;row++)for(let col=startCol;col<=endCol;col++)vals.push(get(`${columnLabel(col)}${row+1}`));return vals}
+   if(node.kind==="ref"){const ref=node.ref.replace(/\$/g,"").toUpperCase();const v=get(ref,node.sheet);return err(v)?v:v}
+   if(node.kind==="range"){const a=decodeCell(node.from),b=decodeCell(node.to);if(!a||!b)return "#REF!";const startRow=Math.min(a.row,b.row),endRow=Math.max(a.row,b.row),startCol=Math.min(a.col,b.col),endCol=Math.max(a.col,b.col);const size=(endRow-startRow+1)*(endCol-startCol+1);if(size>2000)return "#REF!";const vals:Value[]=[];for(let row=startRow;row<=endRow;row++)for(let col=startCol;col<=endCol;col++)vals.push(get(`${columnLabel(col)}${row+1}`,node.sheet));return vals}
    if(node.kind==="unary"){const v=number(evalNode(node.right));if(typeof v==="string")return v;return node.op==="-"?-v:node.op==="%"?v/100:v}
    if(node.kind==="binary"){
     const a=evalNode(node.left),b=evalNode(node.right);if(err(scalar(a)))return scalar(a);if(err(scalar(b)))return scalar(b);
@@ -91,7 +104,7 @@ export function evaluateSheetFormula(input:string,get:(ref:string)=>CellResult):
    }
    if(name==="MATCH"){const list=flatten(second());const mode=values.length>=3?num(third()):0;if(mode!==0)return "#N/A";const i=list.findIndex(v=>comparison(v,first())===0);return i<0?"#N/A":i+1}
    if(name==="INDEX"){const list=flatten(first()),i=num(second());if(typeof i==="string")return i;return list[Math.trunc(i)-1]??"#REF!"}
-   if(name==="VLOOKUP"){if(args.length<3||args[1].kind!=="range")return "#N/A";const a=decodeCell(args[1].from),b=decodeCell(args[1].to),col=num(third());if(!a||!b||typeof col==="string"||col<1)return "#REF!";if(values.length>3&&truth(values[3]))return "#N/A";const fromCol=Math.min(a.col,b.col),toCol=Math.max(a.col,b.col);if(fromCol+col-1>toCol)return "#REF!";for(let row=Math.min(a.row,b.row);row<=Math.max(a.row,b.row);row++){if(comparison(get(`${columnLabel(fromCol)}${row+1}`),first())===0)return get(`${columnLabel(fromCol+col-1)}${row+1}`)}return "#N/A"}
+   if(name==="VLOOKUP"){if(args.length<3||args[1].kind!=="range")return "#N/A";const a=decodeCell(args[1].from),b=decodeCell(args[1].to),col=num(third());if(!a||!b||typeof col==="string"||col<1)return "#REF!";if(values.length>3&&truth(values[3]))return "#N/A";const fromCol=Math.min(a.col,b.col),toCol=Math.max(a.col,b.col);if(fromCol+col-1>toCol)return "#REF!";for(let row=Math.min(a.row,b.row);row<=Math.max(a.row,b.row);row++){if(comparison(get(`${columnLabel(fromCol)}${row+1}`,args[1].sheet),first())===0)return get(`${columnLabel(fromCol+col-1)}${row+1}`,args[1].sheet)}return "#N/A"}
    if(name==="XLOOKUP"){const search=flatten(second()),results=flatten(third());if(search.length!==results.length)return "#VALUE!";const i=search.findIndex(v=>comparison(v,first())===0);return i<0?(args[3]?values[3]:"#N/A"):results[i]}
    return "#ERROR!"
   };

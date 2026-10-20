@@ -17,12 +17,17 @@ export function shiftFormulaReferences(value:string,rowDelta:number,colDelta:num
  });
 }
 export function parseTabularPaste(text:string):string[][]{const lines=text.replace(/\r/g,"").replace(/\n$/,"").split("\n");return lines.map(line=>line.split("\t"))}
-/** Import only the browser evaluator's supported formulas (no external workbook references). */
+/** Accept supported formulas only; cross-sheet references must stay inside this workbook.
+ * Excel external links ([OtherFile]Sheet!A1), unsafe operators and unknown functions remain text.
+ */
 export function supportedImportFormula(value:string){
- if(!value.startsWith("=")||value.length>1500||/[!\[\]{};\\]/.test(value))return false;
+ if(!value.startsWith("=")||value.length>1500||/[\[\]{};\\]/.test(value))return false;
  const body=value.slice(1).replace(/"(?:[^"]|"")*"/g,'""');
- if(!/^[\sA-Z0-9_.(),:%+\-*/^&$<>=" ]+$/i.test(body))return false;
- const noRefs=body.replace(/\$?[A-Z]{1,2}\$?[1-9]\d{0,3}/gi,"").replace(/(?:\d+(?:\.\d*)?|\.\d+)/g,"");
+ const localOnly=body.replace(/'(?:[^']|'')+'!|[A-Z_][A-Z_0-9]*!/gi,(prefix,at,source:string)=>{
+  return /^\$?[A-Z]{1,2}\$?[1-9]\d{0,3}/i.test(source.slice(at+prefix.length))?"":"INVALID";
+ });
+ if(/[!']/g.test(localOnly)||!/^[\sA-Z0-9_.(),:%+\-*/^&$<>=" ]+$/i.test(localOnly))return false;
+ const noRefs=localOnly.replace(/\$?[A-Z]{1,2}\$?[1-9]\d{0,3}/gi,"").replace(/(?:\d+(?:\.\d*)?|\.\d+)/g,"");
  const names=noRefs.match(/\b[A-Z_][A-Z_0-9]*\b/gi)||[];
  const allowed=new Set(["TRUE","FALSE","SUM","AVERAGE","MIN","MAX","COUNT","COUNTA","COUNTBLANK","IF","IFS","IFERROR","AND","OR","NOT","ROUND","ROUNDUP","ROUNDDOWN","ABS","MOD","POWER","SQRT","LEN","UPPER","LOWER","TRIM","CONCAT","CONCATENATE","LEFT","RIGHT","MID","COUNTIF","SUMIF","MATCH","INDEX","VLOOKUP","XLOOKUP"]);
  return names.every(name=>allowed.has(name.toUpperCase()));

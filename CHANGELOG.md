@@ -1,21 +1,36 @@
-# HRMS Spreadsheet Advanced Tools — Changelog
-2026-10-20 — Advanced Sheets Incremental Revision
+# HRMS — Development Changelog
 
-## Source changes
-- `components/SpreadsheetWorkspace.tsx` — add Data Tools panel, actual view-only sorting/filtering of grid rows (canonical cell references retained), range formatting, list/number validation controls, conditional formatting rules, and expanded formula help. Protect official report rows from editing.
-- `lib/sheetFormulas.ts` — extend safe non-eval formula parser with conditionals, comparisons, text and lookup functions, rounding and aggregate conditions; return spreadsheet-style errors for unsupported operations.
-- `lib/sheetRange.ts` — allow safe import/export of supported formula subset, reject external references and unsupported formulas (preserve as text).
-- `lib/sheetDataTools.ts` (new) — pure helpers for validation, conditional rules, spreadsheet-range inclusion and natural sorting.
-- `lib/spreadsheetStore.ts` — require active admin-approved edit grants before saving validation, formatting and conditional rules; validate incoming cell values atomically, audit actions without recording cell contents.
-- `app/spreadsheets/spreadsheet.css` — extend route-scoped Google Sheets-style layout with responsive Data Tools panel.
-- `app/spreadsheets/layout.tsx` — include previous route-scoped stylesheet import to prevent the previously reported unstyled spreadsheet UI.
+## 2026-10-20 — Advanced Spreadsheets V4: Cross-sheet formulas and chart/pivot previews
 
-## Key invariants
-- HRMS Employee 201, Payroll, Payslips, Loan, Incident, and other official source records are NEVER modified through this spreadsheet editor.
-- Module-specific workbooks, batch isolation, existing sheets, and original approval requests remain intact.
-- Data sorting/filtering is a view operation, not a write or an irreversible row reordering.
-- Protected sheet changes still require an active approver grant. Revocation blocks writes.
-- Browser-local permissions and audit logs are demo-only. Secure production enforcement requires backend authorization.
+### Source file changes
 
-## Not in this incremental revision
-- Pivot tables, charts, cross-sheet formulas, named ranges, true multiuser collaboration, server-backed storage and Google Sheets feature parity.
+- **Modified `lib/sheetFormulas.ts`** — supports quoted/unquoted *same-workbook* references like `=Sheet2!B2`, `='Compensation & Premiums'!B2`, `=SUM('Earnings'!C2:C20)` and cross-sheet VLOOKUP using a two-argument reference callback. References never resolve outside the open workbook; invalid/missing sheets result in `#REF!`. Cell-level circular-reference detection is preserved by the workspace.
+- **Modified `lib/sheetRange.ts`** — safely allows supported Excel formulas with same-workbook references on import/export; external-book links and unsupported formulas remain rejected/imported as text. Relative `$` reference shifting continues to work with qualified sheet names.
+- **New `lib/sheetInsights.ts`** — deterministic, read-only pivot-style aggregation (COUNT/SUM/AVERAGE). Explicit handling of blanks, nonnumeric values and negative numbers; limit of 4,000 source rows and 12 visible groups plus aggregated “Other.” No changes to HRMS or sheet storage.
+- **Modified `components/SpreadsheetWorkspace.tsx`** — adds a **Pivot & Charts** analysis panel; group/value selection, COUNT/SUM/AVERAGE, bar/line chart previews and CSV summary export. Adds same-workbook formula lookup. Menu actions open the panel; preserves existing admin-approval gates.
+- **Modified `app/spreadsheets/spreadsheet.css`** — scoped responsive styles for pivot-table, chart display and controls, preserving the continuous grid and toolbar layout.
+
+### Data integrity and security
+
+- All pivot/charts operate in **view-only analysis mode** from displayed rows after filtering.
+- Working-copy edits continue to require approved HR access; source payroll/Employee 201 data remains read-only.
+- No new NPM dependencies, no backend changes, no write-through from spreadsheets to official HRMS records.
+- Existing browser-only approvals and audit logs are not production security boundaries.
+
+### Known limitations
+
+- Charts and pivot tables are **read-only previews**, not saved draggable chart or Excel pivot objects.
+- Cross-sheet reference names are resolved only within the currently open workbook. Excel external-book references are blocked. Excel export may rename/shorten unsupported sheet names, so complex cross-sheet XLSX fidelity is not guaranteed.
+- Cross-workbook formulas, large lookup tables, rich chart customizations, and Google Sheets parity still require later work.
+- Full `npm run build` and browser end-to-end testing could not be completed because project dependencies were unavailable in the local environment. Verify with Vercel before next major patch.
+
+---
+
+### Earlier change history (retained)
+
+# HRMS Changelog — Spreadsheet Layout Repair
+
+- **Added** `app/spreadsheets/spreadsheet.css`: restored the missing `.sw-*` styles for the workbook home, horizontal top menu, format bar, action buttons, approvals, formula bar, continuous grid, sheet tabs, dropdowns, and responsive breakpoints.
+- **Added** `app/spreadsheets/layout.tsx`: imports those styles automatically for both `/spreadsheets` and `/spreadsheets/[id]`.
+- Preserved all existing HRMS data, Employee 201, payroll batches, admin approvals, and report mappings. No new dependencies.
+- Fixed styling scope instead of replacing `app/globals.css`, to avoid erasing other patches.
