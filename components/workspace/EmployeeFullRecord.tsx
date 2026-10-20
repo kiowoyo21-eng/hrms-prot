@@ -1,7 +1,7 @@
 "use client";
 import type {HRPerson,PremiumProfile} from "../../lib/hrState";
-import {effectiveRate} from "../../lib/hrState";
-import {basicRateOnDate,type PayRateChange} from "../../lib/payrollConfig";
+import {type PayRateChange} from "../../lib/payrollConfig";
+import {employeePaySnapshot} from "../../lib/employee201Rates";
 
 export type EmployeeFullDraft=Pick<HRPerson,"name"|"gender"|"email"|"phone"|"birthDate"|"civilStatus"|"address"|"emergencyName"|"emergencyRelationship"|"emergencyPhone"|"sssNumber"|"philhealthNumber"|"pagibigNumber"|"tinNumber"|"monthlyWorkDays"|"hoursPerDay"|"nationality"|"placeOfBirth"|"middleName"|"suffix"|"emergencyAddress">;
 const keys:readonly (keyof EmployeeFullDraft)[]=["name","gender","email","phone","birthDate","civilStatus","address","emergencyName","emergencyRelationship","emergencyPhone","sssNumber","philhealthNumber","pagibigNumber","tinNumber","monthlyWorkDays","hoursPerDay","nationality","placeOfBirth","middleName","suffix","emergencyAddress"];
@@ -16,19 +16,15 @@ const fields:[keyof EmployeeFullDraft,string,string?][]= [
  ["sssNumber","SSS number"],["philhealthNumber","PhilHealth number"],["pagibigNumber","Pag-IBIG MID number"],["tinNumber","TIN"]
 ];
 export default function EmployeeFullRecord({person,draft,onDraft,editing,rateChanges,rates,onOpenPayroll,probation,sil,vil}:{person:HRPerson;draft:EmployeeFullDraft|null;onDraft:(next:EmployeeFullDraft)=>void;editing:boolean;rateChanges:PayRateChange[];rates:Record<string,PremiumProfile>;onOpenPayroll?:()=>void;probation:number;sil:number;vil:number}){
- const base=basicRateOnDate(person.id,person.rate,new Date().toISOString().slice(0,10),rateChanges);
- const days=person.monthlyWorkDays;const hours=person.hoursPerDay;
- const daily=person.salaryType==="Daily"?base:(days&&days>0?base/days:null);
- const hourly=daily!==null&&hours&&hours>0?daily/hours:null;
- const premium=effectiveRate(person,rates);
+ const snapshot=employeePaySnapshot(person,rates,rateChanges);
  const amounts:[string,number|null,number,string][]= [
-  ["Ordinary day / daily rate",daily,100,"per day"],
-  ["Hourly rate",hourly,100,"per hour"],
-  ["OT · ordinary day",hourly,premium.ot,"per hour"],
-  ["HP · regular holiday",daily,premium.regular,"per day"],
-  ["SHP · special non-working holiday",daily,premium.special,"per day"],
-  ["RDW · rest day work",daily,premium.rdw,"per day"],
-  ["RDOT · rest day overtime",hourly,premium.rdot,"per hour"]
+  ["Ordinary day / daily rate",snapshot.daily,100,"per day"],
+  ["Hourly rate",snapshot.hourly,100,"per hour"],
+  ["OT · ordinary day",snapshot.ot,snapshot.premium.ot,"per hour"],
+  ["HP · regular holiday",snapshot.hp,snapshot.premium.regular,"per day"],
+  ["SHP · special non-working holiday",snapshot.shp,snapshot.premium.special,"per day"],
+  ["RDW · rest day work",snapshot.rdw,snapshot.premium.rdw,"per day"],
+  ["RDOT · rest day overtime",snapshot.rdot,snapshot.premium.rdot,"per hour"]
  ];
  const set=(key:keyof EmployeeFullDraft,value:string)=>{if(!draft)return;onDraft({...draft,[key]:key==="hoursPerDay"||key==="monthlyWorkDays"?(value===""?undefined:Number(value)):value})};
  const info=(label:string,value:unknown)=><div className="employee-full-field" key={label}><small>{label}</small><strong>{show(value)}</strong></div>;
@@ -39,10 +35,10 @@ export default function EmployeeFullRecord({person,draft,onDraft,editing,rateCha
   <section className="employee-full-section" id="emp201-employment"><h3>Employment & Assignment</h3><div className="employee-full-grid">{info("Employee ID",person.id)}{info("Branch",person.branch)}{info("Department",person.department)}{info("Position",person.position)}{info("Employment status",person.status)}{info("Hire date",person.hire)}{info("Probation period",`${probation} months`)}{info("SIL leave credits",`${sil} days`)}{info("VIL leave credits",`${vil} days`)}</div></section>
   <section className="employee-full-section employee-sensitive"><h3>Government & Statutory Identifiers</h3><p>Restricted employee data. Never use actual identifiers in the frontend-only demo; secure storage and access controls must be implemented on the server before production.</p><div className="employee-full-grid">{render(15,19)}</div></section>
   <section className="employee-full-section" id="emp201-compensation"><div className="employee-full-head"><h3>Compensation & Premium Rates</h3>{onOpenPayroll&&<button type="button" className="secondary" onClick={onOpenPayroll}>Open Payroll Rate Controls ↗</button>}</div><div className="employee-full-grid">
-   {info("Basic salary",`${money(base)} / ${person.salaryType==="Daily"?"day":"month"}`)}{info("Pay classification",person.salaryType)}
+   {info("Basic salary",`${money(snapshot.basic)} / ${person.salaryType==="Daily"?"day":"month"}`)}{info("Pay classification",person.salaryType)}{info("Basic rate effective date",snapshot.basicEffective||"Not recorded")}
    <label className="employee-full-field"><small>Monthly working-day divisor</small>{editing&&draft?<input type="number" min="1" max="31" step="0.5" value={draft.monthlyWorkDays??""} onChange={e=>set("monthlyWorkDays",e.target.value)} placeholder="Required to derive monthly daily rate"/>:<strong>{person.monthlyWorkDays??"Not configured"}</strong>}</label>
    <label className="employee-full-field"><small>Working hours per day</small>{editing&&draft?<input type="number" min="1" max="24" step="0.5" value={draft.hoursPerDay??""} onChange={e=>set("hoursPerDay",e.target.value)} placeholder="Required for hourly rates"/>:<strong>{person.hoursPerDay??"Not configured"}</strong>}</label>
-   {amounts.map(([label,amount,multiplier,unit])=><div className="employee-full-field" key={label}><small>{label}{label.includes("·")?` (${multiplier}%)`:""}</small><strong>{amount===null?"Set divisor and hours":`${money(amount*multiplier/100)} ${unit}`}</strong></div>)}
+   {amounts.map(([label,amount,multiplier,unit])=><div className="employee-full-field" key={label}><small>{label}{label.includes("·")?` (${multiplier}%)`:""}</small><strong>{amount===null?"Set divisor and hours":`${money(amount)} ${unit}`}</strong></div>)}
    {info("Disbursement method",person.salaryDestination?.channel)}{info("Disbursement verification",person.salaryDestination?.status)}
   </div><p className="employee-full-hint">Premiums shown are calculated using the HRMS reference multipliers, not a legally verified payroll calculation. Basic pay changes are made in Payroll Management; this profile does not bypass that approval process. Monthly-to-daily conversion requires an explicitly configured divisor.</p></section>
  </div>;

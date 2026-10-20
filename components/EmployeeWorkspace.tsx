@@ -2,7 +2,7 @@
 
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {createPortal} from "react-dom";
-import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet} from "lucide-react";
+import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,ChevronDown,ChevronUp,X,Info,Eye,Pencil,Laptop,Wallet,FileSpreadsheet} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
@@ -307,7 +307,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  return <div className="rev-stack employee201">
   {!person&&<div className="rev-title">
    <div><h3>Employee 201 Files</h3></div>
-   <div className="rev-actions"><HelpButton topic="employee" label="Employee 201 Guide"/>
+   <div className="rev-actions"><a className="secondary" href={`/spreadsheets/employees?branch=${encodeURIComponent(branch)}`} target="_blank" rel="noopener noreferrer" title="Open the Employee 201 workbook in a new browser tab"><FileSpreadsheet size={16}/> Open in Spreadsheet</a><HelpButton topic="employee" label="Employee 201 Guide"/>
     {!person&&!add&&<button className="primary" onClick={()=>{setAdd(true);setMessage("")}}><Plus size={16}/> Add Employee</button>}
    </div>
   </div>}

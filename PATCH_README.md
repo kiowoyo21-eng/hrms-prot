@@ -1,14 +1,12 @@
-# Install via GitHub website (no terminal required)
+# Installation — HRMS Employee 201 Spreadsheet Patch
 
-This ZIP contains only the two missing source files and documentation. Do **not** upload the ZIP itself to GitHub.
+Base: HRMS consolidated project containing V1–V3 Workspace, V2 resumed revisions and Payroll Batch Management (2026-10-20). Apply missing-component hotfixes first if your GitHub repository omitted files.
 
-1. Extract the ZIP to your computer.
-2. Open https://github.com/kiowoyo21-eng/hrms-prot on branch `main`.
-3. Open the `components` directory and click **Add file → Upload files**.
-4. Upload `IncidentWorkspace.tsx` and `DocumentWorkspace.tsx` from the ZIP's `components` folder. Ensure both appear at `components/<filename>.tsx` (not at the repository root and not nested inside another folder).
-5. Choose **Commit changes** directly to `main`.
-6. Wait for Vercel's new deployment and verify that the Source Commit changed from `2acbf6a`.
+1. Extract the ZIP; keep the `components/` and `lib/` folder structure.
+2. On the GitHub website, update each listed existing file at its exact path; create `lib/employee201Rates.ts` as a new file.
+3. Commit all six source files together to `main`.
+4. Let Vercel deploy the new commit; inspect its build log. A full Next.js build was not verified in the packaging environment.
+5. Sign in as HR or Super Admin; open Employee 201 → Open in Spreadsheet. Confirm the branch filter, eight related worksheets, masked IDs, and up-to-date rate references.
+6. Test Employee Profile compensation and Document Library auto-fill using **fictional** sample data. Verify no sheet operation changes official payroll records.
 
-If one or both files already exist in GitHub at the exact case-sensitive path, compare the latest commit and do not blindly overwrite newer work. Ask for a fresh deployment log instead.
-
-The patch does not add dependencies. Next.js build success still needs confirmation.
+Do not upload the ZIP itself as a GitHub repository file. The paths in the archive start at project root (no wrapper folder).

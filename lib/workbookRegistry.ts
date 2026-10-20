@@ -1,6 +1,6 @@
 /** Dedicated report workbooks; authoritative HRMS records stay read-only. Browser-local prototype. */
 import type {HRState} from "./hrState";
-import {effectiveRate} from "./hrState";
+import {employeePaySnapshot,maskGovId} from "./employee201Rates";
 import type {Branch} from "./mock";
 import {buildHRReportSheets} from "./reportSheetData";
 import {batchForDraft} from "./payrollBatches";
@@ -36,15 +36,35 @@ export function buildWorkbookSheets(data:HRState,branch:Branch,workbook:Workbook
  const base=buildHRReportSheets(data,branch);
  const pick=(...ids:string[])=>base.filter(s=>ids.includes(s.id));
  const people=data.people.filter(p=>onlyBranch(p.branch,branch));
- if(workbook==="employees")return [
-  ...pick("employee-directory"),
-  extra("employee-rates","Compensation & Premiums",["Employee ID","Employee","Rate Type","Basic Rate (PHP)","Monthly Work Days","Hours / Day","Derived Daily Rate","Derived Hourly Rate","OT %","RDW %","RDOT %","HP %","SHP %","Rate Effective"],people.map(p=>{
-   const r=effectiveRate(p,data.rates),workdays=p.monthlyWorkDays||0,hours=p.hoursPerDay||8;
-   const daily=p.salaryType==="Daily"?p.rate:workdays>0?p.rate/workdays:"";
-   return [p.id,p.name,p.salaryType,p.rate,workdays||"Not configured",hours,daily,typeof daily==="number"?Number((daily/hours).toFixed(4)):"",r.ot,r.rdw,r.rdot,r.regular,r.special,r.effective];
-  }),"Derived rates are illustrative unless monthly work days and rate settings are configured; confirm payroll policy before use."),
-  extra("employee-government","Government & Contact Details",["Employee ID","Employee","Branch","SSS","PhilHealth","Pag-IBIG","TIN","Email","Phone","Hire Date","Civil Status"],people.map(p=>[p.id,p.name,p.branch,p.sssNumber||"Not recorded",p.philhealthNumber||"Not recorded",p.pagibigNumber||"Not recorded",p.tinNumber||"Not recorded",p.email,p.phone,p.hire,p.civilStatus||""]),"Confidential reference: browser-local only. Avoid exporting actual IDs without appropriate authorization.")
- ];
+ if(workbook==="employees"){
+  const changes=data.payrollConfig?.rateChanges||[];
+  const snapshot=(p:typeof people[number])=>employeePaySnapshot(p,data.rates,changes);
+  const missing=(v:string|number|undefined)=>v===undefined||v===null||v===""?"Not recorded":v;
+  return [
+   ...pick("employee-directory"),
+   extra("employee-personal","Personal & Emergency Details",[
+    "Employee ID","Full Name","Middle Name","Suffix","Gender","Birth Date","Birth Place","Nationality","Civil Status","Residence Address","Email","Phone","Emergency Contact","Relationship","Emergency Phone","Emergency Address"
+   ],people.map(p=>[p.id,p.name,missing(p.middleName),missing(p.suffix),p.gender,missing(p.birthDate),missing(p.placeOfBirth),missing(p.nationality),missing(p.civilStatus),missing(p.address),missing(p.email),missing(p.phone),missing(p.emergencyName),missing(p.emergencyRelationship),missing(p.emergencyPhone),missing(p.emergencyAddress)]),"Employee 201 source values only. Unrecorded fields stay explicitly missing; confidentiality applies to exported copies."),
+   extra("employee-employment","Employment & Assignments",[
+    "Employee ID","Full Name","Branch","Department","Position","Status","Original Hire Date","Probation (Months)","SIL Allocation","VIL Allocation","Assignment History Entries"
+   ],people.map(p=>[p.id,p.name,p.branch,p.department,p.position,p.status,p.hire,p.probation,p.sil,p.vil,p.assignmentHistory?.length||0]),"Current assignment and allocated credits only, not verified leave balances."),
+   extra("employee-rates","Compensation & Premiums",[
+    "Employee ID","Employee","Salary Type","Current Basic Rate (PHP)","Effective Date","Monthly Work Days","Hours / Day","Daily Rate","Hourly Rate","OT %","OT / Hour","HP %","HP / Day","SHP %","SHP / Day","RDW %","RDW / Day","RDOT %","RDOT / Hour"
+   ],people.map(p=>{const r=snapshot(p);return [p.id,p.name,p.salaryType,r.basic,r.basicEffective||"Not recorded",p.monthlyWorkDays??"Not configured",p.hoursPerDay??"Not configured",r.daily??"Not configured",r.hourly??"Not configured",r.premium.ot,r.ot??"Not configured",r.premium.regular,r.hp??"Not configured",r.premium.special,r.shp??"Not configured",r.premium.rdw,r.rdw??"Not configured",r.premium.rdot,r.rdot??"Not configured"]}),"Calculated reference rates, not verified payroll or payment instructions. Never assume a monthly divisor or daily hours when unconfigured."),
+   extra("employee-rate-history","Recorded Rate Changes",[
+    "Record ID","Employee ID","Employee","Salary Type","Amount (PHP)","Effective Date","Status","Reason","Recorded At"
+   ],changes.filter(c=>people.some(p=>p.id===c.employeeId)).sort((a,b)=>b.effective.localeCompare(a.effective)).map(c=>[c.id,c.employeeId,people.find(p=>p.id===c.employeeId)?.name||"Unknown",c.salaryType,c.amount,c.effective,c.status,c.reason,c.recordedAt]),"Only explicitly saved payroll rate-change records. Initial compensation is in Compensation & Premiums; no fictional history."),
+   extra("employee-government","Government & Contact Details",[
+    "Employee ID","Employee","Branch","SSS (masked)","PhilHealth (masked)","Pag-IBIG (masked)","TIN (masked)","Email","Phone","Hire Date","Civil Status"
+   ],people.map(p=>[p.id,p.name,p.branch,maskGovId(p.sssNumber),maskGovId(p.philhealthNumber),maskGovId(p.pagibigNumber),maskGovId(p.tinNumber),missing(p.email),missing(p.phone),p.hire,missing(p.civilStatus)]),"Government IDs masked on spreadsheet exports. Full identifiers remain in the restricted Employee 201 record and require real backend authorization before production."),
+   extra("employee-documents","Employee Document Checklist",[
+    "Employee ID","Employee","Branch","Document","Verification Status","File Reference"
+   ],people.flatMap(p=>p.documents.map(doc=>[p.id,p.name,p.branch,doc.name,doc.status,doc.fileName||"No file reference"])) ,"Document filenames/status only. No bytes attached to worksheet; verification is not proof of legal validity."),
+   extra("employee-assignments","Assignment History",[
+    "Employee ID","Employee","Effective Date","Action","Branch","Department","Position","Memo ID","Memo Type"
+   ],people.flatMap(p=>(p.assignmentHistory||[]).map(a=>[p.id,p.name,a.effectiveDate,a.kind,a.branch,a.department,a.position,a.memoId||"",a.memoType||""])) ,"Records only explicitly saved assignments. Missing historical records are not inferred.")
+  ];
+ }
  if(workbook==="attendance")return pick("attendance-batches","attendance-rows");
  if(workbook==="payroll"){
   const byEmployee=new Map(data.people.map(p=>[p.id,p]));
