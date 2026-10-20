@@ -1,16 +1,14 @@
-# Installation — HRMS Docs V6 + Universal UI QA
+# Installing HRMS Universal UI V1 (GitHub website)
 
-This is **PATCH FILES ONLY**; do not upload the ZIP directly as a repository file.
+**Prerequisite:** Latest consolidated HRMS plus the previous Docs V6 / Advanced Sheets patches applied to the same `main` branch. This is **NOT** a full project.
 
-1. First ensure the GitHub `main` branch includes the HRMS base and earlier Docs V4/V5, Employee 201 and Spreadsheet V3/V4 changes you intend to keep.
-2. Extract this ZIP locally. The folders inside mirror the repository paths.
-3. On github.com/kiowoyo21-eng/hrms-prot, update the existing files under `app/studio/`, `components/`, and `lib/studio/`. Upload the two new files at `components/studio/FormBuilder.tsx` and `lib/studio/formBuilder.ts`.
-4. Optionally add `docs/UNIVERSAL_UI_QA_CHECKLIST.md` and the root changelog/readme/QA report to your repository.
-5. Commit all source changes together to `main`. Vercel should start a new deployment automatically.
-6. Verify `/studio` as Super Admin. Click **Form Builder** on an active Docs source template, add fields, save. Template becomes Draft. Open in Docs, inspect layout, reapprove. Test manual values and Employee 201 mapped values in Auto-fill and a non-approved HR session.
-7. Open the document auto-fill dialog, confirm it overlays above the page rather than appearing underneath or below the content. Test Escape, backdrop click, desktop/mobile viewport and keyboard use. In HRMS Document Operations > Document Templates, verify the central templates link opens in a new tab.
-8. If Vercel fails, send the FIRST compiler/type error plus commit hash, not only the final exit code.
+1. Download and extract the ZIP. The folder structure inside the ZIP starts at `app/`, `components/`, and `lib/`.
+2. Open your HRMS GitHub repository and update/replace each file at its matching path. For new directories create `components/ui/` and add `useFloatingPopover.ts`.
+3. Ensure both new helper files exist in `lib/`: `moduleAlertViews.ts` and `floatingPosition.ts`.
+4. Ensure `app/universal-ui.css` exists and that `app/layout.tsx` imports it after `globals.css`.
+5. Commit **all 11 source files together** to `main`. Vercel will build the new commit. Do not upload the ZIP as a single repository file.
+6. Review the fresh build log. After successful deployment, hard-refresh (`Cmd+Shift+R` on Mac) and test dashboard counts, notification bells, date calendars and the Leave / Recruitment / Compliance modal workflows.
 
-**Do not overwrite newer GitHub files with older cumulative ZIPs.** This patch was developed from the latest available Docs V5 source snapshot, not directly from live GitHub.
+**Warning:** `app/page.tsx` and the five edited component files must reflect your latest repository edits. If your GitHub versions have been independently modified since Docs V6, merge instead of blindly replacing them; the patch was developed against the available Docs V6 source snapshot, not fetched from your live repository.
 
-**Limitations**: Studio data and approvals are local demo state. Full production Next.js build/browser smoke test could not be run in the offline environment. Missing npm packages prevented installation, and the global `tsc` output is not a valid full type check without those dependencies.
+Changed files only; no `node_modules` or full project files are included.
