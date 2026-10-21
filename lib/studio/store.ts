@@ -2,6 +2,7 @@ import {validateFormFields,withFormPlaceholders} from "./formBuilder";
 import type {StudioFormField} from "./types";
 import {writeAuditEvent} from "../auditTrail";
 import {activeDemoUser} from "../spreadsheetStore";
+import {isHrRole} from "../mock";
 import type {ApprovalRequest,StudioActor,StudioItem,StudioLog,StudioState,StudioKind,TemplateCategory,StudioComment} from "./types";
 const KEY="uc-hr-document-studio-v1";
 const EVENT="uc-hr-document-studio-change";
@@ -14,15 +15,8 @@ const starter:StudioState={items:[
  ],approvals:[],revisions:[],logs:[],comments:[]};
 export const blankState=():StudioState=>JSON.parse(JSON.stringify(starter)) as StudioState;
 export function readStudio():StudioState{if(typeof window==="undefined")return blankState();try{const x=JSON.parse(localStorage.getItem(KEY)||"null");return x&&Array.isArray(x.items)&&Array.isArray(x.approvals)&&Array.isArray(x.revisions)&&Array.isArray(x.logs)?{...x,comments:Array.isArray(x.comments)?x.comments:[]}:blankState()}catch{return blankState()}}
-export function studioActor():StudioActor|null{
- const actor=activeDemoUser();
- if(!actor)return null;
- if(actor.role==="Super Admin" || actor.role==="HR" || actor.role==="BM"){
-  return {username:actor.username,role:actor.role};
- }
- return null;
-}
-export function canRead(a:StudioActor|null){return !!a&&(a.role==="HR"||a.role==="Super Admin")}
+export function studioActor():StudioActor|null{return activeDemoUser()}
+export function canRead(a:StudioActor|null){return !!a&&(isHrRole(a.role)||a.role==="Super Admin")}
 export function canEdit(s:StudioState,a:StudioActor|null,itemId:string,at=Date.now()):boolean{if(!a||!canRead(a))return false;if(a.role==="Super Admin")return true;return s.approvals.some(r=>r.itemId===itemId&&r.requester===a.username&&r.status==="approved"&&!!r.expiresAt&&Date.parse(r.expiresAt)>at)}
 export function currentRequest(s:StudioState,a:StudioActor|null,itemId:string){return [...s.approvals].reverse().find(r=>r.itemId===itemId&&r.requester===a?.username)}
 function audit(s:StudioState,a:string,itemId:string,action:string,detail=""){s.logs.unshift({id:id(),itemId,date:now(),actor:a,action,detail:detail.slice(0,300)});s.logs=s.logs.slice(0,750)}
@@ -30,7 +24,7 @@ export function changeStudio(a:StudioActor,run:(s:StudioState)=>void):StudioStat
  const event=s.logs[0];if(event&&event.id!==priorLog)writeAuditEvent({module:"Document Library / Docs / PDF",action:event.action,recordId:event.itemId,actor:a.username,role:a.role,summary:"Change recorded; document contents and reasons withheld"});
  window.dispatchEvent(new Event(EVENT));return s}
 export function subscribeStudio(callback:()=>void){window.addEventListener(EVENT,callback);const onStorage=(e:StorageEvent)=>{if(e.key===KEY||e.key==="ucmm-hr-demo-login-v1")callback()};window.addEventListener("storage",onStorage);return ()=>{window.removeEventListener(EVENT,callback);window.removeEventListener("storage",onStorage)}}
-export function requestDocumentEdit(a:StudioActor,itemId:string,reason:string){if(a.role!=="HR")throw Error("Only HR requests editing access.");const text=reason.trim();if(text.length<12)throw Error("Enter at least 12 characters explaining the change.");return changeStudio(a,s=>{const item=s.items.find(x=>x.id===itemId);if(!item)throw Error("Document was not found.");if(canEdit(s,a,itemId))throw Error("Editing is already approved.");if(s.approvals.some(x=>x.itemId===itemId&&x.requester===a.username&&x.status==="pending"))throw Error("There is already a pending request.");s.approvals.push({id:id(),itemId,itemTitle:item.title,requester:a.username,reason:text.slice(0,500),status:"pending",requestedAt:now()});audit(s,a.username,itemId,"Edit permission requested",text)})}
+export function requestDocumentEdit(a:StudioActor,itemId:string,reason:string){if(!isHrRole(a.role))throw Error("Only HR requests editing access.");const text=reason.trim();if(text.length<12)throw Error("Enter at least 12 characters explaining the change.");return changeStudio(a,s=>{const item=s.items.find(x=>x.id===itemId);if(!item)throw Error("Document was not found.");if(canEdit(s,a,itemId))throw Error("Editing is already approved.");if(s.approvals.some(x=>x.itemId===itemId&&x.requester===a.username&&x.status==="pending"))throw Error("There is already a pending request.");s.approvals.push({id:id(),itemId,itemTitle:item.title,requester:a.username,reason:text.slice(0,500),status:"pending",requestedAt:now()});audit(s,a.username,itemId,"Edit permission requested",text)})}
 export function decideDocumentEdit(a:StudioActor,requestId:string,action:"approved"|"denied"|"revoked",note=""){if(a.role!=="Super Admin")throw Error("Only Super Admin can decide requests.");return changeStudio(a,s=>{const r=s.approvals.find(x=>x.id===requestId);if(!r)throw Error("Request not found.");if(action==="revoked"){if(r.status!=="approved")throw Error("Approval is no longer active.")}else if(r.status!=="pending")throw Error("Request is no longer pending.");if(r.requester===a.username)throw Error("Self-approval is not permitted.");r.status=action;r.decidedAt=now();r.decidedBy=a.username;r.note=note.slice(0,250);if(action==="approved"){s.approvals.forEach(x=>{if(x!==r&&x.itemId===r.itemId&&x.requester===r.requester&&x.status==="approved")x.status="revoked"});r.expiresAt=new Date(Date.now()+GRANT_TIME).toISOString()}audit(s,a.username,r.itemId,`${action} editing`,`${r.requester} · ${r.itemTitle}`)})}
 export function addStudioItem(a:StudioActor,kind:StudioKind,title:string,category:TemplateCategory,opts:Partial<StudioItem>={}){if(a.role!=="Super Admin")throw Error("Only Super Admin can create source templates.");const name=title.trim();if(name.length<3||name.length>120)throw Error("Title must be 3–120 characters.");const item:StudioItem={id:id(),kind,title:name,category,template:true,html:kind==="docs"?"<h1>Untitled document</h1><p></p>":undefined,fields:kind==="pdf"?[]:undefined,pageSize:"A4",landscape:false,owner:a.username,createdAt:now(),updatedAt:now(),version:1,status:"Draft",...opts};changeStudio(a,s=>{s.items.unshift(item);audit(s,a.username,item.id,"Template created",item.title)});return item}
 export function saveStudioItem(a:StudioActor,itemId:string,update:Partial<StudioItem>,expectedVersion:number){return changeStudio(a,s=>{if(!canEdit(s,a,itemId))throw Error("Editing locked or approval expired. Request approval before saving.");const item=s.items.find(x=>x.id===itemId);if(!item)throw Error("Document not found.");if(item.version!==expectedVersion)throw Error("Document changed in another tab. Reload to avoid overwriting newer work.");if(update.status!==undefined&&a.role!=="Super Admin")throw Error("Only Super Admin can change template approval status.");const allowed:Partial<StudioItem>={};for(const key of ["title","html","fields","pageSize","landscape","status","category","headerText","footerText","marginMm"] as const){if(update[key]!==undefined)(allowed as Record<string,unknown>)[key]=update[key]}s.revisions.unshift({id:id(),itemId:item.id,version:item.version,date:now(),actor:a.username,snapshot:JSON.parse(JSON.stringify(item))});s.revisions=s.revisions.slice(0,24);if(item.template&&a.role!=="Super Admin"&&item.status==="Approved Template")allowed.status="Draft";
@@ -111,7 +105,7 @@ export function duplicateStudioTemplate(a:StudioActor,itemId:string){if(a.role!=
 export function generateDocumentsBatch(a:StudioActor,sourceId:string,entries:{title:string;html:string}[]):StudioItem[]{
  if(!canRead(a))throw Error("Not authorized.");if(entries.length<1||entries.length>100)throw Error("Choose 1–100 employees.");
  const generated:StudioItem[]=[];
- changeStudio(a,s=>{const source=s.items.find(x=>x.id===sourceId);if(!source||source.kind!=="docs"||!source.template||source.status==="Archived")throw Error("Source template is not available.");if(a.role==="HR"&&source.status!=="Approved Template")throw Error("Admin approval of the source template is required.");
+ changeStudio(a,s=>{const source=s.items.find(x=>x.id===sourceId);if(!source||source.kind!=="docs"||!source.template||source.status==="Archived")throw Error("Source template is not available.");if(isHrRole(a.role)&&source.status!=="Approved Template")throw Error("Admin approval of the source template is required.");
   for(const e of entries){const item:StudioItem={...source,id:id(),title:e.title.slice(0,120),html:e.html,template:false,parentId:source.id,owner:a.username,status:"Draft",version:1,createdAt:now(),updatedAt:now()};generated.push(item);s.items.unshift(item)}audit(s,a.username,sourceId,"Bulk generated documents",`${generated.length} files from ${source.title}`)});
  return generated;
 }

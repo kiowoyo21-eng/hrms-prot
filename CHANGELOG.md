@@ -1,34 +1,23 @@
-# HRMS — Ms Kate Special Final Approval Revision
+# CHANGELOG — Ms Kate HR Role Inheritance Correction (2026-10-21)
 
-**2026-10-21 · Incremental patch · Browser-only demo implementation**
+## Intended permission architecture
 
-## New
-- `Special Final Approver — Ms Kate` dedicated role and demo account; original Super Admin / HR / BM users remain unchanged.
-- `Ms Kate Approvals` dedicated restricted navigation and dashboard.
-- Demo request queue with CMS/PB/Cashier and configured HRMS-originated reference snapshots. The CMS/Accounting applications are not linked.
-- Separate pending, approved, rejected, returned, awaiting Accounting, and approval-history tabs; branch/source/search filters.
-- Request detail review of amount, originator, category, description, Accounting approver/date/remarks, demo document metadata, and full stage timeline.
-- Working approve/return/reject confirmation dialogs, with mandatory reason for return/reject.
-- Final decision journal and status transitions scoped to request revision and material-field snapshot, plus audit events using existing local audit helper.
-- Release-authorization *guard function only*; no money movement or disbursement processing is implemented.
-- Ms Kate's own pending-alerts appear in the existing one-bell notification center without adding another bell.
-- Added live local audit entries to Audit Logs, preserving its original demo sample list.
+Ms Kate is a dedicated *HR + Final Approval* role, not an approval-only user:
 
-## Controls
-- Only assigned Ms Kate demo account can perform decisions. Super Admin has overview only, not implicit authority to approve as Ms Kate.
-- Accounting must first approve the exact material revision with approver and timestamp; cannot approve if stale, rejected, returned, pending, or lacking adequate evidence.
-- Duplicate final decisions, maker-checker conflict, negative amounts, missing return/reject explanation, and invalid transitions are blocked in browser/demo logic.
-- A material change invalidates the old Accounting verification and requires new first-level review. A new revision with valid Accounting approval must obtain a fresh final decision.
-- No CMS request-master data or remote integrations are written into HRMS; only local demo final decisions are stored.
+- Ms Kate has exactly the same module navigation access as HR, **plus** `final-approvals`.
+- HR retains existing modules and may not enter the final-approval queue through HR permissions.
+- Ms Kate does not inherit Super Admin privileges or the ability to grant edit requests, approve templates, or create privileged source templates.
+- The single `mskate` demo login and the existing Super Admin, HR, and BM logins are preserved.
+- Final decisions still require the special role AND assigned Ms Kate demo account; Accounting approval must precede them.
 
-## Modified source files
-- `app/page.tsx` — role-specific route navigation, final approval workspace, queue alerts, actual local audit display.
-- `lib/mock.ts` — one new role/demo account and permissions/module definition.
-- `lib/auditTrail.ts` — optional structured before/after statuses and remarks for audit entries (existing callers remain supported).
+## Code changes
 
-## New source files
-- `lib/finalApproval.ts` — request/decision types, demo fixtures, pure gate/transition rules and local decision journal.
-- `components/MsKateApprovalWorkspace.tsx` — dashboard and approval flows.
-- `components/MsKateApprovalWorkspace.module.css` — responsive isolated UI, viewport-safe confirmation dialogs.
+1. `lib/mock.ts` — shared `isHrRole` helper; Ms Kate inherits HR modules plus final approvals.
+2. `lib/studio/types.ts`, `lib/studio/store.ts` — retain actual role identity, permit HR-equivalent Document Studio access/request flows, and keep Super Admin-only grants and template approval protected. Replaces/supersedes prior Studio actor type workaround.
+3. `lib/spreadsheetStore.ts`, `components/SpreadsheetWorkspace.tsx` — permit HR-equivalent editing requests and approved working-sheet edits only; still require Super Admin grant.
+4. `app/studio/page.tsx`, `app/studio/docs/[id]/page.tsx`, `app/studio/pdf/[id]/page.tsx`, `lib/studio/pdfOutputs.ts` — apply HR-equivalent template restrictions and edit-request UI to Ms Kate.
+5. `components/AssetWorkspace.tsx`, `components/ComplianceWorkspace.tsx`, `components/TemplateLibraryWorkspace.tsx` — align HR-equivalent controls and actions.
+6. `components/RecruitmentWorkspace.tsx` — preserve Ms Kate role in local recruitment history, rather than mislabel it BM.
+7. `components/DashboardExtras.tsx` — show normal HR quick-action shortcuts for Ms Kate.
 
-No HR payroll, leave, Employee 201, attendance, asset, document, or incident module source was modified by this patch. No ERP integration exists or was added.
+**No payroll computation, official employee data, existing demo credentials, CMS integration, Accounting integration, ERP integration, or disbursement release function changed.**

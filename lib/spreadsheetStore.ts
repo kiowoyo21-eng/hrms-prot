@@ -1,7 +1,7 @@
 /** Spreadsheet review workspace. Local-browser DEMO ONLY; never use for real authorization.
  * A server must verify session, grant, version, and write permissions in production.
  */
-import {demoAccounts,type Role} from "./mock";
+import {demoAccounts,isHrRole,type Role} from "./mock";
 import {writeAuditEvent} from "./auditTrail";
 import {isValidInput,validRule,rangeIncludes,type ValidationRule,type ConditionalRule} from "./sheetDataTools";
 
@@ -34,7 +34,7 @@ export function touchDemoSession(){
  try{const session=JSON.parse(localStorage.getItem(SESSION_KEY)||"null");if(session?.username===actor.username&&session?.role===actor.role){session.lastActive=Date.now();localStorage.setItem(SESSION_KEY,JSON.stringify(session));}}catch{}
 }
 export function hasEditGrant(state:LocalSheetState,actor:SheetActor,sheetId:string,now=Date.now()):boolean{
- return actor.role==="HR"&&state.requests.some(r=>r.requester===actor.username&&r.sheetId===sheetId&&r.status==="approved"&&!!r.expiresAt&&Date.parse(r.expiresAt)>now);
+ return isHrRole(actor.role)&&state.requests.some(r=>r.requester===actor.username&&r.sheetId===sheetId&&r.status==="approved"&&!!r.expiresAt&&Date.parse(r.expiresAt)>now);
 }
 export function latestRequest(state:LocalSheetState,user:string,sheetId:string){return [...state.requests].reverse().find(r=>r.requester===user&&r.sheetId===sheetId)}
 function log(state:LocalSheetState,actor:string,action:string,sheetId:string,detail:string){state.audit.unshift({id:id(),date:iso(),actor,action,sheetId,detail:detail.slice(0,320)});state.audit=state.audit.slice(0,450)}
@@ -48,7 +48,7 @@ function commit(actor:SheetActor,update:(state:LocalSheetState)=>void):LocalShee
 }
 export function subscribeSheetChanges(callback:()=>void){window.addEventListener(EVENT,callback);const onStorage=(e:StorageEvent)=>{if(e.key===KEY||e.key===SESSION_KEY)callback()};window.addEventListener("storage",onStorage);return ()=>{window.removeEventListener(EVENT,callback);window.removeEventListener("storage",onStorage)}}
 export function requestSheetEdit(actor:SheetActor,sheetId:string,sheetTitle:string,reason:string){
- if(actor.role!=="HR")throw Error("Only HR can request worksheet editing in this prototype.");
+ if(!isHrRole(actor.role))throw Error("Only HR can request worksheet editing in this prototype.");
  const justification=reason.trim();if(justification.length<12)throw Error("Provide a reason of at least 12 characters.");
  return commit(actor,s=>{if(hasEditGrant(s,actor,sheetId))throw Error("You already have an active approval for this sheet.");if(s.requests.some(r=>r.requester===actor.username&&r.sheetId===sheetId&&r.status==="pending"))throw Error("A request is already pending for this worksheet.");s.requests.push({id:id(),requester:actor.username,sheetId,sheetTitle,reason:justification.slice(0,500),status:"pending",requestedAt:iso()});log(s,actor.username,"Requested edit approval",sheetId,justification)});
 }

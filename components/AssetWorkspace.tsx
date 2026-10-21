@@ -2,7 +2,7 @@
 
 import {useEffect,useMemo,useRef,useState,type FormEvent,type PointerEvent} from "react";
 import {Laptop,Plus,ArrowLeft,ArrowRight,FileSignature,ClipboardCheck,FileText,Info,RotateCcw} from "lucide-react";
-import type {Branch,Role} from "../lib/mock";
+import {isHrRole,type Branch,type Role} from "../lib/mock";
 import {assetVisible} from "../lib/branchRecordViews";
 import {canStartAssetAction,canAssignAssetToEmployee,nextAssetId,requestAssetReturn,receiveAssetReturn,closeAssetInspection} from "../lib/assetLifecycle";
 import {useHR,type AssetRecord,type AssetStatus} from "../lib/hrState";
@@ -34,7 +34,7 @@ function SignaturePad({onChange}:{onChange:(signed:boolean)=>void}){
 export default function AssetWorkspace({branch,role,prefillEmployeeId}:{branch:Branch;role:Role;prefillEmployeeId?:string}){
  const {data,update}=useHR();
  const assets=data.assets,people=data.people;
- const editable=role==="HR"||role==="Super Admin";
+ const editable=isHrRole(role)||role==="Super Admin";
  const setAssets=(change:(prev:AssetRecord[])=>AssetRecord[])=>update(s=>({...s,assets:change(s.assets)}));
  const [search,setSearch]=useState("");
  const [filter,setFilter]=useState<AssetStatus|"All">("All");

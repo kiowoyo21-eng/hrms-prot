@@ -1,4 +1,5 @@
 export type Role = "Super Admin" | "HR" | "BM" | "Special Final Approver — Ms Kate";
+export const isHrRole=(role:Role):boolean=>role==="HR"||role==="Special Final Approver — Ms Kate";
 export type Branch = "All Shops" | "UC Mandaluyong" | "UC Las Piñas" | "UC Quezon City" | "MM Mandaluyong";
 export const branches: Branch[] = ["All Shops","UC Mandaluyong","UC Las Piñas","UC Quezon City","MM Mandaluyong"];
 export const modules = [
@@ -21,11 +22,12 @@ export const modules = [
  {id:"settings",name:"Settings",icon:"Settings",count:0}
 ] as const;
 export type ModuleId = typeof modules[number]["id"] | "loans"; // internal legacy alert key; loans workspace now belongs under payroll
+const HR_MODULES:ModuleId[]=["dashboard","employees","lifecycle","payroll","leave","ir","assets","compliance","documents","filters","drive","spreadsheets","studio","audit","settings"];
 export const permissions: Record<Role, ModuleId[]> = {
  "Super Admin":modules.map(m=>m.id),
- "HR": ["dashboard","employees","lifecycle","payroll","leave","ir","assets","compliance","documents","filters","drive","spreadsheets","studio","audit","settings"],
+ "HR":HR_MODULES,
  "BM": ["dashboard","submissions","lifecycle","leave","ir","settings"],
- "Special Final Approver — Ms Kate": ["final-approvals"]
+ "Special Final Approver — Ms Kate": [...HR_MODULES,"final-approvals"]
 };
 export const demoAccounts = [{username:"admin",password:"admin12345",role:"Super Admin" as Role},{username:"hraccount",password:"hraccount12345",role:"HR" as Role},{username:"bmaccount",password:"bm12345",role:"BM" as Role},{username:"mskate",password:"mskate-demo12345",role:"Special Final Approver — Ms Kate" as Role}];
 export const activity=[

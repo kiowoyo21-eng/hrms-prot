@@ -1,34 +1,27 @@
-# Install — Ms Kate Special Final Approval
+# PATCH README — Ms Kate inherits HR rights + unique final approval
 
-## Prerequisites
-- Apply this patch on top of the current HRMS project including **HRMS Main V4 — Employee Lifecycle**, and any previously deployed Universal UI/Notifications and Docs/Sheets patches.
-- The files were prepared against a locally reconstructed version using the 2026-10-20 consolidated HRMS archive and sequential incremental revisions available in the conversation. If your current GitHub source has additional unshared changes in one of the three modified files, manually merge rather than overwrite them.
+## Apply order
 
-## GitHub website only
-1. Extract this ZIP on your Mac. **Do not upload the ZIP as a repo file.**
-2. In your `kiowoyo21-eng/hrms-prot` GitHub repository, create/upload the new files at exactly:
-   - `lib/finalApproval.ts`
-   - `components/MsKateApprovalWorkspace.tsx`
-   - `components/MsKateApprovalWorkspace.module.css`
-3. Replace/merge the modified source files at exactly:
-   - `app/page.tsx`
-   - `lib/mock.ts`
-   - `lib/auditTrail.ts`
-4. Commit all six source changes together to `main` and wait for Vercel's Next.js build.
-5. If the build fails, send the first actual error with the new commit hash; full Next build could not be completed in the authoring environment.
-6. Use the account button **Special Final Approver — Ms Kate** at login to auto-fill demo credentials. If manually signing in, username is `mskate`, demo password is `mskate-demo12345` (never use in production).
-7. Navigate **Ms Kate Approvals**, select branch **All Shops**, open `CMS-DEMO-DR-001`, then test Approve, Return, and Reject on separate Accounting-approved demo requests. Confirm pending-accounting and stale-accounting items are action-disabled.
-8. Sign in as HR, BM, and Super Admin. Their existing logins must still work; only Ms Kate's assigned demo account may record final approval. Super Admin has overview, not approval delegation.
+1. Existing HRMS main project and Ms Kate Special Final Approver V1 patch must already be present.
+2. Apply the previous `ShieldCheck` navigation icon fix (`app/page.tsx`) if the Vercel deployment has not yet passed that check.
+3. **Apply THIS patch instead of the old `hrms-vercel-ms-kate-studio-actor-type-fix-patch-only.zip`.** It safely supersedes that `lib/studio/store.ts` workaround by preserving Ms Kate's full role identity.
+4. Extract this ZIP, preserving paths. In GitHub Web, update/upload the source files to their *matching folders*, commit them together to `main`, then review the new Vercel deployment.
+5. Do not upload the ZIP itself into the GitHub repository; don't delete or reset any localStorage keys.
 
-## Demo data and storage
-- Requests are **immutable code fixtures** prefixed `CMS-DEMO-` or `HRMS-DEMO-`, not synchronized live records.
-- Browser-local final decisions use a new, separate storage key `uc-hr-final-approval-demo-decisions-v1`; pre-existing HRMS localStorage keys and content are unchanged.
-- Approval decisions are isolated from CMS request metadata, HRMS employee/payroll data, and release processing.
-- Existing audit trail is reused (`uc-hr-ui-audit-trail-v2`). Approval history and other browser data are not reliable legal audit evidence.
-- To retest all actions without removing other HRMS data, use a separate private browser session or clear **only** the final-approval demo decisions key using browser developer tools. No auto-reset is executed by this patch.
+## Expected account behavior
 
-## NOT IMPLEMENTED
-- Real CMS/Accounting data ingestion or write-back, shared database, Accounting approvals, payment processing, real attachments/downloads, production login or authorization, durable/tamper-evident audit, multi-device sync.
-- No ERP APIs, database references, synchronization, dependencies, or status links.
+- `hraccount`: existing HR features; no special final approvals.
+- `mskate`: all existing HR modules plus Ms Kate Approvals; HR-based edit requests work but still need Super Admin review. All audit/session records retain the Ms Kate role.
+- `admin`: existing Super Admin features; can oversee the Ms Kate queue but cannot execute Ms Kate's final-approval action via Super Admin authority.
+- `bmaccount`: existing BM permissions only.
 
-See `INTEGRATION_REQUIREMENTS.md` and `QA_REPORT.md`.
+## Manual browser checks after build
+
+- Log in as Ms Kate: Dashboard, Employee 201, Payroll, Leave, Assets, Recruitment, Compliance, Documents, Drive, Spreadsheets, Document Library, Audit Logs and Settings must be visible alongside Ms Kate Approvals.
+- Use a standalone Docs editor and Spreadsheet working copy: Ms Kate can request edit approval; she cannot grant herself one. Super Admin can grant the usual HR edit approval; Ms Kate can then edit that approved item while the grant remains valid.
+- Verify Ms Kate cannot change template approval states, approve spreadsheet edit requests, or bypass payroll release/Accounting-first checks.
+- Confirm HR cannot access Ms Kate final-approval decisions; BM still has BM navigation; Super Admin retains its existing functions.
+
+## Scope limits
+
+**Browser-local prototype only.** The UI permissions are NOT server-side authorization. The CMS/Accounting request queue remains DEMO, has no live sync, and does not authorize real payment. No ERP connection exists or is proposed. Production requires shared-database authentication, RLS, atomic versioned approvals, event delivery, and tamper-evident audit.

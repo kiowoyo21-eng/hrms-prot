@@ -6,7 +6,7 @@ import {ArrowLeft,ArrowRight,AlertTriangle,BriefcaseBusiness,CalendarDays,CheckC
 import {ModuleAlertButton,usePublishModuleAlerts} from "./ModuleAlerts";
 import {useLocalRecords} from "../lib/useLocalRecords";
 import {BRANCHES,DEFAULT_HIRING_FORMS,HIRING_FORMS_KEY,RECRUITMENT_KEY,candidateRequirements,initialApplicants,makeFormId,DEFAULT_ONBOARDING_DOCUMENTS,positionDocumentSuggestions,canonicalRequirement,uniqueRequirements,interviewCriteria,type ApplicantRecord,type ApplicantRequirement,type HiringForm,type HiringInterview} from "../lib/recruitmentCatalog";
-import type {Branch,Role} from "../lib/mock";
+import {isHrRole,type Branch,type Role} from "../lib/mock";
 import {useHR,type HRPerson} from "../lib/hrState";
 import type {Shop} from "../lib/people";
 
@@ -21,7 +21,7 @@ const activeCycle=(r:ApplicantRecord)=>["Shortlisted","Phone Interview","Initial
 const isOnboarding=(r:ApplicantRecord)=>r.stage==="Passed"||r.stage==="Hired";
 function readInterviews(r:ApplicantRecord):HiringInterview[]{if(r.interviews?.length)return r.interviews;if(r.interviewAt)return [{id:`legacy-${r.id}`,round:r.stage.includes("Interview")?r.stage:"Interview",at:r.interviewAt,interviewer:"Not recorded",result:r.interviewOutcome==="Passed"?"Passed":r.interviewOutcome==="Failed"?"Failed":"Pending",notes:"Previous interview schedule"}];return []}
 function qualificationScore(r:ApplicantRecord,form?:HiringForm){const keys=form?.qualifications||[];const complete=keys.filter(k=>r.qualifications?.[k]==="Yes").length;return {complete,total:keys.length};}
-function actor(role:Role){return role==="Super Admin"?"Super Admin":role==="HR"?"HR":"BM"}
+function actor(role:Role){return role==="Super Admin"?"Super Admin":isHrRole(role)?role:"BM"}
 export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:Role}){
  const [records,setRecords]=useLocalRecords(RECRUITMENT_KEY,initialApplicants);
  const {data:hrData,update:updateHR}=useHR();

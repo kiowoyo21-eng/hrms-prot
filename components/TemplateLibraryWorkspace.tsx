@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useMemo,useRef,useState} from "react";
 import {BookOpen,Upload,Plus,Search,Eye,Download,Printer,FileText,Maximize2,ChevronLeft,ChevronRight,X,Info} from "lucide-react";
-import type {Role} from "../lib/mock";
+import {isHrRole,type Role} from "../lib/mock";
 
 type Paper="A4"|"Letter";
 type Template={id:string;name:string;category:string;paper:Paper;created:string;mime?:string;filename?:string;url?:string;content?:string};
@@ -17,7 +17,7 @@ export default function TemplateLibraryWorkspace({role}:{role:Role}){
  const [selectedId,setSelectedId]=useState(defaults[0].id),[q,setQ]=useState(""),[category,setCategory]=useState("All"),[mode,setMode]=useState<"list"|"add">("list"),[expand,setExpand]=useState(false);
  const [name,setName]=useState(""),[formCat,setFormCat]=useState(cats[0]),[paper,setPaper]=useState<Paper>("A4"),[content,setContent]=useState(""),[page,setPage]=useState(1),[notice,setNotice]=useState("");
  const fileInput=useRef<HTMLInputElement>(null),editorRef=useRef<HTMLTextAreaElement>(null),urls=useRef<string[]>([]);
- const editable=role==="HR"||role==="Super Admin";
+ const editable=isHrRole(role)||role==="Super Admin";
  const visible=useMemo(()=>templates.filter(t=>(category==="All"||t.category===category)&&`${t.name} ${t.category}`.toLowerCase().includes(q.toLowerCase())),[templates,category,q]);
  const chosen=templates.find(t=>t.id===selectedId)||null;
  useEffect(()=>()=>{urls.current.forEach(u=>URL.revokeObjectURL(u))},[]);

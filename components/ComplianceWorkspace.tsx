@@ -6,7 +6,7 @@ import HelpButton from "./HelpButton";
 import CalendarDatePicker from "./CalendarDatePicker";
 import {ModuleAlertButton,usePublishModuleAlerts} from "./ModuleAlerts";
 import {useLocalRecords} from "../lib/useLocalRecords";
-import type {Branch,Role} from "../lib/mock";
+import {isHrRole,type Branch,type Role} from "../lib/mock";
 
 type Agency="DOLE"|"BIR"|"SSS"|"PhilHealth"|"Pag-IBIG"|"BFP"|"DENR-EMB"|"PSA"|"LGU";
 type Frequency="Monthly"|"Quarterly"|"Semiannual"|"Annual"|"Event-based"|"Custom";
@@ -45,7 +45,7 @@ function percentage(items:Item[]){const total=items.reduce((n,x)=>n+branchesOf(x
 export default function ComplianceWorkspace({branch,role}:{branch:Branch;role:Role}){
  const [records,setRecords]=useLocalRecords("compliance",initial),[agency,setAgency]=useState<Agency|null>(null),[section,setSection]=useState<"tasks"|"calendar"|"planning"|"evidence">("tasks"),[search,setSearch]=useState(""),[status,setStatus]=useState("All"),[frequency,setFrequency]=useState("All"),[detailId,setDetailId]=useState<number|null>(null),[note,setNote]=useState(""),[feedback,setFeedback]=useState(""),[showAdd,setShowAdd]=useState(false),[calendarApproved,setCalendarApproved]=useState(false),[year,setYear]=useState("2027");
  const [draft,setDraft]=useState<{title:string;agency:Agency;due:string;frequency:Frequency;owner:string;scope:"all"|"selected";selected:Shop[]}>({title:"",agency:"DOLE",due:"",frequency:"Annual",owner:"HR",scope:"all",selected:["UC Mandaluyong"]});
- const canEdit=role==="Super Admin"||role==="HR";
+ const canEdit=role==="Super Admin"||isHrRole(role);
  const scoped=useMemo(()=>records.filter(x=>inScope(x,branch)),[records,branch]);
  const agencyRecords=scoped.filter(x=>!agency||x.agency===agency);
  const filtered=agencyRecords.filter(x=>(status==="All"||x.status===status)&&(frequency==="All"||x.frequency===frequency)&&`${x.title} ${x.agency} ${x.owner} ${x.note}`.toLowerCase().includes(search.toLowerCase()));

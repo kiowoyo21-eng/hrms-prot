@@ -1,3 +1,4 @@
+import {isHrRole} from "../mock";
 import {writeAuditEvent} from "../auditTrail";
 /** Browser-local generated PDF copies. They NEVER replace their source PDF templates. */
 import {getPdf,putPdf,deletePdf} from "./pdfAssets";
@@ -11,7 +12,7 @@ export function subscribePdfOutputs(cb:()=>void){window.addEventListener(EVENT,c
 const assertActor=(actor:StudioActor)=>{const current=studioActor();if(!current||current.username!==actor.username||current.role!==actor.role||!canRead(current))throw Error("HRMS demo session expired or unauthorized.")};
 export async function storePdfOutput(actor:StudioActor,templateId:string,entry:{title:string;employeeId:string;employeeName:string},bytes:Uint8Array):Promise<GeneratedPdf>{
  assertActor(actor);const source=readStudio().items.find(i=>i.id===templateId&&i.kind==="pdf"&&i.template&&i.status!=="Archived");
- if(!source||(actor.role==="HR"&&source.status!=="Approved Template"))throw Error("PDF source template is missing or unapproved.");
+ if(!source||(isHrRole(actor.role)&&source.status!=="Approved Template"))throw Error("PDF source template is missing or unapproved.");
  if(!bytes.byteLength||bytes.byteLength>25_000_000)throw Error("Generated PDF exceeds the 25 MB browser storage limit.");
  const before=readPdfOutputs();if(before.length>=200)throw Error("Local PDF output limit reached (200). Remove old copies before generating more.");
  const entryRecord:GeneratedPdf={id:makeId(),title:entry.title.slice(0,160),templateId,employeeId:entry.employeeId,employeeName:entry.employeeName,owner:actor.username,createdAt:new Date().toISOString(),size:bytes.byteLength};

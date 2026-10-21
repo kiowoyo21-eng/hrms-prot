@@ -1,3 +1,4 @@
+import type {Role} from "../mock";
 /** Browser-only review data. Authorization and storage are NOT secure until server-backed. */
 export type StudioKind = "docs" | "pdf";
 export type TemplateCategory = "Employment" | "Payroll" | "Compliance" | "Onboarding" | "Disciplinary" | "General";
@@ -16,4 +17,4 @@ export type StudioLog={id:string;itemId:string;date:string;actor:string;action:s
 export type StudioCommentReply={id:string;actor:string;date:string;text:string};
 export type StudioComment={id:string;itemId:string;actor:string;date:string;quote:string;text:string;resolved:boolean;resolvedBy?:string;resolvedAt?:string;replies:StudioCommentReply[]};
 export type StudioState={items:StudioItem[];approvals:ApprovalRequest[];revisions:StudioRevision[];logs:StudioLog[];comments?:StudioComment[]};
-export type StudioActor={username:string;role:"HR"|"Super Admin"|"BM"};
+export type StudioActor={username:string;role:Role};

@@ -1,27 +1,21 @@
-# QA Report — Ms Kate Second-Level Approval Revision
+# QA REPORT — Ms Kate HR Role Inheritance Correction
 
-## Passed
-- **43 focused approval/security/data assertions** on role isolation, existing account preservation, demo-fixture ownership, Accounting-first gate, three decisions, required explanation, duplicate/idempotency protection, self-approval, invalid amount, stale/changed source revisions, release predicate, browser-local decision storage, audit fields, and Philippine time formatting.
-- `tsc --noEmit --strict` passed for `lib/finalApproval.ts`, `lib/mock.ts`, and `lib/auditTrail.ts` (standalone pure-TypeScript check).
-- **118 TypeScript/TSX source files parsed** with no syntax diagnostics in the reconstructed HRMS workspace.
-- **322 relative imports validated** with zero missing import targets in that workspace.
-- New CSS module parsed successfully.
+## Verified in source / local test harness
 
-## Unverified / required for deployment
-- **Full `next build` not executed successfully.** An offline npm install was attempted, but dependency `@tiptap/core` was not in the npm cache (`ENOTCACHED`); therefore Next.js module resolution, complete project-wide typechecking, runtime bundling and Vercel compilation are **unverified**.
-- Interactive browser end-to-end (actual React rendering, keyboard focus, modal layering, mobile layouts, screen reader interaction, user login/session persistence, and cross-tab concurrency) not independently completed.
-- Existing payroll, Employee 201, recruitment, assets, leave and other modules were not all end-to-end regression tested. Existing source files for those modules were intentionally not modified.
-- Frontend role guards and browser audit/storage do not provide production authorization, immutable audit or atomic cross-application approvals.
+- 119 TS/TSX files parsed without syntax errors.
+- 331 relative source/CSS imports checked; no unresolved relative imports in reconstructed project.
+- TypeScript `--strict` succeeded for actual `lib/mock.ts` and `lib/studio/types.ts` role/actor definitions.
+- Focused runtime regression script passed: identical navigation permissions to HR plus unique approval module, all four existing accounts, Document Studio read and edit-request flow, approved edit grant and admin-only template changes, Spreadsheet edit request/grant logic, local audit role preservation, final approval gate refusing ordinary HR and allowing assigned Ms Kate only, non-release before final approval, BM restrictions.
+- All patched TSX files retain the top-of-file `"use client"` directive when applicable.
+- No employee, payroll or CMS source records were changed by the patch.
 
-## Suggested Vercel + browser acceptance checks
-1. Fresh Vercel deployment `next build` completes without missing modules or TypeScript errors.
-2. All original demo roles log in and navigate; Ms Kate logs in using dedicated button. Ms Kate should see only her approval module and no Super Admin settings or payroll navigation.
-3. Account-approved `CMS-DEMO-DR-001` appears Pending My Approval; `CMS-DEMO-DR-002` stays Waiting on Accounting; amended `CMS-DEMO-DR-003` requires Accounting reapproval.
-4. Ms Kate approves `CMS-DEMO-DR-001`, rejects `HRMS-DEMO-REQ-001` with reason, and returns `CMS-DEMO-DR-004` with reason; tabs and timeline update, and browser reload preserves demo decisions.
-5. Super Admin may inspect but cannot approve; HR and BM cannot open Ms Kate's module. Reject and Return buttons reject blank explanations.
-6. Approval action is unavailable after a final decision or after a material mutation, and no real release takes place.
-7. Test across desktop and narrow mobile widths: request list scroll, confirmation modal displays above page with visible Cancel/Confirm, Escape and overlay dismissal work, no popovers behind the page.
-8. Super Admin Audit Logs show decision audit rows with actor/role/Philippine timestamp/status transition; Ms Kate's history shows remarks and timeline.
+## Not verified
 
-## Baseline
-Source assembled from `HRMS-Complete-Project-Payroll-Batches-2026-10-20.zip` plus successive available patch ZIPs through **HRMS Main V4**; actual live GitHub branch and Vercel deployment were not fetched/verified. Merge carefully if the live repository differs.
+- A full Next.js production build was not run because project npm dependencies are unavailable in this workspace.
+- Real Vercel deployment and browser click-through must be verified after GitHub upload.
+- No live Accounting/CMS integration, real authentication, bank disbursement or production-security tests exist.
+
+## Known limitations
+
+- Existing browser-local demo permissions and audit data can be modified by a user who controls their browser storage. This does not provide production-grade access control.
+- Existing MS Kate final-approval interface validates a single demo role/account identity. Future server-side policy must support securely configured approvers and delegation if needed.
