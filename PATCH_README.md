@@ -1,18 +1,21 @@
-# Installing HRMS Main V7 via GitHub Web
+# Install HRMS Main V8 (GitHub website)
 
-This is **PATCH FILES ONLY**, built on the latest local V6 source snapshot available in this conversation. Apply after **HRMS Main V6**, preserving Ms Kate HR-role inheritance correction and previous fixes. This is not a full project ZIP.
+**Baseline:** latest locally assembled HRMS V6 + main V7 Recruitment/Compliance patch. This was not downloaded from the live GitHub main branch. Preserve any newer changes you made to the same files.
 
-1. Extract the ZIP on your Mac.
-2. On GitHub, open your existing HRMS repository and `main` branch.
-3. Upload/replace the files **at the corresponding paths**:
-   - `components/RecruitmentWorkspace.tsx` (replace)
-   - `components/ComplianceWorkspace.tsx` (replace)
-   - `lib/recruitmentChecks.ts` (new)
-   - `lib/complianceChecks.ts` (new)
-4. Keep all other source files untouched. Commit all four in one commit.
-5. Check the new Vercel production build (Webpack **and** TypeScript steps) before accepting the patch.
-6. Browser smoke tests: change branches with an applicant/case open; try scheduling an interview for an unshortlisted applicant; try a future valid interview; confirm a non-Passed applicant can't be hired; attempt duplicate compliance requirement; verify status sequence per branch and evidence prompt; check agency/year/branch calendar reviews remain separate. Confirm HR and Ms Kate's inherited HR module permissions.
+**Prerequisites:** Prior Docs/Document Library and Ms Kate HR-role inheritance patches are expected to be present; retain your existing `lib/studio/pdfOutputs.ts`, `lib/studio/pdfAssets.ts` and `lib/studio/store.ts` files. The patch does NOT replace them.
 
-**Data caution:** Existing applicant/employee identities in this prototype can be stored in the browser only. Do not put real sensitive applicant documents, employer filing proof or payroll identifiers into the frontend prototype. An evidence filename is not an uploaded proof file or legally valid verification. This patch does not integrate government portals, ERP, CMS, or Accounting.
+1. Confirm your HRMS V7 deployment on Vercel is working.
+2. Unzip this archive on your computer.
+3. Upload the **four source files** to exactly their corresponding GitHub folder paths:
+   - `app/studio/pdf/[id]/page.tsx` (replace)
+   - `app/studio/pdf-output/[id]/page.tsx` (new folder `[id]` under `pdf-output`)
+   - `lib/studio/pdfFormTools.ts` (new)
+   - `app/studio/studio.css` (replace)
+4. Commit the changes to `main` together and inspect the new Vercel production build.
+5. Sign in as Super Admin, import an ordinary SAMPLE nonconfidential AcroForm PDF into Document Library, map fields, save, approve the template, then sign in as HR/Ms Kate and fill it.
+6. Confirm the downloaded PDF is listed under "Generated PDF copies". Open its read-only viewer and download it again. Test both Flatten on and Flatten off.
+7. Check mobile/responsive layout and restore/approve paths. No production data should be uploaded to this browser-only demo.
 
-**Fallback:** If your live GitHub files have newer unrelated edits than the locally available source, compare the two TSX components rather than overwrite those changes blindly.
+**Do not upload the ZIP as a file to the GitHub repository.** Upload the individual source files under their intended paths. If your current `app/studio/studio.css` differs, merge the new V8 rules instead of reverting newer CSS.
+
+Troubleshooting: If the generated PDF opens on your device but not another, this is expected: IndexedDB data and document metadata are not synced. A full production backend is a future phase. This patch does not connect ERP or the other apps.

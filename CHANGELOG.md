@@ -1,25 +1,28 @@
-# HRMS Main V7 — Recruitment & Compliance Reliability
-**Date:** 2026-10-21  
-**Scope:** Incremental HRMS frontend patch; four new/modified source files.
+# HRMS Master Revision V8 — PDF Forms & Document Library
 
-## Recruitment
-- Candidate selection is scoped to the active branch, including deep links opened through alerts; stale selected/decline/resume dialogs close when branch changes.
-- Applicant edits are blocked when the record is outside the selected branch or the actor is the BM review role. Browser storage remains a demo, not a security boundary.
-- Rejects duplicate applications for the same normalized email and position (preserves multiple different-position applications).
-- Validates scheduled interview date/time and interviewer, guards unscreened/rejected/hired stages and concurrent pending interviews.
-- Final hire requires a previously selected Passed candidate, in addition to existing offer, documents, signing, rate and Employee 201 duplicate checks.
-- Prevents manually adding an applicant to a branch other than the currently selected branch.
+## Modified/new source files (4)
 
-## Government Compliance
-- Detail modal and mutations are limited to requirements in the selected branch.
-- Branch completion now requires explicit branch-status and branch-evidence references for shared/multi-branch requirements; legacy single-branch records remain supported.
-- Branch-specific progress, calendar urgency and review counts don't inherit other branches' completed work.
-- Multi-branch details only expose current branch's status/evidence while viewing a specific branch.
-- Adds guarded stage transitions (Draft → For Approval → Approved → In Progress → Submitted → Verified; limited corrections/reopening supported). Per-branch internal verification needs an evidence reference and human confirmation; filename-only data is explicitly not official government verification.
-- Rejects overlapping requirements with same agency, normalized title, due date and applicable branch; validates calendar dates.
-- Annual schedule-review state is saved by agency, branch, and year, rather than leaking between agency views. Clearly labeled as local review only.
+1. `app/studio/pdf/[id]/page.tsx` — PDF form editor enhancements (modified)
+2. `app/studio/pdf-output/[id]/page.tsx` — read-only viewer for generated PDFs (new)
+3. `lib/studio/pdfFormTools.ts` — typed geometry, validation, and value helpers (new)
+4. `app/studio/studio.css` — PDF output viewer, manual-field inputs, responsive layout (modified)
 
-## Preserved
-- No changes to payroll, loans, final pay, Ms Kate role/approval authority, Employee 201 calculations, external integrations, app routes or existing credentials.
-- Existing local records retained. No migration or deletion.
-- ERP remains standalone. No CMS/Accounting live sync.
+## Changes
+
+- Save generated PDF copies in the existing browser-local Document Library output store (`storePdfOutput`) before downloading; no server, CMS, Accounting, or ERP integration is implied.
+- Fix the existing "Open PDF viewer" link, which previously navigated to a missing route.
+- Add a read-only viewer that can reopen and download a generated PDF stored in the same browser.
+- Import AcroForm fields from the correct PDF pages with PDF.js annotation rectangles, accounting for page crop and rotation. Unsupported widgets are skipped and missing rectangles are flagged.
+- Allow HR to fill unmapped PDF fields for the current output WITHOUT modifying a source template, requesting edit rights, or changing Employee 201 data.
+- Preserve manual `custom.*` and `document.reference` values for current-generation output.
+- Support both a flattened PDF copy and a PDF with newly added AcroForm text/checkbox widgets when "Flatten" is disabled.
+- Validate required output values, page bounds, duplicate field IDs, duplicate AcroForm source mappings, and characters unsupported by standard PDF font encoding before generating.
+- Prevent generating outputs from unsaved field-map edits. Existing studio storage enforces active session and approved-template requirements for HR.
+- Material modifications to an already-approved PDF template reset it to Draft for review before HR can use it again.
+- Keep the original imported PDF unchanged and existing templates/employee/payroll records intact.
+
+## Exclusions
+
+- This is NOT a general-purpose Adobe Acrobat clone: no full PDF content editing, OCR, cryptographic signing, redaction, universal font embedding, or secure permanent storage.
+- Printed-name signature fields are NOT legally verified digital signatures.
+- PDFs, approvals, and generated outputs remain browser-local demo artifacts pending a backend.

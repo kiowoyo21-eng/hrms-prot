@@ -1,26 +1,26 @@
-# HRMS Main V7 — QA Report
-**Baseline:** latest available local assembled HRMS V6 source; live GitHub commit not fetched.  
-**Updated components:** RecruitmentWorkspace, ComplianceWorkspace.  
-**New strict-typed helpers:** recruitmentChecks, complianceChecks.
+# V8 QA Report — What was actually checked
 
-## Completed here
-- **47** Node runtime assertions across branch visibility, candidate deduplication, interview eligibility, final-hire stage, compliance scope, legacy data, per-branch verification, duplicate requirements and status transitions.
-- **9** additional calendar-date validation assertions, including leap days and invalid February 30 interview.
-- **56 focused assertions total passed.**
-- Both helpers compiled with global TypeScript in `--strict` mode.
-- **123 TS/TSX source files parsed** without syntax errors in the assembled project.
-- **353 relative imports checked; none missing**, including stylesheet imports.
-- Source patch ZIP hash/integrity verified at packaging time.
+## Passed
 
-## Not verified
-- Full Next.js production build was not run because the assembled source has no installed application dependencies in this runtime.
-- No real interactive browser or Vercel deployment test; modal stacking, details panel, accessibility and responsive layout must be checked on the deployed site.
-- Strict whole-repository type-check is not verified. Syntax parsing and isolated helper `--strict` checks are not a substitute.
-- Demo browser localStorage is not a secure HRMS backend, file vault, government filing integration, or tamper-evident audit log.
+- 44 targeted JavaScript functional/integration-source assertions for PDF field position bounds, annotation rotation conversion, required fields, custom values, checkbox semantics, duplicate IDs/source fields, unsupported glyph warning, generated output registry and approval-invalidation guard.
+- `lib/studio/pdfFormTools.ts` passed isolated TypeScript `--strict --noEmit` checking with TypeScript 5.8.3.
+- 125 TS/TSX/JS source files parsed with the TypeScript parser; zero parser diagnostics.
+- No unresolved relative imports in the assembled source files.
+- `app/studio/studio.css` parsed with tinycss2: 0 top-level CSS errors.
+- ZIP archive contents and integrity verified.
 
-## Known limitations / future work
-- Compliance stage changes are local review steps, not official filing or government verification.
-- New annual review records live in a separate browser-local key (`uc-hr-ui-compliance-schedule-reviews`) and can be lost if browser data is cleared; original compliance records remain in their existing key.
-- Some legacy all-branch tasks with a shared global Verified status/proof may now correctly show as **not verified** until explicit branch-level references are recorded. The historical data is not deleted.
-- Recruitment applicant records are still demo records and their synchronization does not cross devices.
-- Full end-to-end regression of payroll, Employee 201, Assets, Docs and Ms Kate's approval queue remains pending.
+## Not verified here
+
+- Full `next build`/whole-project type checking (application dependencies were not installed; npm registry access failed).
+- Runtime pdf-lib/PDF.js behavior with real PDFs, including form field appearances, page rotation, exact text layout, and viewer fidelity (no application node_modules or browser session available).
+- Interactive HR/Super Admin approval workflow, portal stacking, mobile browser operation, or Vercel deployment.
+- Actual PDF editor feature parity with commercial PDF tools.
+
+## Risks / follow-up
+
+- Existing PDF widgets with unusual annotations, malformed Acrobat names or unsupported controls may require manual mapping.
+- Standard Helvetica cannot display all Unicode characters. Preflight blocks unsupported text rather than silently replacing official names.
+- Flattened overlay text placement is approximate; review the final PDF before using it. Unflattened output creates editable widgets for newly mapped fields.
+- The form rendering relies on the existing pdf-lib and PDF.js packages already specified in `package.json`.
+- Browser storage is demo-only; local data can be erased or altered. Super Admin edit approvals are NOT production-grade permission enforcement until backed by a server.
+- The existing Studio template/version store and generated PDF metadata are separate browser-local stores. No cross-device consistency is promised.
