@@ -1,21 +1,16 @@
-# QA REPORT — Ms Kate HR Role Inheritance Correction
+# HRMS Main V5 QA report
 
-## Verified in source / local test harness
+## Executed and passed locally
+- 39 focused assertions for role/maker-checker restrictions, create/dedup, offboarding association, branch and status validation, asset and unreleased payroll blockers, required reconciliation references, negative and cent precision validation, arithmetic totals, last-day date rules, invalid transitions, return/resubmit, stale review rejection, independent reviewer, demo handoff, and history retention.
+- 121 TS/TSX source files parsed successfully with the global TypeScript parser in the reconstructed codebase; 0 missing relative imports detected.
+- `lib/finalPayReview.ts` passed standalone `tsc --strict --noEmit` with matching type stubs for its HRState dependencies.
+- New CSS module parsed with no syntax errors.
 
-- 119 TS/TSX files parsed without syntax errors.
-- 331 relative source/CSS imports checked; no unresolved relative imports in reconstructed project.
-- TypeScript `--strict` succeeded for actual `lib/mock.ts` and `lib/studio/types.ts` role/actor definitions.
-- Focused runtime regression script passed: identical navigation permissions to HR plus unique approval module, all four existing accounts, Document Studio read and edit-request flow, approved edit grant and admin-only template changes, Spreadsheet edit request/grant logic, local audit role preservation, final approval gate refusing ordinary HR and allowing assigned Ms Kate only, non-release before final approval, BM restrictions.
-- All patched TSX files retain the top-of-file `"use client"` directive when applicable.
-- No employee, payroll or CMS source records were changed by the patch.
+## NOT VERIFIED
+- A complete `npm run build` was **not executed successfully**; `npm install --offline` failed because the project dependencies were not cached and network `npm install` timed out. Vercel production build and real desktop/mobile browser tests remain pending.
+- No production backend, real Accounting/CMS synchronization, immutable audit, actual payout or financial reconciliation tested.
+- Full HRMS-wide visual/functional regression remains pending. None of the original payroll calculation/release functions were modified by this patch. Employee Lifecycle role gates now include Ms Kate where HR access is required, but retain Super Admin final-signoff restriction.
 
-## Not verified
-
-- A full Next.js production build was not run because project npm dependencies are unavailable in this workspace.
-- Real Vercel deployment and browser click-through must be verified after GitHub upload.
-- No live Accounting/CMS integration, real authentication, bank disbursement or production-security tests exist.
-
-## Known limitations
-
-- Existing browser-local demo permissions and audit data can be modified by a user who controls their browser storage. This does not provide production-grade access control.
-- Existing MS Kate final-approval interface validates a single demo role/account identity. Future server-side policy must support securely configured approvers and delegation if needed.
+## Deployment smoke-test checklist
+- Confirm Vercel build, new Payroll card renders, mobile form does not overflow, branch switching hides out-of-scope records, lifecycle eligibility displays correct employees, no duplicate records, no stale data on change of selection.
+- Check HR/Ms Kate/Super Admin vs BM visibility, second-account review, asset hold, draft payroll hold, validation failures, return and reapproval, audit entries, no new payroll releases, and no notification duplicates.

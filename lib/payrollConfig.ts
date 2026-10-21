@@ -1,5 +1,5 @@
 /** Frontend payroll review configuration. Source-backed reference schedules are NOT live payroll rules. */
-export type PayrollArea = "rates"|"government"|"holidays"|"thirteenth"|"history"|"generate"|"loans";
+export type PayrollArea = "rates"|"government"|"holidays"|"thirteenth"|"history"|"generate"|"loans"|"finalpay";
 export type Agency = "SSS"|"PhilHealth"|"Pag-IBIG"|"BIR";
 export type DeductionBracket = {min:number;max:number;employee:number;employer:number;rate?:number;fixed?:number;effective:string};
 export type DeductionVersion={id:string;agency:Agency;label:string;effective:string;sourceUrl:string;sourceLabel:string;status:"Reference — needs HR review"|"Draft Update"|"Reviewed for Demo";rows:DeductionBracket[];notes:string};
