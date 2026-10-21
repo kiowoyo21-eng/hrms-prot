@@ -1,29 +1,23 @@
-# GitHub Website Installation — HRMS Dashboard & Recruitment
+# Install on GitHub website
 
-## Prerequisite
-This patch was built against the exact ZIP uploaded by the user in this chat: `hrms-prot-main (1).zip`. If your live GitHub branch has more recent edits to any of the existing files listed below, compare those edits before replacing the file.
+This is an **incremental source patch**, not a whole HRMS project. Apply it to the exact current HRMS repo matching the uploaded `hrms-prot-main (1).zip` (or the same source after the previous dashboard/calendar patch). The ZIP includes the previous dashboard/calendar sources, so you do **not** need to upload both patches separately.
 
-## Changed source files (7)
-| Path | Action |
-|---|---|
-| `app/page.tsx` | replace |
-| `app/globals.css` | replace |
-| `components/DashboardOverview.tsx` | add |
-| `components/DashboardOverview.module.css` | add |
-| `components/EmployeeWorkspace.tsx` | replace |
-| `components/RecruitmentWorkspace.tsx` | replace |
-| `lib/dashboardAnalytics.ts` | add |
+1. Unzip this archive on your computer.
+2. On GitHub, visit your HRMS `main` branch.
+3. Upload/replace the eight source files in their respective `app/`, `components/`, and `lib/` subfolders. **Preserve folder paths**; do not upload the ZIP itself or put all files in repo root.
+4. Commit changes together.
+5. Wait for Vercel: check `npm run build` succeeded; use a hard browser refresh.
+6. Sign in as HR and Ms Kate; verify Dashboard analytics, Employee 201 Add Filter, summary and full record, and the Recruitment Calendar.
 
-Extract the ZIP. In your GitHub `main` branch, upload files to their corresponding existing folder paths; do not upload the ZIP itself as a repository file. Commit all seven files together to trigger Vercel.
+If you have edited any listed file directly in GitHub since the last uploaded ZIP, compare/merge before replacing.
 
-## Browser verification after deploy
-1. Sign in as HR or Super Admin. Dashboard must start with Analytics, followed by Quick Actions, alerts, and the existing demo activity section.
-2. Change branch; check headcount, requests and incidents counts. The salary report should never count sample releases as real browser-reviewed salary.
-3. Open Recruitment home: three cards on left and Interview Calendar on right at desktop size. Use calendar arrows and date buttons; click an appointment to open the applicant.
-4. Change branch and ensure calendar entries respect the selected branch. Check mobile stacking.
-5. Open Employee 201. `Full View` opens the same comprehensive profile; Edit must still work under existing permissions.
-6. Sign in as BM; sensitive position-separated termination figures and payroll salary totals should not be displayed. Check Ms Kate retains normal HR features and her dedicated final-approval module.
-7. Check browser DevTools and Vercel build for any additional errors before merging later revisions.
+### UI regression checklist
+- Desktop and mobile: no overlapping quick actions or clipped filters; Add Filter dialog remains in viewport, scrolls, Escape/close/outside click dismisses, Reset and Show Results work.
+- Filtering: status, branch, job level, employment arrangement, docs status, gender, salary type/ranges, hire dates, chips, branch-scoped counts; no cross-branch employee detail.
+- Employee profile: Overview cards open existing detail dialogs; Complete Employee 201 includes all current personal, government and compensation fields; Edit still saves via existing HR state flow.
+- Dashboard: approved local salary release for completed month vs sample releases, missing data, male/female/unspecified totals, gained/lost by position, HR Forms task counts, branch switch.
+- Recruitment: three cards on left, calendar on right desktop; stacks vertically on small screens; interview click opens authorized candidate.
+- Other modules: existing Ms Kate HR access and exclusive final-approval, payroll, audit and universal notification bell unchanged.
 
-## Data boundaries
-This remains browser-local demo data, not authenticated payroll or employee accounting; `Salary released` uses recorded gross salary releases from last month only. Historical branch attribution requires snapshot branch metadata and a backend in a future revision. Complain/incident totals include current demo incidents if seeded. KPI is a scoped task preview, not a complete productivity score or statutory reporting dataset. ERP stays fully disconnected.
+### Limitations
+This container had no installed Next.js/React/TipTap dependencies. A full Next.js build and actual React click-through test could not be run. Static HTML/CSS design smoke previews are **not** live HRMS tests.
