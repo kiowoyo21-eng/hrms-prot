@@ -21,7 +21,7 @@ import ComplianceWorkspace from "../components/ComplianceWorkspace";
 import {activity,branches,demoAccounts,modules,permissions,type Branch,type ModuleId,type Role} from "../lib/mock";
 import {ModuleAlertsProvider,ModuleAlertButton,ModuleAlertSummary,DashboardModuleAlerts,UniversalNotificationCenter,useModuleAlerts} from "../components/ModuleAlerts";
 import {visibleAlerts,dashboardAlertCounts} from "../lib/moduleAlertViews";
-const icons={LayoutDashboard,FolderOpen,Workflow,Wallet,CalendarCheck,HandCoins,FileWarning,Laptop,Landmark,ListTodo,Files,SlidersHorizontal,ScrollText,Settings,ClipboardList,ClipboardCheck,FileUp,HardDrive,FileSpreadsheet,FilePenLine};
+const icons={LayoutDashboard,ShieldCheck,FolderOpen,Workflow,Wallet,CalendarCheck,HandCoins,FileWarning,Laptop,Landmark,ListTodo,Files,SlidersHorizontal,ScrollText,Settings,ClipboardList,ClipboardCheck,FileUp,HardDrive,FileSpreadsheet,FilePenLine};
 type User={username:string;role:Role};
 const DEMO_SESSION_KEY="ucmm-hr-demo-login-v1";
 const DEMO_SESSION_MAX_MS=7*24*60*60*1000;
