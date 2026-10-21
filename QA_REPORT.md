@@ -1,30 +1,19 @@
-# QA Report — HRMS Employee Demographics & Forms
+# HRMS Dashboard & Recruitment Revision — QA
 
-## Verified on reconstructed HRMS Main V10 workspace
-- 133 TS / TSX files parsed with **0 parser errors**.
-- 386 relative imports checked with **0 missing files**.
-- Dedicated shared CSS stylesheet parsed (51 rules, 0 errors).
-- `lib/hrForms.ts` passes strict standalone TypeScript checking.
-- `lib/employeeDemographics.ts` passes strict TypeScript checking using an isolated compatible type stub for HRPerson (full app compilation NOT implied).
-- **59 focused assertions passed** on demographic rate conversions, monthly/annual summary (male, female, unspecified), null/missing values, historical rates, reference wage classification, age/tenure, report CSV escaping; form validation, 15 schemas, reviewer authorization, prohibited self-approval, branch isolation, status transitions, final decision duplication, decision history and unsigned draft export.
-- Existing module IDs remain intact; new module IDs are included in permissions, navigation, shortcuts and universal notification display.
-- No existing source-record release function or cross-app synchronization code modified.
+**Source:** User-uploaded `hrms-prot-main (1).zip`.
+
+## Checks completed
+- Parsed **133 TS/TSX** application source files with global TypeScript AST parser: zero syntax errors.
+- Checked **388 relative imports**: zero missing references.
+- Parsed original-plus-updated `app/globals.css` and new CSS Module with `tinycss2`: zero CSS syntax errors.
+- **29** executable dashboard analytics assertions passed (Philippine month rollover, branch/role scoping, salary release source and kind filters, sample exclusion, hire/offboarding effective-date logic, termination distinction, HR Forms KPI, BM incident confidentiality).
+- **10** source regression guards passed: dashboard-first ordering, universal bell retained, existing calendar integration, branch filtering, Employee Full View label, Ms Kate permissions unchanged, etc.
+- Diff of user-uploaded ZIP against working tree verified exactly **7** new/modified source files (no other source changes).
 
 ## Not verified
-- `npm run build` / Vercel deployment: React/Next/npm dependencies are not installed in the local environment. TypeScript parser checks alone do not guarantee full compilation.
-- Actual browser click-through at desktop/mobile breakpoints; responsive CSS is present but untested visually.
-- Authentic payroll or legal compliance correctness. Salary annualization excludes bonuses, overtime and actual wages paid; wage comparisons are informational.
-- Persistence and multi-user concurrency across devices, due to browser-local-only state.
+- **Full `next build` / TypeScript project-wide type checking:** npm offline installation failed with `ENOTCACHED` for `@tiptap/core` because the dependency is not cached. Browser rendering, interaction, and Vercel deployment not run in this environment.
+- No real network/backend integrations, real payroll audit evidence, or real statutory salary-compliance calculations.
 
-## Required Vercel / browser smoke checklist
-1. Build succeeds on Vercel with no unresolved type errors.
-2. HR, Ms Kate and Super Admin open Demographics; BM cannot access Demographics.
-3. HR/Ms Kate update classification and confirm Employee 201 profile reflects it.
-4. Choose a minimum-wage reference, verify noncomparable records remain noncomparable.
-5. Confirm missing daily-rate conversion data does not inflate totals; annualized total is 12x monthly for computable rates.
-6. Download aggregate CSV and employee listing; review for raw ID exposure and unsafe formulas.
-7. BM submits a form tied to its own branch, HR account can review; BM cannot approve.
-8. HR submitting a form cannot self-approve even with HR role.
-9. Return with reason, revise/resubmit, reject, approve, confirm statuses and unsigned draft download.
-10. Confirm one notification bell across modules, no clipped overlays, responsive tables and forms.
-11. Verify existing Payroll, Employee 201, Docs, Assets, Incident, Ms Kate special final approvals and V10 Audit screens continue working.
+## Manual QA requested
+- Vercel production build, desktop/mobile Recruitment calendar rendering, month navigation/agenda links, Dashboard role/branch switches, own-request KPI refresh, and Employee 201 Full View and Edit.
+- Browser-local form updates should refresh dashboard summaries; open another tab if needed and test localStorage `storage` events.

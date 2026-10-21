@@ -798,3 +798,53 @@ button{min-width:0}
 @media(max-width:650px){.top-actions{gap:8px}.topbar{padding-left:13px;padding-right:13px}.mu-global-trigger{min-width:37px}.mu-global-head small{font-size:10px}}
 
 .mu-global-more{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:0;border-bottom:1px solid #edf1f5;padding:12px 13px;text-align:left;background:#fffaed;color:#624b18;font-size:11px;font-weight:700;cursor:pointer}.mu-global-more:hover{background:#fff2c9}
+
+/* Recruitment home: three vertically stacked workflow cards beside the existing interview calendar. */
+.hire-home-layout{display:grid;grid-template-columns:minmax(245px,0.95fr) minmax(0,1.9fr);align-items:start;gap:15px;min-width:0}
+.hire-home-layout>.hire-workspace-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-width:0}
+.hire-home-layout>.hire-workspace-grid .hire-workspace-card{grid-template-columns:110px minmax(0,1fr);grid-template-rows:auto;min-height:125px}
+.hire-home-layout>.hire-workspace-grid .hire-card-art{min-height:125px}
+.hire-home-layout>.uc-hire-calendar-panel{min-width:0;max-width:100%}
+@media(max-width:1050px){.hire-home-layout{grid-template-columns:1fr}.hire-home-layout>.hire-workspace-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hire-home-layout>.hire-workspace-grid .hire-workspace-card{grid-template-columns:1fr;grid-template-rows:auto}.hire-home-layout>.hire-workspace-grid .hire-card-art{min-height:85px}}
+@media(max-width:640px){.hire-home-layout>.hire-workspace-grid{grid-template-columns:1fr}.hire-home-layout>.hire-workspace-grid .hire-workspace-card{grid-template-columns:95px minmax(0,1fr);grid-template-rows:auto}.hire-home-layout>.hire-workspace-grid .hire-card-art{min-height:110px}}
+/* Restored interview calendar styles: scoped to recruitment home. */
+.uc-hire-calendar-panel{background:#fff;border:1px solid #dfe6ef;border-radius:14px;overflow:hidden;display:grid;gap:12px;padding:16px;min-width:0;box-shadow:0 4px 15px #15253a08}
+.uc-hire-calendar-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.uc-hire-calendar-header h3{display:flex;align-items:center;gap:7px;font-size:16px;color:#263951;margin:0}
+.uc-hire-calendar-header p{margin:5px 0 0;color:#7a8698;font-size:11px}
+.uc-hire-calendar-count{background:#eaf4fe;color:#1d6794;padding:6px 9px;border-radius:40px;font-size:11px;font-weight:700}
+.uc-hire-calendar-navigation,.uc-hire-calendar-navend{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.uc-hire-calendar-navigation strong{font-size:13px;color:#334862}
+.uc-hire-calendar-iconbtn,.uc-hire-calendar-today{border:1px solid #dae2ed;border-radius:8px;background:#fff;color:#405774;padding:7px 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:11px}
+.uc-hire-calendar-iconbtn:hover,.uc-hire-calendar-today:hover{background:#f1f7fe;border-color:#bed2e7}
+.uc-hire-calendar-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.uc-hire-calendar-weekday{font-size:10px;text-align:center;color:#718197;padding:5px 0;font-weight:700}
+.uc-hire-calendar-blank{min-height:46px}
+.uc-hire-calendar-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:46px;padding:5px 1px;border:1px solid transparent;border-radius:9px;background:#f8fafc;color:#4d5f76;font-size:12px;cursor:pointer;min-width:0}
+.uc-hire-calendar-day small{font-size:9px;color:#2785bd;display:flex;align-items:center;gap:3px;white-space:nowrap}
+.uc-hire-calendar-day:hover{border-color:#a4c7e5;background:#f2f8fe}
+.uc-hire-calendar-day.is-selected{background:#ddecfa;border-color:#74a9d7;color:#154e83;font-weight:700}
+.uc-hire-calendar-day.is-today>span:first-child{border-bottom:2px solid #246bb2}
+.uc-hire-calendar-day.has-interviews{background:#f0f7ff}
+.uc-hire-calendar-day.is-selected.has-interviews{background:#ddecfa}
+.uc-hire-calendar-dot,.uc-hire-calendar-legend i{background:#378bd0;width:6px;height:6px;border-radius:50%;display:inline-block}
+.uc-hire-calendar-legend{display:flex;gap:16px;flex-wrap:wrap;color:#8792a2;font-size:10px}
+.uc-hire-calendar-legend>span{display:inline-flex;align-items:center;gap:5px}
+.uc-hire-calendar-agenda,.uc-hire-calendar-upcoming{border-top:1px solid #e9eef5;padding-top:11px;display:grid;gap:8px}
+.uc-hire-calendar-agenda-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.uc-hire-calendar-agenda-head h4{font-size:12px;margin:0;color:#30435b}
+.uc-hire-calendar-agenda-head>span{font-size:11px;background:#edf3f9;border-radius:14px;padding:4px 8px;color:#536e86}
+.uc-hire-calendar-agenda-head button,.uc-hire-calendar-more{border:0;background:none;color:#176b9a;font-size:11px;font-weight:650;display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.uc-hire-calendar-appointment{width:100%;display:flex;gap:9px;align-items:center;text-align:left;background:#f8fafc;border:1px solid #e7edf5;border-radius:10px;padding:9px;min-width:0;cursor:pointer;color:#3d526a}
+.uc-hire-calendar-appointment:hover,.uc-hire-calendar-upcoming-row:hover{background:#edf7ff}
+.uc-hire-calendar-appointment-time{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;font-size:10px;color:#5e7893}
+.uc-hire-calendar-appointment-info{display:grid;gap:4px;min-width:0;flex:1}
+.uc-hire-calendar-appointment-info b{font-size:11px;overflow-wrap:anywhere}
+.uc-hire-calendar-appointment-info small{font-size:10px;color:#78889b;display:inline-flex;align-items:center;gap:4px}
+.uc-hire-calendar-result{font-size:9px;border-radius:20px;padding:4px 6px;background:#edf5ee;color:#497a50}
+.uc-hire-calendar-result.is-pending{background:#fff5d9;color:#947125}
+.uc-hire-calendar-upcoming-row{display:grid;gap:5px;text-align:left;background:#fff;border:1px solid #e5edf4;border-radius:8px;padding:9px;cursor:pointer}
+.uc-hire-calendar-upcoming-row>span{display:flex;gap:5px;align-items:center;font-size:11px;color:#3b526a}
+.uc-hire-calendar-upcoming-row>small{font-size:10px;color:#73839a}
+.uc-hire-calendar-empty{font-size:11px;color:#8290a0;line-height:1.5;margin:0;background:#f8fafc;border-radius:8px;padding:11px}
+@media(max-width:550px){.uc-hire-calendar-panel{padding:11px}.uc-hire-calendar-day{min-height:39px}.uc-hire-calendar-blank{min-height:39px}.uc-hire-calendar-appointment{flex-wrap:wrap}.uc-hire-calendar-result{margin-left:auto}}

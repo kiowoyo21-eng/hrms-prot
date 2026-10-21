@@ -1,42 +1,26 @@
-# HRMS Main Extension — Employee Demographics & HR Forms
-Date: 2026-10-21
+# HRMS — Dashboard Analytics & Recruitment Calendar Revision
 
-## New: Employee Demographics & Compensation
-- Dedicated sidebar module (not merely a filter in Reports).
-- Independent **job level** classification: Rank-and-File, Supervisory, Managerial, Not recorded.
-- Independent **employment arrangement**: Regular, Probationary (explicit assignment only), Contractual, Project-Based, Seasonal, Casual, Fixed-Term, Other, Not recorded.
-- Existing status remains distinct from arrangement. Legacy explicit Regular / Project-Based / etc status can be displayed as a fallback; a probationary lifecycle status alone never implies a contract type.
-- Records classification directly on Employee 201 HRPerson objects without altering salary, employment status, approval processes or payroll releases. Displays these fields within the Employee 201 full profile.
-- Branch, department, status, level, arrangement, age-band, tenure-band and recorded-gender summaries, including unknowns.
-- Male, female and unspecified basic-rate totals (monthly and annualized), with missing-conversion counts. Effective-dated rate changes are considered.
-- Daily-paid staff need a recorded monthly working-day divisor for estimated monthly/annualized totals. Monthly-paid staff need that divisor before a daily minimum-wage reference comparison.
-- User-selected historical wage-reference comparison: at, above, below or not comparable. This is **NOT a legal minimum-wage determination**.
-- Aggregate summary CSV and employee reference CSV, with formula-injection mitigation and without raw government IDs.
+Base: the user-uploaded `hrms-prot-main (1).zip` (not an older consolidated snapshot). Patch contains only seven new/changed source files.
 
-## New: HR Forms & Document Requests
-- Separate sidebar workspace with a request register, dynamic typed forms, branch-scoped Employee 201 association, validations and searchable statuses.
-- 15 internal documentation templates: overtime, internal work authorization, leave documentation, dispute/grievance, document requests, attendance correction, schedule changes, incident statement, asset clearance, COE, policy acknowledgment, Notice to Explain response, return-to-work clearance, field assignment, separation/clearance.
-- Save drafts, submit, return for revision, revise/resubmit, approve documentation and reject; reason required for returns/rejections, and self-approval restricted.
-- Editable browser-local demo records with decision history, metadata-only audit events, and unsigned TXT draft downloads.
-- Browser-local registry is role/branch scoped, and reset-demo actions clear the new local store.
-- Universal notification bell shows pending documentation review and returned requests with no extra bell.
+## Dashboard
+- An analytics-first dashboard precedes Quick Actions and existing Module Alerts.
+- Employee 201: branch-specific headcount and recorded Male/Female/Other or unspecified counts; no invented gender values.
+- Last completed Philippine calendar month: new hires from recorded hire date; separations from *applied* Employee Lifecycle Offboard effective dates; terminations separated from other exits; role-protected position breakdown for HR/Super Admin/Ms Kate.
+- Last-month gross salary releases: only `Browser Review`, `Released`, `Salary` transactions actually recorded in HRMS. Excludes seeded sample releases, other kinds, and pending releases. Shows empty state if none exist. Branch is based on the employee's **current** branch; this is not a historical branch payroll ledger.
+- HR Forms and Incident Reports: counts of submitted/pending and documentation-approved/rejected or closed records, respecting available role/branch visibility. Demo incidents remain labeled.
+- Account-holder KPI: own pending/decided HR documentation requests and, for HR reviewers, submitted requests available for review and reviews recorded under their username. Does not pretend to be a complete employee performance KPI.
+- Quick Actions, alerts, links, and existing modules remain available.
 
-## Permissions / preservation
-- HR and Ms Kate have normal HR access; Ms Kate retains her separate final-approval authority.
-- BM can submit and see only its own UC Mandaluyong demo forms; cannot approve.
-- Super Admin access is retained; demo maker-checker check applies.
-- Existing Docs, leave, payroll, legal/official forms, final pay and CMS/Accounting workflows are not mutated by documentation decisions.
-- No ERP connection. No new external database or service integration.
+## Recruitment & Hiring
+- Restored previously existing `RecruitmentInterviewCalendar` on Recruitment home, showing actual available applicant interview schedules.
+- Desktop: three workflow cards stacked on the left, calendar on the right; responsive layout for smaller screens.
+- Calendar agenda and upcoming appointments link to the respective applicant; respects current branch filtering.
+- Restored calendar component styles, which were not present in the uploaded `app/globals.css`.
 
-## Updated or new source files
-- app/page.tsx
-- lib/mock.ts
-- lib/hrState.tsx
-- lib/employeeDemographics.ts (new)
-- lib/hrForms.ts (new)
-- components/EmployeeDemographicsWorkspace.tsx (new)
-- components/HRFormsRequestsWorkspace.tsx (new)
-- components/HROperationsExtras.module.css (new)
-- components/workspace/EmployeeFullRecord.tsx
-- components/DashboardExtras.tsx
-- components/ModuleAlerts.tsx
+## Employee 201
+- Renamed directory's `View` action to `Full View` in table and compact cards. Reuses the existing Employee 201 complete record and edit workflow; no duplicate data views created.
+
+## Preserved
+- No mutations to employee, payroll, CMS, Accounting, incident, form, or Ms Kate approval stores.
+- Existing Super Admin / HR / BM / Ms Kate role definitions retained.
+- No ERP or external system integration.

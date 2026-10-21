@@ -409,7 +409,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      <td>{formatDate(p.hire)}</td>
      <td><div className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(p,data.payrollConfig?.rateChanges||[])}</strong><small className="employee201-salary-type">{p.salaryType}</small></div></td>
      <td><div className="employee201-docprogress"><strong>{verified(p)}/{p.documents.length} verified</strong><small>{missing(p)>0?`${missing(p)} missing`:"No missing documents"}</small></div></td>
-     <td><div className="rev-actions emp201-rowactions"><button type="button" className="secondary" onClick={()=>openProfile(p.id)}><Eye size={15}/> View</button><button type="button" className="secondary" onClick={()=>openProfile(p.id,true)}><Pencil size={15}/> Edit</button></div></td>
+     <td><div className="rev-actions emp201-rowactions"><button type="button" className="secondary" onClick={()=>openProfile(p.id)}><Eye size={15}/> Full View</button><button type="button" className="secondary" onClick={()=>openProfile(p.id,true)}><Pencil size={15}/> Edit</button></div></td>
     </tr>)}</tbody></table>
     {shown.length===0&&<div className="empty"><strong>No employees match these filters.</strong><p>Try another branch or status, remove a filter chip above, or use Clear All Filters.</p><button type="button" className="secondary" onClick={resetFilters}>Show All Employees</button></div>}
     </div>
@@ -417,7 +417,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
       {shown.map(p=><article className="emp201-responsive-card" key={p.id}>
        <div className="emp201-responsive-head"><div><strong>{p.name}</strong><small>{p.id} · {p.branch}</small></div><span className="tag">{p.status}</span></div>
        <dl><div><dt>Department / Position</dt><dd>{p.department} · {p.position}</dd></div><div><dt>Gender</dt><dd>{p.gender}</dd></div><div><dt>Hire Date</dt><dd>{formatDate(p.hire)}</dd></div><div><dt>Salary / Type</dt><dd>{salaryAmount(p,data.payrollConfig?.rateChanges||[])} · {p.salaryType}</dd></div><div><dt>Documents</dt><dd>{verified(p)}/{p.documents.length} verified · {missing(p)} missing</dd></div></dl>
-       <div className="emp201-responsive-actions"><button className="secondary" type="button" onClick={()=>openProfile(p.id)}><Eye size={15}/> View</button><button className="secondary" type="button" onClick={()=>openProfile(p.id,true)}><Pencil size={15}/> Edit</button></div>
+       <div className="emp201-responsive-actions"><button className="secondary" type="button" onClick={()=>openProfile(p.id)}><Eye size={15}/> Full View</button><button className="secondary" type="button" onClick={()=>openProfile(p.id,true)}><Pencil size={15}/> Edit</button></div>
       </article>)}
      {shown.length===0&&<p className="muted">No matching employees.</p>}
     </div>
@@ -434,7 +434,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   {person&&!add&&<>
    <button className="rev-back" onClick={backToDirectory}><ArrowLeft size={16}/> Back to Employee Directory</button>
    <section className="panel">
-    <div className="rev-title employee201-profiletitle"><div><h3><UserRound size={19}/> {person.name}</h3><p>{person.id} · {person.department} / {person.position} · {person.branch}</p></div><div className="rev-actions"><span className="tag">{person.status}</span><button type="button" className="secondary" onClick={()=>{setEditing(false);setPersonal(null);setEmploymentDraft(null);setAction(null)}}><Eye size={15}/> View</button><button type="button" className={editing?"primary":"secondary"} onClick={startEdit}><Pencil size={15}/> Edit</button></div></div>
+    <div className="rev-title employee201-profiletitle"><div><h3><UserRound size={19}/> {person.name}</h3><p>{person.id} · {person.department} / {person.position} · {person.branch}</p></div><div className="rev-actions"><span className="tag">{person.status}</span><button type="button" className="secondary" onClick={()=>{setEditing(false);setPersonal(null);setEmploymentDraft(null);setAction(null)}}><Eye size={15}/> Full View</button><button type="button" className={editing?"primary":"secondary"} onClick={startEdit}><Pencil size={15}/> Edit</button></div></div>
     {!action&&<>
      <nav className="rev-tabs employee201-profiletabs" aria-label="Employee 201 tabs">{profileSections.map(({id,label})=><button type="button" key={id} className={tab===id?"active":""} aria-current={tab===id?"page":undefined} onClick={()=>{setTab(id);setMessage("")}}>{label}</button>)}</nav>
      {tab==="Profile"&&<nav className="emp201-jumplinks" aria-label="Jump to employee profile section">{[["Employee Details","personal"],["Employment","employment"],["Salary & Benefits","compensation"],["Reviews","evaluations"],["History","history"],["Clearance & Assets","clearance"],["Employee Actions","actions"]].map(([label,id])=><a key={id} href={`#emp201-${id}`}>{label}</a>)}</nav>}
