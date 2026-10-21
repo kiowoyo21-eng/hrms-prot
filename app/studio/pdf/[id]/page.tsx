@@ -100,7 +100,7 @@ function PdfEditor({id,actor,state,refresh}:{id:string;actor:StudioActor;state:S
      if(field.type==="checkbox"){
       const checkbox=form.createCheckBox(name);checkbox.addToPage(pdfPage,{x,y,width:w,height:h});if(checkedValue(text))checkbox.check();
      }else{
-      const textField=form.createTextField(name);textField.addToPage(pdfPage,{x,y,width:w,height:h,font,fontSize:Math.min(28,Math.max(6,field.fontSize))});textField.setText(text);
+      const textField=form.createTextField(name);textField.addToPage(pdfPage,{x,y,width:w,height:h,font});textField.setFontSize(Math.min(28,Math.max(6,field.fontSize)));textField.setText(text);
      }
     }else if(field.type==="checkbox"){
      if(checkedValue(text))pdfPage.drawText("X",{x,y,size:Math.max(8,field.fontSize),font,color:rgb(0,0,0)});

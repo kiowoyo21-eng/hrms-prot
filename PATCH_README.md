@@ -1,21 +1,18 @@
-# Install HRMS Main V8 (GitHub website)
+# Installation — GitHub website (HRMS Main V9 + PDF build fix)
 
-**Baseline:** latest locally assembled HRMS V6 + main V7 Recruitment/Compliance patch. This was not downloaded from the live GitHub main branch. Preserve any newer changes you made to the same files.
-
-**Prerequisites:** Prior Docs/Document Library and Ms Kate HR-role inheritance patches are expected to be present; retain your existing `lib/studio/pdfOutputs.ts`, `lib/studio/pdfAssets.ts` and `lib/studio/store.ts` files. The patch does NOT replace them.
-
-1. Confirm your HRMS V7 deployment on Vercel is working.
-2. Unzip this archive on your computer.
-3. Upload the **four source files** to exactly their corresponding GitHub folder paths:
+1. **Prerequisite:** Existing `main` branch includes HRMS Main V8 and the previous Ms Kate HR-role correction. This ZIP only contains incremental changes.
+2. Extract this ZIP on your computer. The source paths inside the ZIP begin at `app/`, `components/`, and `lib/` (no extra project root).
+3. On GitHub, edit/upload these six files into their exact corresponding paths:
+   - `components/SpreadsheetWorkspace.tsx` (replace)
+   - `lib/sheetSearch.ts` (new)
+   - `app/spreadsheets/spreadsheet.css` (replace)
+   - `app/studio/docs/[id]/page.tsx` (replace)
+   - `lib/studio/textSearch.ts` (new)
    - `app/studio/pdf/[id]/page.tsx` (replace)
-   - `app/studio/pdf-output/[id]/page.tsx` (new folder `[id]` under `pdf-output`)
-   - `lib/studio/pdfFormTools.ts` (new)
-   - `app/studio/studio.css` (replace)
-4. Commit the changes to `main` together and inspect the new Vercel production build.
-5. Sign in as Super Admin, import an ordinary SAMPLE nonconfidential AcroForm PDF into Document Library, map fields, save, approve the template, then sign in as HR/Ms Kate and fill it.
-6. Confirm the downloaded PDF is listed under "Generated PDF copies". Open its read-only viewer and download it again. Test both Flatten on and Flatten off.
-7. Check mobile/responsive layout and restore/approve paths. No production data should be uploaded to this browser-only demo.
+4. Commit all changes together to `main`. Vercel will build the new commit.
+5. Check the **first** red error (if any). Do not mistake the nonfatal autoprefixer warnings about `start`/`flex-start` for the blocking error.
+6. Browser smoke tests: use Docs Find/Previous/Next in view-only mode; confirm Replace is disabled without approval. Use working sheets Find/Replace, verify formula cells cannot be replaced and HRMS report sheets stay read-only. Generate a fillable PDF and confirm its output opens in Document Library.
 
-**Do not upload the ZIP as a file to the GitHub repository.** Upload the individual source files under their intended paths. If your current `app/studio/studio.css` differs, merge the new V8 rules instead of reverting newer CSS.
+**Conflict caution:** This source is based on your latest locally available V8 snapshot, not a fresh checkout of live GitHub commit `9a6b455`. If GitHub has newer edits in these same files, merge changes instead of overwriting them.
 
-Troubleshooting: If the generated PDF opens on your device but not another, this is expected: IndexedDB data and document metadata are not synced. A full production backend is a future phase. This patch does not connect ERP or the other apps.
+No `package.json`/lockfile changes, no data migrations, no ERP, no live CMS or Accounting connection.

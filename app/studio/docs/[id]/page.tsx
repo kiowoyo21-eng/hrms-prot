@@ -28,6 +28,7 @@ import {Bold,Italic,Underline as UnderlineIcon,Strikethrough,AlignLeft,AlignCent
 import {requestDocumentEdit,saveStudioItem,restoreStudioRevision,canEdit,currentRequest,addStudioComment,replyStudioComment,setStudioCommentResolved} from "../../../../lib/studio/store";
 import {variableGroups} from "../../../../lib/studio/variables";
 import {exportDocx} from "../../../../lib/studio/exportDocx";
+import {findTextMatches,adjacentTextMatch} from "../../../../lib/studio/textSearch";
 import {printHtml} from "../../../../lib/studio/print";
 import {saveBlob} from "../../../../lib/studio/pdfAssets";
 import StudioGate from "../../../../components/studio/StudioGate";
@@ -68,15 +69,31 @@ function DocsEditor({id,actor,state,refresh}:{id:string;actor:StudioActor;state:
  function postComment(){msg(()=>{addStudioComment(actor,id,commentDraft,commentQuote);setCommentDraft("");setCommentQuote("")})}
  function postReply(threadId:string){msg(()=>{replyStudioComment(actor,id,threadId,replyDrafts[threadId]||"");setReplyDrafts(v=>({...v,[threadId]:""}))})}
  const msg=(fn:()=>void)=>{try{fn();refresh()}catch(e){setStatus(e instanceof Error?e.message:String(e))}};
+ function documentMatches(){
+  if(!editor||!needle||needle.length>100)return [];
+  const segments:{text:string;pos:number}[]=[];
+  editor.state.doc.descendants((node,pos)=>{if(node.isText&&node.text)segments.push({text:node.text,pos})});
+  return findTextMatches(segments,needle,false,1001);
+ }
+ function findAdjacent(direction:1|-1){
+  if(!editor||!needle)return;const matches=documentMatches();
+  const cursor=direction===1?editor.state.selection.to:editor.state.selection.from;
+  const match=adjacentTextMatch(matches,cursor,direction);
+  if(!match){setStatus("No match found.");return}
+  editor.chain().setTextSelection({from:match.from,to:match.to}).scrollIntoView().run();
+  setStatus(`Match ${matches.findIndex(m=>m.from===match.from)+1} of ${matches.length}${matches.length>=1001?"+":""}.`);
+ }
  function findReplace(all=false){
-  if(!editor||!granted||!needle)return;
-  const matches:{from:number;to:number}[]=[];
-  editor.state.doc.descendants((node,pos)=>{if(!node.isText||!node.text)return;const text=node.text.toLowerCase(),term=needle.toLowerCase();let offset=0;while((offset=text.indexOf(term,offset))>=0){matches.push({from:pos+offset,to:pos+offset+needle.length});offset+=needle.length;if(!all)break}});
+  if(!editor||!granted||!canEdit(state,actor,id,Date.now())||!needle||needle.length>100)return;
+  const matches=documentMatches();
   if(!matches.length){setStatus("No match found.");return}
-  const targets=all?matches:[matches[0]];let tr=editor.state.tr;
-  // Work backwards to preserve positions and all unrelated formatting/markup.
-  for(const match of targets.reverse())tr=tr.insertText(replacement,match.from,match.to);
-  editor.view.dispatch(tr);editor.commands.focus();setStatus(`${targets.length} replacement(s) made.`);
+  if(all&&matches.length>=1001){setStatus("More than 1,000 matches. Narrow your search before Replace all.");return}
+  const selection=editor.state.selection;
+  const first=adjacentTextMatch(matches,selection.from,1);
+  const targets=all?matches:first?[first]:[];
+  let tr=editor.state.tr;
+  for(const match of [...targets].reverse())tr=tr.insertText(replacement,match.from,match.to);
+  editor.view.dispatch(tr);editor.commands.focus();setStatus(`${targets.length} replacement(s) made. Review before saving.`);
  }
  function insertImage(file:File){if(!editor||!granted)return;if(!file.type.startsWith("image/")||file.size>600_000){setStatus("Choose an image below 600 KB for browser-only documents.");return}const r=new FileReader();r.onload=()=>editor.chain().focus().setImage({src:String(r.result),alt:file.name}).run();r.readAsDataURL(file)}
  function downloadHtml(){
@@ -138,7 +155,7 @@ function DocsEditor({id,actor,state,refresh}:{id:string;actor:StudioActor;state:
 <button disabled={!granted} title="Increase indentation" aria-label="Increase indentation" onClick={()=>setBlockAttribute("indent",Math.min(8,Number(editor?.getAttributes(editor?.isActive("heading")?"heading":"paragraph").indent||0)+1))}><IndentIncrease size={16}/></button>
 {actor.role==="Super Admin"&&<label>Template<select disabled={!granted} value={templateStatus} onChange={e=>{setTemplateStatus(e.target.value as StudioItem["status"]);setDirty(true);isDirty.current=true}}><option>Draft</option><option>Approved Template</option><option>Archived</option></select></label>}<div className="doc-variable"><span>Insert auto-fill field:</span><select aria-label="Insert HRMS variable" value="" disabled={!granted} onChange={e=>{if(e.target.value)editor?.chain().focus().insertContent(`{{${e.target.value}}}`).run()}}><option value="">Select variable…</option>{Object.entries(variableGroups).map(([name,values])=><optgroup label={name} key={name}>{values.map(x=><option value={x} key={x}>{x}</option>)}</optgroup>)}</select></div><span className="doc-stats">{wordCount} words · {characterCount} characters</span></div>
  <main className="doc-content"><div className="doc-page-scroll"><div className="doc-ruler"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span><span>12</span><span>14</span><span>16</span></div><div className={`doc-paper ${size.toLowerCase()} ${landscape?"landscape":""} ${!granted?"readonly":""}`} style={{paddingLeft:`${marginMm*3.78}px`,paddingRight:`${marginMm*3.78}px`}}><div className="doc-page-hf"><input aria-label="Page header" title="Page header" placeholder="Click to add header" disabled={!granted} value={headerText} onChange={e=>{setHeaderText(e.target.value);setDirty(true);isDirty.current=true}}/></div><EditorContent editor={editor}/><div className="doc-page-hf footer"><input aria-label="Page footer" title="Page footer" placeholder="Click to add footer" disabled={!granted} value={footerText} onChange={e=>{setFooterText(e.target.value);setDirty(true);isDirty.current=true}}/></div></div><div className="doc-footnote">Browser-only editor · Documents are not synced across devices · Print uses your browser for PDF output</div></div>
- {rightPanel!=="none"&&<aside className="doc-sidepanel"><div className="doc-side-head"><b>{rightPanel==="versions"?"Version history":rightPanel==="find"?"Find and replace":rightPanel==="comments"?`Review comments (${openReviewCount} open)`:"Document outline"}</b><button onClick={()=>setRightPanel("none")}><ChevronDown size={19}/></button></div>{rightPanel==="versions"&&<>{state.revisions.filter(r=>r.itemId===id).map(r=><div className="doc-version" key={r.id}><b>Version {r.version}</b><small>{new Date(r.date).toLocaleString("en-PH")} · {r.actor}</small><button disabled={!granted} onClick={()=>{if(!window.confirm(`Restore version ${r.version}? This creates a new version.`))return;msg(()=>{restoreStudioRevision(actor,id,r.id,versionRef.current);isDirty.current=false;setDirty(false);window.location.reload()})}}>Restore</button></div>)}{!state.revisions.some(r=>r.itemId===id)&&<p>Versions appear after saving changes.</p>}</>}{rightPanel==="find"&&<div className="doc-find"><label>Find<input value={needle} onChange={e=>setNeedle(e.target.value)} placeholder="Find text"/></label><label>Replace<input disabled={!granted} value={replacement} onChange={e=>setReplacement(e.target.value)} placeholder="Replace with"/></label><button disabled={!granted} onClick={()=>findReplace()}>Replace first</button><button disabled={!granted} onClick={()=>findReplace(true)}>Replace all</button><small>Replacements may affect formatting inside matches. Review changes before release.</small></div>}{rightPanel==="comments"&&<div className="doc-review-panel">
+ {rightPanel!=="none"&&<aside className="doc-sidepanel"><div className="doc-side-head"><b>{rightPanel==="versions"?"Version history":rightPanel==="find"?"Find and replace":rightPanel==="comments"?`Review comments (${openReviewCount} open)`:"Document outline"}</b><button onClick={()=>setRightPanel("none")}><ChevronDown size={19}/></button></div>{rightPanel==="versions"&&<>{state.revisions.filter(r=>r.itemId===id).map(r=><div className="doc-version" key={r.id}><b>Version {r.version}</b><small>{new Date(r.date).toLocaleString("en-PH")} · {r.actor}</small><button disabled={!granted} onClick={()=>{if(!window.confirm(`Restore version ${r.version}? This creates a new version.`))return;msg(()=>{restoreStudioRevision(actor,id,r.id,versionRef.current);isDirty.current=false;setDirty(false);window.location.reload()})}}>Restore</button></div>)}{!state.revisions.some(r=>r.itemId===id)&&<p>Versions appear after saving changes.</p>}</>}{rightPanel==="find"&&<div className="doc-find"><label>Find<input value={needle} onChange={e=>setNeedle(e.target.value)} placeholder="Find text"/></label><label>Replace<input disabled={!granted} value={replacement} onChange={e=>setReplacement(e.target.value)} placeholder="Replace with"/></label><button type="button" disabled={!needle} onClick={()=>findAdjacent(-1)}>Previous</button><button type="button" disabled={!needle} onClick={()=>findAdjacent(1)}>Next</button><small>{needle?`${documentMatches().length}${documentMatches().length>=1001?"+":""} matching text segments`:"Enter a search term"}</small><button disabled={!granted||!needle} onClick={()=>findReplace()}>Replace next</button><button disabled={!granted||!needle} onClick={()=>findReplace(true)}>Replace all</button><small>Replacements may affect formatting inside matches. Review changes before release.</small></div>}{rightPanel==="comments"&&<div className="doc-review-panel">
  <p className="doc-review-hint">Comments are review notes for this file. Quoted selections are text snapshots and may become outdated after edits. Changing comments requires active edit approval.</p>
  {granted&&<section className="doc-review-compose"><label htmlFor="doc-new-comment">New review comment</label>{commentQuote&&<div className="doc-review-quote">“{commentQuote}” <button type="button" onClick={()=>setCommentQuote("")} aria-label="Clear selected quote">×</button></div>}<textarea id="doc-new-comment" value={commentDraft} maxLength={1200} onChange={e=>setCommentDraft(e.target.value)} placeholder="Write a review note…"/><button className="studio-primary" disabled={commentDraft.trim().length<2} onClick={postComment}>Post comment</button></section>}
  <label className="doc-review-toggle"><input type="checkbox" checked={showResolved} onChange={e=>setShowResolved(e.target.checked)}/> Show resolved threads</label>

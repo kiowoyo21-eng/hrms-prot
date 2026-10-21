@@ -223,3 +223,15 @@
 .sw-chart svg{width:100%;height:auto;display:block}
 .sw-chart small{display:block;margin-top:12px;color:#64748b;line-height:1.5}
 @media(max-width:820px){.sw-insight-layout{grid-template-columns:1fr}.sw-insight-controls label{min-width:160px}}
+/* V9: inline find/replace avoids clipped popups and remains readable on mobile. */
+.sw-find-panel{max-width:1800px;margin:0 auto;padding:12px 16px;background:#fff;border:1px solid #d7e2eb;border-top:0;display:grid;gap:10px}
+.sw-find-heading,.sw-find-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.sw-find-heading{justify-content:space-between}
+.sw-find-heading button,.sw-find-actions button{padding:7px 11px;background:#f7fafc;border:1px solid #cbd5df;border-radius:7px;color:#2a4355}
+.sw-find-fields{display:flex;align-items:end;gap:12px;flex-wrap:wrap}
+.sw-find-fields label{display:grid;gap:5px;font-weight:650;min-width:min(100%,205px)}
+.sw-find-fields input:not([type="checkbox"]){padding:8px 9px;border:1px solid #c9d7e2;border-radius:7px;width:100%;background:#fff;color:#1f2b3a}
+.sw-find-fields .sw-find-case{display:flex;align-items:center;gap:7px;min-width:0;padding:8px 0}
+.sw-find-actions small{color:#64748b;flex:1 1 300px}
+.sw-find-actions button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:620px){.sw-find-panel{padding:12px 9px}.sw-find-fields label{width:100%}}

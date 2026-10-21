@@ -1,28 +1,15 @@
-# HRMS Master Revision V8 — PDF Forms & Document Library
+# HRMS Main V9 — Docs & Sheets + V8 PDF Build Fix
 
-## Modified/new source files (4)
+## Changed source files (6)
+- `components/SpreadsheetWorkspace.tsx` — add inline Find/Replace tools scoped to visible rows in the selected worksheet; next/previous selection, match counts, replacement confirmation, and working-copy approval gate.
+- `lib/sheetSearch.ts` — bounded, case-optional literal search; safely generate proposed replacements; prohibit changing formula cells or creating new formulas by replacement.
+- `app/spreadsheets/spreadsheet.css` — responsive, route-scoped Find/Replace panel styling.
+- `app/studio/docs/[id]/page.tsx` — add previous/next document match navigation for readers, limited-batch Find/Replace under existing editing approval, status feedback.
+- `lib/studio/textSearch.ts` — position-preserving, bounded text segment search and match navigation.
+- `app/studio/pdf/[id]/page.tsx` — fix TypeScript error reported by Vercel for pdf-lib `FieldAppearanceOptions`: `addToPage()` without unsupported `fontSize`; set the PDF text form field size with `PDFTextField.setFontSize()` instead. Keep output storage and permissions unchanged.
 
-1. `app/studio/pdf/[id]/page.tsx` — PDF form editor enhancements (modified)
-2. `app/studio/pdf-output/[id]/page.tsx` — read-only viewer for generated PDFs (new)
-3. `lib/studio/pdfFormTools.ts` — typed geometry, validation, and value helpers (new)
-4. `app/studio/studio.css` — PDF output viewer, manual-field inputs, responsive layout (modified)
+## Compatibility and scope
+This is an incremental patch based on the locally available HRMS V8 source. Apply it after the prior releases, including Ms Kate HR role inheritance and Main V8. It does not include any backend/sync changes or ERP integration. Report spreadsheets remain read-only; replacements require an approved working sheet. Document replacements require existing edit rights.
 
-## Changes
-
-- Save generated PDF copies in the existing browser-local Document Library output store (`storePdfOutput`) before downloading; no server, CMS, Accounting, or ERP integration is implied.
-- Fix the existing "Open PDF viewer" link, which previously navigated to a missing route.
-- Add a read-only viewer that can reopen and download a generated PDF stored in the same browser.
-- Import AcroForm fields from the correct PDF pages with PDF.js annotation rectangles, accounting for page crop and rotation. Unsupported widgets are skipped and missing rectangles are flagged.
-- Allow HR to fill unmapped PDF fields for the current output WITHOUT modifying a source template, requesting edit rights, or changing Employee 201 data.
-- Preserve manual `custom.*` and `document.reference` values for current-generation output.
-- Support both a flattened PDF copy and a PDF with newly added AcroForm text/checkbox widgets when "Flatten" is disabled.
-- Validate required output values, page bounds, duplicate field IDs, duplicate AcroForm source mappings, and characters unsupported by standard PDF font encoding before generating.
-- Prevent generating outputs from unsaved field-map edits. Existing studio storage enforces active session and approved-template requirements for HR.
-- Material modifications to an already-approved PDF template reset it to Draft for review before HR can use it again.
-- Keep the original imported PDF unchanged and existing templates/employee/payroll records intact.
-
-## Exclusions
-
-- This is NOT a general-purpose Adobe Acrobat clone: no full PDF content editing, OCR, cryptographic signing, redaction, universal font embedding, or secure permanent storage.
-- Printed-name signature fields are NOT legally verified digital signatures.
-- PDFs, approvals, and generated outputs remain browser-local demo artifacts pending a backend.
+## Remaining work
+This is NOT full Google Docs/Sheets parity. Advanced collaboration, complex multi-node text searching, editable pivot objects, enterprise permissions, and a shared database remain future work. The full Vercel production build still needs to be run on the repository/lockfile combination.

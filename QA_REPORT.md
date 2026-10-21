@@ -1,26 +1,25 @@
-# V8 QA Report — What was actually checked
+# QA Report — V9 + V8 PDF Type Fix
 
-## Passed
+## Passed locally
+- 33 focused assertions across search navigation, case handling, bounded matching, safe replacements, formula protection, edit-gate source checks, and the PDF export API correction.
+- 128 TS/TSX files parsed without syntax errors.
+- 356 relative imports checked; no missing imports.
+- New `textSearch.ts`, `sheetSearch.ts`, and `sheetFormulas.ts` passed strict TypeScript checks with globally installed TypeScript 5.8.3.
+- The route-scoped spreadsheet stylesheet parsed successfully.
+- ZIP integrity checked when archived.
 
-- 44 targeted JavaScript functional/integration-source assertions for PDF field position bounds, annotation rotation conversion, required fields, custom values, checkbox semantics, duplicate IDs/source fields, unsupported glyph warning, generated output registry and approval-invalidation guard.
-- `lib/studio/pdfFormTools.ts` passed isolated TypeScript `--strict --noEmit` checking with TypeScript 5.8.3.
-- 125 TS/TSX/JS source files parsed with the TypeScript parser; zero parser diagnostics.
-- No unresolved relative imports in the assembled source files.
-- `app/studio/studio.css` parsed with tinycss2: 0 top-level CSS errors.
-- ZIP archive contents and integrity verified.
+## Vercel error addressed
+Commit `9a6b455`: `app/studio/pdf/[id]/page.tsx:103:105` — `fontSize` is not accepted in `FieldAppearanceOptions` passed to `PDFTextField.addToPage`. The patch calls `textField.setFontSize()` instead. The TypeScript error is thus specifically addressed; this does not establish successful complete deployment.
 
 ## Not verified here
+- Full Next.js `npm run build`: npm packages were not present; offline npm installation returned `ENOTCACHED` for `@tiptap/core`.
+- Interactive browser tests in deployed Vercel site and real PDF rendering with installed `pdf-lib` were unavailable.
+- Integration/compatibility with any GitHub changes later than the local V8 snapshot.
 
-- Full `next build`/whole-project type checking (application dependencies were not installed; npm registry access failed).
-- Runtime pdf-lib/PDF.js behavior with real PDFs, including form field appearances, page rotation, exact text layout, and viewer fidelity (no application node_modules or browser session available).
-- Interactive HR/Super Admin approval workflow, portal stacking, mobile browser operation, or Vercel deployment.
-- Actual PDF editor feature parity with commercial PDF tools.
-
-## Risks / follow-up
-
-- Existing PDF widgets with unusual annotations, malformed Acrobat names or unsupported controls may require manual mapping.
-- Standard Helvetica cannot display all Unicode characters. Preflight blocks unsupported text rather than silently replacing official names.
-- Flattened overlay text placement is approximate; review the final PDF before using it. Unflattened output creates editable widgets for newly mapped fields.
-- The form rendering relies on the existing pdf-lib and PDF.js packages already specified in `package.json`.
-- Browser storage is demo-only; local data can be erased or altered. Super Admin edit approvals are NOT production-grade permission enforcement until backed by a server.
-- The existing Studio template/version store and generated PDF metadata are separate browser-local stores. No cross-device consistency is promised.
+## Expected user acceptance tests
+1. Navigate a Docs file and test Find/Previous/Next when view-only; test approved Replace.
+2. Search and replace literal text in an approved working spreadsheet and verify `=...` cells cannot change.
+3. Verify HRMS report worksheets remain read-only.
+4. Generate editable and flattened PDFs and reopen a saved output from Document Library.
+5. Verify Ms Kate retains HR access and only she has special final-approval authority.
+6. Check Vercel build status after the combined commit.
