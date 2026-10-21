@@ -9,6 +9,7 @@ import {BRANCHES,DEFAULT_HIRING_FORMS,HIRING_FORMS_KEY,RECRUITMENT_KEY,candidate
 import {isHrRole,type Branch,type Role} from "../lib/mock";
 import {useHR,type HRPerson} from "../lib/hrState";
 import type {Shop} from "../lib/people";
+import {branchCanView,isDuplicateApplication,mayScheduleInterview,mayConfirmHire} from "../lib/recruitmentChecks";
 
 type Space="home"|"forms"|"cycle"|"onboarding";
 type CandidateView="forms"|"cycle"|"onboarding";
@@ -60,6 +61,8 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
  const [addRequirementOpen,setAddRequirementOpen]=useState(false);
  const [newRequirement,setNewRequirement]=useState("");
  const [newRequirementRequired,setNewRequirementRequired]=useState(true);
+ // Switching branches clears stale detail dialogs immediately.
+ useEffect(()=>{setSelectedId(null);setDeclineId(null);setFullscreen(false);setPortalPreview(false);setResumeFile(null);setManualAdd(false)},[branch]);
  // Canonicalize older browser records (Resume and Resume / CV refer to one requirement).
  useEffect(()=>{setRecords(previous=>{
   const merged=previous.map(row=>{const input=row.requirements||[];const normalized=uniqueRequirements(input.map(req=>{
@@ -72,7 +75,7 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
  // Keep historical/app-imported positions visible even if their form was not in the new catalog.
  useEffect(()=>{const legacy=Array.from(new Set(records.map(r=>r.role).filter(name=>name&&!forms.some(f=>f.position===name))));if(!legacy.length)return;setForms(previous=>[...previous,...legacy.filter(name=>!previous.some(f=>f.position===name)).map(name=>({id:`legacy-${makeFormId(name)}`,position:name,status:"Draft" as const,minimumYears:0,education:"",qualifications:[],questions:[],onboardingDocuments:[...DEFAULT_ONBOARDING_DOCUMENTS],createdAt:today()}))])},[records,forms,setForms]);
  const visible=records.filter(r=>branch==="All Shops"||r.branch===branch);
- const selected=records.find(r=>r.id===selectedId);
+ const selected=visible.find(r=>r.id===selectedId);
  const job=forms.find(f=>f.id===positionId);
  const relevant=useMemo(()=>visible.filter(r=>r.role===job?.position&&`${r.name} ${r.id} ${r.email} ${r.education||""}`.toLowerCase().includes(query.toLowerCase())&&(stageFilter==="All"||r.stage===stageFilter)&&(experienceFilter==="All"||(typeof r.relevantYears==="number"&&r.relevantYears>=Number(experienceFilter)))),[visible,job,query,stageFilter,experienceFilter]);
  const stageMatches=(r:ApplicantRecord,tab:CycleTab)=>tab==="applications"?["New Applicant","On Hold"].includes(r.stage):tab==="shortlisted"?r.stage==="Shortlisted":tab==="interviews"?r.stage.includes("Interview")&&!(readInterviews(r).length&&readInterviews(r)[readInterviews(r).length-1].result==="Passed"): ["Rejected","Passed","Hired"].includes(r.stage)||(r.stage.includes("Interview")&&readInterviews(r).length>0&&readInterviews(r)[readInterviews(r).length-1].result!=="Pending");
@@ -91,7 +94,7 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
   ...pendingOnboard.map(r=>({id:`onboard-${r.id}`,title:`Complete onboarding: ${r.name}`,detail:r.role,branch:r.branch,level:"normal" as const,action:`onboarding:${r.id}`}))
  ];
  usePublishModuleAlerts("lifecycle",alerts);
- useEffect(()=>{setResumeFile(null);setFullscreen(false);setScreeningNote(records.find(r=>r.id===selectedId)?.notes||"");setAssessment("");setScorecard({});setScreeningChecks(records.find(r=>r.id===selectedId)?.screeningChecklist||{});setResult("Passed");setPortalPreview(false);setOnboardFileNames({});setAddRequirementOpen(false);setNewRequirement("");setNewRequirementRequired(true)},[selectedId]);
+ useEffect(()=>{setResumeFile(null);setFullscreen(false);setScreeningNote(visible.find(r=>r.id===selectedId)?.notes||"");setAssessment("");setScorecard({});setScreeningChecks(visible.find(r=>r.id===selectedId)?.screeningChecklist||{});setResult("Passed");setPortalPreview(false);setOnboardFileNames({});setAddRequirementOpen(false);setNewRequirement("");setNewRequirementRequired(true)},[selectedId,branch]);
  useEffect(()=>{if(!resumeFile){setResumeUrl("");return;}const url=URL.createObjectURL(resumeFile);setResumeUrl(url);return()=>URL.revokeObjectURL(url)},[resumeFile]);
  useEffect(()=>{if(!fullscreen)return;const key=(e:KeyboardEvent)=>{if(e.key==="Escape")setFullscreen(false)};window.addEventListener("keydown",key);return()=>window.removeEventListener("keydown",key)},[fullscreen]);
  useEffect(()=>{setHireDate(selected?.hireDate||"")},[selected?.id,selected?.hireDate]);
@@ -106,9 +109,10 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
   const onFocus=()=>sync();window.addEventListener("focus",onFocus);
   return()=>{window.removeEventListener("storage",sync);window.removeEventListener("focus",onFocus)};
  },[setRecords]);
- function change(id:string,patch:Partial<ApplicantRecord>,event?:string){setRecords(p=>p.map(r=>r.id===id?{...r,...patch,history:event?[`${new Date().toLocaleString("en-PH")} · ${actor(role)} · ${event}`,...(r.history||[])]:r.history}:r))}
+ function change(id:string,patch:Partial<ApplicantRecord>,event?:string){if(role==="BM"||!visible.some(r=>r.id===id))return;setRecords(p=>p.map(r=>r.id===id?{...r,...patch,history:event?[`${new Date().toLocaleString("en-PH")} · ${actor(role)} · ${event}`,...(r.history||[])]:r.history}:r))}
  function openCandidate(id:string,where:CandidateView){
-  const candidate=records.find(r=>r.id===id);
+  const candidate=visible.find(r=>r.id===id);
+  if(!candidate)return;
   setSpace(where==="forms"?"cycle":where);
   setPositionId(forms.find(f=>f.position===candidate?.role)?.id||null);
   setCandidateScreen(candidate&&activeCycle(candidate)?"interview":"application");
@@ -125,7 +129,7 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
  }
  function screen(id:string,next:"Shortlisted"|"Rejected"){
   if(role==="BM")return;
-  const r=records.find(x=>x.id===id);if(!r||(next==="Shortlisted"?!["New Applicant","On Hold"].includes(r.stage):["Rejected","Hired","Passed"].includes(r.stage)))return;
+  const r=visible.find(x=>x.id===id);if(!r||(next==="Shortlisted"?!["New Applicant","On Hold"].includes(r.stage):["Rejected","Hired","Passed"].includes(r.stage)))return;
   if(next==="Rejected"&&!declineReason.trim()){setNotice("A decline reason is required before confirming.");return}if(next==="Shortlisted"&&["Resume / CV reviewed","Minimum role qualifications checked","Relevant experience reviewed","Availability and job requirements confirmed"].some(item=>!r.screeningChecklist?.[item])){setNotice("Complete the initial screening checklist before shortlisting the applicant.");return}
   if(!window.confirm(`${next==="Shortlisted"?"Shortlist":"Decline"} ${r.name} for ${r.role}?`))return;
   const reason=next==="Rejected"?declineReason.trim():(selectedId===r.id?screeningNote.trim():"");
@@ -134,7 +138,7 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
  }
  function editForm(f?:HiringForm){setBuilder(f?.id||"new");setSelectedId(null);setPositionId(f?.id||null);setJobDraft({position:f?.position||"",minimumYears:String(f?.minimumYears??0),education:f?.education||"",qualifications:(f?.qualifications||[]).join("\n"),questions:(f?.questions||[]).join("\n"),onboardingDocuments:(f?.onboardingDocuments?.length?f.onboardingDocuments:DEFAULT_ONBOARDING_DOCUMENTS).join("\n"),status:f?.status||"Draft"})}
  function saveForm(e:FormEvent){e.preventDefault();if(role==="BM")return;const position=jobDraft.position.trim(),qualifications=jobDraft.qualifications.split("\n").map(x=>x.trim()).filter(Boolean),questions=jobDraft.questions.split("\n").map(x=>x.trim()).filter(Boolean);if(!position){setNotice("Enter a position title.");return;}const id=builder==="new"?makeFormId(position):builder||makeFormId(position);if(builder==="new"&&forms.some(f=>f.id===id||f.position.toLowerCase()===position.toLowerCase())){setNotice("A hiring form for this position already exists.");return}const newForm:HiringForm={id,position,status:jobDraft.status,onboardingDocuments:[...new Set(jobDraft.onboardingDocuments.split("\n").map(x=>x.trim()).filter(Boolean))],minimumYears:Math.max(0,Number(jobDraft.minimumYears)||0),education:jobDraft.education.trim(),qualifications,questions,createdAt:forms.find(f=>f.id===id)?.createdAt||today()};setForms(p=>builder==="new"?[...p,newForm]:p.map(f=>f.id===id?newForm:f));setPositionId(id);setBuilder(null);setNotice("Hiring form settings saved to this browser's review data. Published public links work as local form previews only.");}
- function addApplicant(e:FormEvent){e.preventDefault();if(role==="BM"||!job)return;const email=manual.email.trim().toLowerCase();if(!manual.name.trim()||!email||!email.includes("@")){setNotice("Enter applicant name and valid email.");return}if(records.some(r=>r.email.toLowerCase()===email&&r.role===job.position)){setNotice("An application using this email already exists for this position.");return}const number=records.reduce((n,r)=>Math.max(n,Number(r.id.replace("APP-",""))||1000),1000)+1;const id=`APP-${number}`;const candidate:ApplicantRecord={id,name:manual.name.trim(),email,phone:manual.phone.trim(),role:job.position,branch:manual.branch,submitted:today(),stage:"New Applicant",notes:"Manual test record",history:[`${new Date().toLocaleString("en-PH")} · Sample applicant added`],relevantYears:manual.relevantYears===""?null:Number(manual.relevantYears),totalYears:manual.totalYears===""?null:Number(manual.totalYears),education:manual.education,qualifications:manual.skills,requirements:candidateRequirements(job)};setRecords(p=>[candidate,...p]);setManualAdd(false);setManual({name:"",email:"",phone:"",branch:"UC Mandaluyong",relevantYears:"",totalYears:"",education:"",skills:{}});openCandidate(id,"cycle");setNotice("Test applicant added to this browser only.");}
+ function addApplicant(e:FormEvent){e.preventDefault();if(role==="BM"||!job)return;const email=manual.email.trim().toLowerCase();if(branch!=="All Shops"&&manual.branch!==branch){setNotice("Select the current branch before adding an applicant.");return}if(!manual.name.trim()||!email||!email.includes("@")){setNotice("Enter applicant name and valid email.");return}if(isDuplicateApplication(records,email,job.position)){setNotice("An application using this email already exists for this position.");return}const number=records.reduce((n,r)=>Math.max(n,Number(r.id.replace("APP-",""))||1000),1000)+1;const id=`APP-${number}`;const candidate:ApplicantRecord={id,name:manual.name.trim(),email,phone:manual.phone.trim(),role:job.position,branch:manual.branch,submitted:today(),stage:"New Applicant",notes:"Manual test record",history:[`${new Date().toLocaleString("en-PH")} · Sample applicant added`],relevantYears:manual.relevantYears===""?null:Number(manual.relevantYears),totalYears:manual.totalYears===""?null:Number(manual.totalYears),education:manual.education,qualifications:manual.skills,requirements:candidateRequirements(job)};setRecords(p=>[candidate,...p]);setManualAdd(false);setManual({name:"",email:"",phone:"",branch:"UC Mandaluyong",relevantYears:"",totalYears:"",education:"",skills:{}});openCandidate(id,"cycle");setNotice("Test applicant added to this browser only.");}
  function addRequirement(candidate:ApplicantRecord,name:string,required:boolean){
   if(role==="BM"||candidate.stage==="Hired")return;
   const title=canonicalRequirement(name);if(!title){setNotice("Enter a document name first.");return}
@@ -153,7 +157,7 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
   if(!window.confirm(`Remove custom requirement ${req.name}?`))return;
   change(candidate.id,{requirements:candidate.requirements.filter((_,i)=>i!==index)},`Custom pre-employment requirement removed: ${req.name}`);
  }
- function scheduleInterview(e:FormEvent){e.preventDefault();if(!selected||role==="BM"||!interviewAt||!interviewer.trim())return;if(readInterviews(selected).some(i=>i.result==="Pending")){setNotice("Evaluate or resolve the pending interview before scheduling another round.");return}const interview:HiringInterview={id:`INT-${Date.now()}`,round,at:interviewAt,interviewer:interviewer.trim(),result:"Pending",notes:""};change(selected.id,{stage:round==="Phone Interview"?"Phone Interview":round==="Final Interview"?"Final Interview":"Initial Interview",interviews:[...readInterviews(selected),interview],interviewAt},`${round} scheduled for ${interviewAt.replace("T"," ")} with ${interviewer}`);setInterviewAt("");setInterviewer("");setNotice("Interview scheduled in this browser's review records.");}
+ function scheduleInterview(e:FormEvent){e.preventDefault();if(!selected||role==="BM")return;const error=mayScheduleInterview({...selected,interviews:readInterviews(selected)},interviewAt,interviewer);if(error){setNotice(error);return}const interview:HiringInterview={id:`INT-${Date.now()}`,round,at:interviewAt,interviewer:interviewer.trim(),result:"Pending",notes:""};change(selected.id,{stage:round==="Phone Interview"?"Phone Interview":round==="Final Interview"?"Final Interview":"Initial Interview",interviews:[...readInterviews(selected),interview],interviewAt},`${round} scheduled for ${interviewAt.replace("T"," ")} with ${interviewer}`);setInterviewAt("");setInterviewer("");setNotice("Interview scheduled in this browser's review records.");}
  function evaluateInterview(interview:HiringInterview){if(!selected||role==="BM")return;if(!assessment.trim()){setNotice("Write the interview assessment before saving a decision.");return;}const criteria=interviewCriteria(selected.role);if(criteria.some(k=>!(scorecard[k]>=1&&scorecard[k]<=5))){setNotice("Rate all five job-related criteria from 1 to 5 before evaluating.");return;}if(!window.confirm(`Record ${result} for ${interview.round} (${selected.name})?`))return;const list=readInterviews(selected).map(i=>i.id===interview.id?{...i,result,notes:assessment.trim(),scorecard:{...scorecard}}:i);change(selected.id,{interviews:list,interviewOutcome:result},`${interview.round}: ${result} · ${assessment.trim()}`);setAssessment("");setScorecard({});setNotice("Individual interview result saved. Previous interview results cannot be reused for other rounds.");}
  function moveToOnboarding(){if(!selected||role==="BM")return;const interviews=readInterviews(selected);if(!interviews.length||interviews.some(i=>i.result==="Pending")||interviews[interviews.length-1].result!=="Passed"){setNotice("The latest interview must have a Passed evaluation before selection.");return}if(!window.confirm(`Select ${selected.name} for onboarding?`))return;const latest=interviews[interviews.length-1];if(interviewCriteria(selected.role).some(x=>!((latest.scorecard?.[x]||0)>=1))){setNotice("Complete the latest job-specific assessment scorecard before final selection.");return}const selectedForm=forms.find(f=>f.position===selected.role);
   const base=candidateRequirements(selectedForm);
@@ -169,6 +173,7 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
  const copyPortal=async(candidate:ApplicantRecord)=>{if(!candidate.uploadPortal)return;try{await navigator.clipboard.writeText(portalUrl(candidate));setNotice("Copied same-browser DEMO preview link. Do not send to real applicants; cross-device file uploads are not connected.")}catch{setNotice("Clipboard unavailable. Select the URL in the preview field to copy.")}};
  function confirmHired(){
   if(!selected||role==="BM"||selected.stage==="Hired")return;
+  if(!mayConfirmHire(selected)){setNotice("Only a candidate who passed selection may be confirmed as hired.");return}
   if(selected.offerStatus!=="Accepted"){setNotice("Confirm accepted job offer first.");return}
   if(!hireDate){setNotice("Confirm the Hire Date during onboarding.");return}
   if(!Number.isFinite(Number(hireBasicRate))||Number(hireBasicRate)<=0){setNotice("Set the employee's approved starting basic rate before confirming hire.");return}
@@ -187,7 +192,7 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
   setNotice(`Browser-demo hiring completed. Employee 201 record ${id} created with verified document statuses and pending salary destination. File bytes are not stored.`);
  }
  function previewFrame(){return <div className="hire-resume-paper">{resumeUrl&&(resumeFile?.type==="application/pdf"||/\.pdf$/i.test(resumeFile?.name||""))?<iframe title="Resume PDF preview" src={resumeUrl} className="hire-resume-embed"/>:resumeUrl&&resumeFile?.type.startsWith("image/")?<img src={resumeUrl} alt="Attached applicant resume" className="hire-resume-image"/>:<div className="hire-resume-empty"><FileText size={34}/><b>{selected?.resumeName||"No resume attached"}</b><small>{selected?.resumeName?"File name on record; original file is not stored in the frontend.":"Attach a PDF to preview it during this session."}</small></div>}</div>}
- function openAlert(action?:string){if(!action)return;const [where,id]=action.split(":");const candidate=records.find(x=>x.id===id);if(!candidate)return;setPositionId(forms.find(f=>f.position===candidate.role)?.id||null);openCandidate(id,where==="onboarding"?"onboarding":"cycle");
+ function openAlert(action?:string){if(!action)return;const [where,id]=action.split(":");const candidate=visible.find(x=>x.id===id);if(!candidate)return;setPositionId(forms.find(f=>f.position===candidate.role)?.id||null);openCandidate(id,where==="onboarding"?"onboarding":"cycle");
   if(candidate.stage==="New Applicant")setCandidateScreen("application");
   setCycleTab(candidate.stage==="Shortlisted"?"shortlisted":candidate.stage.includes("Interview")?"interviews":candidate.stage==="New Applicant"?"applications":"decisions");}
  return <div className="phase2-area hire-root">

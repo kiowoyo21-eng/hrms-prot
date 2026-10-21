@@ -1,20 +1,26 @@
-# HRMS Main V6 — QA Report
+# HRMS Main V7 — QA Report
+**Baseline:** latest available local assembled HRMS V6 source; live GitHub commit not fetched.  
+**Updated components:** RecruitmentWorkspace, ComplianceWorkspace.  
+**New strict-typed helpers:** recruitmentChecks, complianceChecks.
 
-## Completed checks
+## Completed here
+- **47** Node runtime assertions across branch visibility, candidate deduplication, interview eligibility, final-hire stage, compliance scope, legacy data, per-branch verification, duplicate requirements and status transitions.
+- **9** additional calendar-date validation assertions, including leap days and invalid February 30 interview.
+- **56 focused assertions total passed.**
+- Both helpers compiled with global TypeScript in `--strict` mode.
+- **123 TS/TSX source files parsed** without syntax errors in the assembled project.
+- **353 relative imports checked; none missing**, including stylesheet imports.
+- Source patch ZIP hash/integrity verified at packaging time.
 
-- 31 focused attendance import, cutoff coverage, duplicate/invalid CSV, submitted-draft blocking and attendance→draft comparison assertions: PASS.
-- 21 focused leave/loan reconciliation, conflicting approvals, status filtering, branch/name scoping and malformed local data assertions: PASS.
-- Isolated `tsc --strict --noEmit` for `lib/attendanceUpload.ts`, `lib/attendanceReview.ts`, `lib/payrollReconciliation.ts`: PASS.
-- Full assembled source parse/import scan (122 TS/TSX files, 345 relative imports): PASS, zero missing relative imports or syntax diagnostics.
-- Patch scope diffed against V5 workspace; only 4 new/modified source files.
-- ZIP paths and archive integrity verified.
+## Not verified
+- Full Next.js production build was not run because the assembled source has no installed application dependencies in this runtime.
+- No real interactive browser or Vercel deployment test; modal stacking, details panel, accessibility and responsive layout must be checked on the deployed site.
+- Strict whole-repository type-check is not verified. Syntax parsing and isolated helper `--strict` checks are not a substitute.
+- Demo browser localStorage is not a secure HRMS backend, file vault, government filing integration, or tamper-evident audit log.
 
-## Pending tests / limits
-
-- FULL `next build`, whole-project TS typecheck and Vercel deployment: NOT VERIFIED (no installed project npm dependencies locally).
-- Browser end-to-end clicking, modal responsiveness and real file-picker behavior: NOT VERIFIED.
-- Existing complete employee/payroll workflows regression requires deployed browser test with current user's local data. Synthetic logic tests do not prove full correctness.
-- Browser-local security is not server authorization; all decisions need backend-enforced maker-checker, durable audit, versioned evidence, and shared-database integration before production.
-- Leave and loan browser records are matched by legacy name+branch only. This is informational: not a safe basis for automated deductions or approved leave pay.
-- Uploaded CSV is untrusted. Verification reflects manual HR review only; attendance policy, paid/unpaid leave, OT rate, withholding and payroll amounts require independent review.
-- Existing older demo records without validated employee-day CSV rows do NOT satisfy the new approval gate. Reupload and review evidence as appropriate.
+## Known limitations / future work
+- Compliance stage changes are local review steps, not official filing or government verification.
+- New annual review records live in a separate browser-local key (`uc-hr-ui-compliance-schedule-reviews`) and can be lost if browser data is cleared; original compliance records remain in their existing key.
+- Some legacy all-branch tasks with a shared global Verified status/proof may now correctly show as **not verified** until explicit branch-level references are recorded. The historical data is not deleted.
+- Recruitment applicant records are still demo records and their synchronization does not cross devices.
+- Full end-to-end regression of payroll, Employee 201, Assets, Docs and Ms Kate's approval queue remains pending.

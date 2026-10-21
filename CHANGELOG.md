@@ -1,23 +1,25 @@
-# HRMS Master Revision V6 — Attendance, Leave, Loan and Payroll Controls
+# HRMS Main V7 — Recruitment & Compliance Reliability
+**Date:** 2026-10-21  
+**Scope:** Incremental HRMS frontend patch; four new/modified source files.
 
-Date: 2026-10-21. Scope: browser-local HRMS frontend only. Apply over Main V5 including Ms Kate's HR-role correction.
+## Recruitment
+- Candidate selection is scoped to the active branch, including deep links opened through alerts; stale selected/decline/resume dialogs close when branch changes.
+- Applicant edits are blocked when the record is outside the selected branch or the actor is the BM review role. Browser storage remains a demo, not a security boundary.
+- Rejects duplicate applications for the same normalized email and position (preserves multiple different-position applications).
+- Validates scheduled interview date/time and interviewer, guards unscreened/rejected/hired stages and concurrent pending interviews.
+- Final hire requires a previously selected Passed candidate, in addition to existing offer, documents, signing, rate and Employee 201 duplicate checks.
+- Prevents manually adding an applicant to a branch other than the currently selected branch.
 
-## New and revised
+## Government Compliance
+- Detail modal and mutations are limited to requirements in the selected branch.
+- Branch completion now requires explicit branch-status and branch-evidence references for shared/multi-branch requirements; legacy single-branch records remain supported.
+- Branch-specific progress, calendar urgency and review counts don't inherit other branches' completed work.
+- Multi-branch details only expose current branch's status/evidence while viewing a specific branch.
+- Adds guarded stage transitions (Draft → For Approval → Approved → In Progress → Submitted → Verified; limited corrections/reopening supported). Per-branch internal verification needs an evidence reference and human confirmation; filename-only data is explicitly not official government verification.
+- Rejects overlapping requirements with same agency, normalized title, due date and applicable branch; validates calendar dates.
+- Annual schedule-review state is saved by agency, branch, and year, rather than leaking between agency views. Clearly labeled as local review only.
 
-- Payroll → Generate Payslips → Attendance Upload now supports CSV preview, header validation, branch/cutoff checks, employee-ID matching, duplicate dates, malformed punches, incomplete attendance, and approved-OT evidence checks.
-- File import has a 1.5 MB UI cap and a 6,000 attendance-row parser limit. Import is staged and cannot be saved when any error remains.
-- Saved attendance rows remain separate from upload metadata. Explicit Uploaded → For Verification → Verified/Needs Correction review is required. Legacy metadata with no matching rows cannot authorize a payslip.
-- Before payslip approval, attendance must be Verified for the specific employee's branch/cutoff and complete for all employed dates in the week. A summary flags missing/incomplete rows, leave days and mismatched day/OT figures.
-- Prevents replacement of cutoff attendance evidence after submitted/approved drafts or demo payroll release for that branch/cutoff.
-- Review Payslip Draft now displays a read-only leave/loan reconciliation summary from existing browser-local records, matched by name and branch as unverified leads. Conflicting leave evidence or outstanding loans require documented reconciliation remarks before demo approval.
-- Draft status changes check that submission starts at Draft and approval starts at For Review; recorded demo releases retain existing duplicate/destination checks.
-- Branch switching clears stale attendance import/branch and draft-review notes. Changes are recorded through existing audit functions without copying raw CSV or payment amounts into audit summaries.
-- New helper modules: `lib/attendanceReview.ts`, `lib/payrollReconciliation.ts`.
-
-## Non-changes and guardrails
-
-- No direct biometric connection, real bank release, statutory entitlement calculation, loan collection, or Accounting integration.
-- No automatic leave pay or loan deductions from browser-local name matching. All amounts require independent HR/Accounting verification.
-- The existing Ms Kate HR permissions and special approval authority remain unchanged.
-- Existing Employee 201, leave records, payroll batches/releases and prior final-pay workflow are not migrated or overwritten.
-- No ERP integration or dependency.
+## Preserved
+- No changes to payroll, loans, final pay, Ms Kate role/approval authority, Employee 201 calculations, external integrations, app routes or existing credentials.
+- Existing local records retained. No migration or deletion.
+- ERP remains standalone. No CMS/Accounting live sync.
