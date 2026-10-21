@@ -14,7 +14,14 @@ const starter:StudioState={items:[
  ],approvals:[],revisions:[],logs:[],comments:[]};
 export const blankState=():StudioState=>JSON.parse(JSON.stringify(starter)) as StudioState;
 export function readStudio():StudioState{if(typeof window==="undefined")return blankState();try{const x=JSON.parse(localStorage.getItem(KEY)||"null");return x&&Array.isArray(x.items)&&Array.isArray(x.approvals)&&Array.isArray(x.revisions)&&Array.isArray(x.logs)?{...x,comments:Array.isArray(x.comments)?x.comments:[]}:blankState()}catch{return blankState()}}
-export function studioActor():StudioActor|null{return activeDemoUser()}
+export function studioActor():StudioActor|null{
+ const actor=activeDemoUser();
+ if(!actor)return null;
+ if(actor.role==="Super Admin" || actor.role==="HR" || actor.role==="BM"){
+  return {username:actor.username,role:actor.role};
+ }
+ return null;
+}
 export function canRead(a:StudioActor|null){return !!a&&(a.role==="HR"||a.role==="Super Admin")}
 export function canEdit(s:StudioState,a:StudioActor|null,itemId:string,at=Date.now()):boolean{if(!a||!canRead(a))return false;if(a.role==="Super Admin")return true;return s.approvals.some(r=>r.itemId===itemId&&r.requester===a.username&&r.status==="approved"&&!!r.expiresAt&&Date.parse(r.expiresAt)>at)}
 export function currentRequest(s:StudioState,a:StudioActor|null,itemId:string){return [...s.approvals].reverse().find(r=>r.itemId===itemId&&r.requester===a?.username)}
