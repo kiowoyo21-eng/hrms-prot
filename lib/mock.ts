@@ -1,8 +1,9 @@
-export type Role = "Super Admin" | "HR" | "BM";
+export type Role = "Super Admin" | "HR" | "BM" | "Special Final Approver — Ms Kate";
 export type Branch = "All Shops" | "UC Mandaluyong" | "UC Las Piñas" | "UC Quezon City" | "MM Mandaluyong";
 export const branches: Branch[] = ["All Shops","UC Mandaluyong","UC Las Piñas","UC Quezon City","MM Mandaluyong"];
 export const modules = [
  {id:"dashboard",name:"Dashboard",icon:"LayoutDashboard",count:0},
+ {id:"final-approvals",name:"Ms Kate Approvals",icon:"ShieldCheck",count:0},
  {id:"employees",name:"Employee 201 Files",icon:"FolderOpen",count:8},
  {id:"submissions",name:"Submit Employee Documents",icon:"FileUp",count:0},
  {id:"lifecycle",name:"Recruitment & Hiring",icon:"Workflow",count:5},
@@ -23,9 +24,10 @@ export type ModuleId = typeof modules[number]["id"] | "loans"; // internal legac
 export const permissions: Record<Role, ModuleId[]> = {
  "Super Admin":modules.map(m=>m.id),
  "HR": ["dashboard","employees","lifecycle","payroll","leave","ir","assets","compliance","documents","filters","drive","spreadsheets","studio","audit","settings"],
- "BM": ["dashboard","submissions","lifecycle","leave","ir","settings"]
+ "BM": ["dashboard","submissions","lifecycle","leave","ir","settings"],
+ "Special Final Approver — Ms Kate": ["final-approvals"]
 };
-export const demoAccounts = [{username:"admin",password:"admin12345",role:"Super Admin" as Role},{username:"hraccount",password:"hraccount12345",role:"HR" as Role},{username:"bmaccount",password:"bm12345",role:"BM" as Role}];
+export const demoAccounts = [{username:"admin",password:"admin12345",role:"Super Admin" as Role},{username:"hraccount",password:"hraccount12345",role:"HR" as Role},{username:"bmaccount",password:"bm12345",role:"BM" as Role},{username:"mskate",password:"mskate-demo12345",role:"Special Final Approver — Ms Kate" as Role}];
 export const activity=[
  {module:"Payroll",text:"Payroll calculation preview requested",user:"HR Sample",date:"Oct 11, 2026"},
  {module:"Employee 201",text:"Onboarding requirement flagged",user:"HR Sample",date:"Oct 10, 2026"},

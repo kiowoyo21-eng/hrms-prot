@@ -1,27 +1,34 @@
-# HRMS Main Revision V3 — Asset Custody & Incident Integrity
-Date: 2026-10-20
-Type: Incremental frontend patch (four source files)
+# HRMS — Ms Kate Special Final Approval Revision
 
-## Assets & Devices
-- Add explicit **Request Return** action for Assigned assets. A nonempty reason is required and stored in the asset's browser-local notes. Status becomes **For Return** while the employee remains the custodian.
-- Make **Receive Return** available for Assigned and For Return devices. Require separate confirmations of return-document review **and physical receipt** before setting the device to Inspection.
-- Add **Reinspect** for devices in Maintenance, so a repair can end in Available, continued Maintenance or Retired.
-- Clear current custodian, signing method, officer and temporary signature metadata only after completing the inspection (all three outcomes). Retain a simple previous-custodian reference in history.
-- Reject an inspection outcome of Available if its condition is Damaged or For Inspection.
-- Block accidental assignments to employees outside the asset's registered branch, including when All Shops is selected.
-- Avoid duplicate asset IDs with a dedicated AST-series generator; validate trimmed name and serial.
-- Keep the new return-request form in view when opened; use the browser-local date instead of UTC date for new lifecycle entries.
-- Preserve V2 branch-filtered list and detail view behavior and existing audit/change tracking.
+**2026-10-21 · Incremental patch · Browser-only demo implementation**
 
-## Incident Reports
-- Restrict new-report Employee 201 selectors to the report branch and case-link selectors to the selected case's branch (including for HR in All Shops).
-- When changing report branch, clear old verified employee IDs; reset open case state on role/branch changes.
-- Prevent closure unless two distinct, existing Employee 201 IDs match the incident's branch.
-- Keep narrative stage reasons, case notes and takeover reasons in the case's restricted local notes without duplicating their text into action timeline entries.
-- Reject case comment/file/identity/takeover changes to closed cases at the handler layer, not only by hiding buttons.
-- Use collision-resistant session attachment IDs and avoid putting attachment filenames in timeline entries.
+## New
+- `Special Final Approver — Ms Kate` dedicated role and demo account; original Super Admin / HR / BM users remain unchanged.
+- `Ms Kate Approvals` dedicated restricted navigation and dashboard.
+- Demo request queue with CMS/PB/Cashier and configured HRMS-originated reference snapshots. The CMS/Accounting applications are not linked.
+- Separate pending, approved, rejected, returned, awaiting Accounting, and approval-history tabs; branch/source/search filters.
+- Request detail review of amount, originator, category, description, Accounting approver/date/remarks, demo document metadata, and full stage timeline.
+- Working approve/return/reject confirmation dialogs, with mandatory reason for return/reject.
+- Final decision journal and status transitions scoped to request revision and material-field snapshot, plus audit events using existing local audit helper.
+- Release-authorization *guard function only*; no money movement or disbursement processing is implemented.
+- Ms Kate's own pending-alerts appear in the existing one-bell notification center without adding another bell.
+- Added live local audit entries to Audit Logs, preserving its original demo sample list.
 
-## Scope / limitations
-- No changes to Employee 201 core data, Payroll, payslips, notification bell, or server permissions.
-- Browser-local data is a prototype: not an authoritative custody ledger, compliant confidential incident system, or proof of signed handovers.
-- No full Next.js production build or interactive browser regression has been verified yet; see QA_REPORT.md.
+## Controls
+- Only assigned Ms Kate demo account can perform decisions. Super Admin has overview only, not implicit authority to approve as Ms Kate.
+- Accounting must first approve the exact material revision with approver and timestamp; cannot approve if stale, rejected, returned, pending, or lacking adequate evidence.
+- Duplicate final decisions, maker-checker conflict, negative amounts, missing return/reject explanation, and invalid transitions are blocked in browser/demo logic.
+- A material change invalidates the old Accounting verification and requires new first-level review. A new revision with valid Accounting approval must obtain a fresh final decision.
+- No CMS request-master data or remote integrations are written into HRMS; only local demo final decisions are stored.
+
+## Modified source files
+- `app/page.tsx` — role-specific route navigation, final approval workspace, queue alerts, actual local audit display.
+- `lib/mock.ts` — one new role/demo account and permissions/module definition.
+- `lib/auditTrail.ts` — optional structured before/after statuses and remarks for audit entries (existing callers remain supported).
+
+## New source files
+- `lib/finalApproval.ts` — request/decision types, demo fixtures, pure gate/transition rules and local decision journal.
+- `components/MsKateApprovalWorkspace.tsx` — dashboard and approval flows.
+- `components/MsKateApprovalWorkspace.module.css` — responsive isolated UI, viewport-safe confirmation dialogs.
+
+No HR payroll, leave, Employee 201, attendance, asset, document, or incident module source was modified by this patch. No ERP integration exists or was added.

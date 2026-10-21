@@ -1,25 +1,34 @@
-# HRMS Main V3 — GitHub Website Installation
+# Install — Ms Kate Special Final Approval
 
-This ZIP contains **changed/new source files only**, not a full project.
+## Prerequisites
+- Apply this patch on top of the current HRMS project including **HRMS Main V4 — Employee Lifecycle**, and any previously deployed Universal UI/Notifications and Docs/Sheets patches.
+- The files were prepared against a locally reconstructed version using the 2026-10-20 consolidated HRMS archive and sequential incremental revisions available in the conversation. If your current GitHub source has additional unshared changes in one of the three modified files, manually merge rather than overwrite them.
 
-## Required base
-Latest HRMS project with **Main Modules V2 — UI & Data Integrity** already applied, together with Universal Notifications V2 and V3. This patch was assembled against source files available in this conversation; it was not pulled from your current live GitHub `main` branch.
+## GitHub website only
+1. Extract this ZIP on your Mac. **Do not upload the ZIP as a repo file.**
+2. In your `kiowoyo21-eng/hrms-prot` GitHub repository, create/upload the new files at exactly:
+   - `lib/finalApproval.ts`
+   - `components/MsKateApprovalWorkspace.tsx`
+   - `components/MsKateApprovalWorkspace.module.css`
+3. Replace/merge the modified source files at exactly:
+   - `app/page.tsx`
+   - `lib/mock.ts`
+   - `lib/auditTrail.ts`
+4. Commit all six source changes together to `main` and wait for Vercel's Next.js build.
+5. If the build fails, send the first actual error with the new commit hash; full Next build could not be completed in the authoring environment.
+6. Use the account button **Special Final Approver — Ms Kate** at login to auto-fill demo credentials. If manually signing in, username is `mskate`, demo password is `mskate-demo12345` (never use in production).
+7. Navigate **Ms Kate Approvals**, select branch **All Shops**, open `CMS-DEMO-DR-001`, then test Approve, Return, and Reject on separate Accounting-approved demo requests. Confirm pending-accounting and stale-accounting items are action-disabled.
+8. Sign in as HR, BM, and Super Admin. Their existing logins must still work; only Ms Kate's assigned demo account may record final approval. Super Admin has overview, not approval delegation.
 
-## Files to upload together
-- `components/AssetWorkspace.tsx` (replace existing)
-- `components/IncidentWorkspace.tsx` (replace existing)
-- `lib/assetLifecycle.ts` (new)
-- `lib/incidentCaseRules.ts` (new)
+## Demo data and storage
+- Requests are **immutable code fixtures** prefixed `CMS-DEMO-` or `HRMS-DEMO-`, not synchronized live records.
+- Browser-local final decisions use a new, separate storage key `uc-hr-final-approval-demo-decisions-v1`; pre-existing HRMS localStorage keys and content are unchanged.
+- Approval decisions are isolated from CMS request metadata, HRMS employee/payroll data, and release processing.
+- Existing audit trail is reused (`uc-hr-ui-audit-trail-v2`). Approval history and other browser data are not reliable legal audit evidence.
+- To retest all actions without removing other HRMS data, use a separate private browser session or clear **only** the final-approval demo decisions key using browser developer tools. No auto-reset is executed by this patch.
 
-## Installation through the GitHub website
-1. Extract this ZIP locally; DO NOT upload the ZIP itself to the repository.
-2. Open `github.com/kiowoyo21-eng/hrms-prot`, branch `main`.
-3. Upload the two new `lib` files into `lib/`.
-4. Replace the two existing files in `components/` with the patch copies. Make sure folder paths are exact.
-5. Commit all four source files in **one commit**.
-6. Wait for the Vercel production deployment; if the build fails, send the error log before applying another major revision.
-7. Once deployed, perform the manual smoke tests in QA_REPORT.md (branch switching, asset custody stages, incident links, document review).
+## NOT IMPLEMENTED
+- Real CMS/Accounting data ingestion or write-back, shared database, Accounting approvals, payment processing, real attachments/downloads, production login or authorization, durable/tamper-evident audit, multi-device sync.
+- No ERP APIs, database references, synchronization, dependencies, or status links.
 
-**Merge caution:** If AssetWorkspace or IncidentWorkspace has been edited in GitHub since Main V2, merge those new changes into these replacements rather than overwriting later work.
-
-**Security:** This frontend-only localStorage prototype MUST NOT contain real confidential complaints, real handover signatures or legally significant employee/asset records without a secure backend, authenticated permissions and verified storage.
+See `INTEGRATION_REQUIREMENTS.md` and `QA_REPORT.md`.
