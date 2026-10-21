@@ -1,15 +1,22 @@
-# HRMS Main V9 — Docs & Sheets + V8 PDF Build Fix
+# HRMS Main V10 — Universal UI, Audit & Permission Consistency
 
-## Changed source files (6)
-- `components/SpreadsheetWorkspace.tsx` — add inline Find/Replace tools scoped to visible rows in the selected worksheet; next/previous selection, match counts, replacement confirmation, and working-copy approval gate.
-- `lib/sheetSearch.ts` — bounded, case-optional literal search; safely generate proposed replacements; prohibit changing formula cells or creating new formulas by replacement.
-- `app/spreadsheets/spreadsheet.css` — responsive, route-scoped Find/Replace panel styling.
-- `app/studio/docs/[id]/page.tsx` — add previous/next document match navigation for readers, limited-batch Find/Replace under existing editing approval, status feedback.
-- `lib/studio/textSearch.ts` — position-preserving, bounded text segment search and match navigation.
-- `app/studio/pdf/[id]/page.tsx` — fix TypeScript error reported by Vercel for pdf-lib `FieldAppearanceOptions`: `addToPage()` without unsupported `fontSize`; set the PDF text form field size with `PDFTextField.setFontSize()` instead. Keep output storage and permissions unchanged.
+## Changes — October 21, 2026
 
-## Compatibility and scope
-This is an incremental patch based on the locally available HRMS V8 source. Apply it after the prior releases, including Ms Kate HR role inheritance and Main V8. It does not include any backend/sync changes or ERP integration. Report spreadsheets remain read-only; replacements require an approved working sheet. Document replacements require existing edit rights.
+### Audit History (functional correction)
+- Replace duplicate browser-event and illustrative sample timelines with **one browser-recorded audit workspace**. The Dashboard's separate sample-activity illustration remains untouched.
+- Search recorded events by non-sensitive metadata (module, actor, action, IDs, status); filter by module/actor/action; clear filters; paginate 50 at a time.
+- CSV download exports **the actual filtered browser events**, not fictional sample activity. CSV is labeled as browser-local demo, timestamps are Asia/Manila, and free-text summary/remarks are excluded.
+- Guard against malformed audit records, invalid timestamps, and duplicate event IDs in the *view*, without deleting or migrating saved browser data.
+- Show detailed summaries and recorded remarks only to Super Admin; role-specific audit access follows the existing permissions matrix.
+- Explicitly warn that legacy audit records lack reliable branch metadata and that localStorage evidence is not tamper-evident.
 
-## Remaining work
-This is NOT full Google Docs/Sheets parity. Advanced collaboration, complex multi-node text searching, editable pivot objects, enterprise permissions, and a shared database remain future work. The full Vercel production build still needs to be run on the repository/lockfile combination.
+### Universal UI consistency
+- Notification popover closes when the user changes branches or modules, preventing a stale popup after switching views.
+- Escape key closes the notification popover and returns keyboard focus to its trigger.
+- New Audit History filters and event rows have responsive narrow-screen layouts.
+
+### Preserved
+- Existing HRMS employees, payroll calculations, leaves, assets, incidents, Docs/Sheets, final-pay and Ms Kate final-approval logic.
+- HR and Ms Kate audit visibility; Ms Kate inherits HR modules while only her special role has final approval. No new account or authentication change.
+- Audit storage key (`uc-hr-ui-audit-trail-v2`) and existing audit event writers. No data reset or migration.
+- Browser-only design; no CMS/Accounting/ERP integration added.

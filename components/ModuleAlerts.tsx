@@ -7,11 +7,25 @@ export type {ModuleAlert} from "../lib/moduleAlertViews";
 import {Bell,ChevronRight,X} from "lucide-react";
 import type {Branch,ModuleId} from "../lib/mock";
 type Registry=AlertRegistry;
-type ModuleNoticeAPI={registry:Registry;publish:(module:ModuleId,entries:ModuleAlert[],source?:string)=>void;clear:()=>void};
+type ModuleActionHandler=(alert:ModuleAlert)=>void;
+type ModuleNoticeAPI={
+ registry:Registry;
+ publish:(module:ModuleId,entries:ModuleAlert[],source?:string)=>void;
+ clear:()=>void;
+ registerAction:(module:ModuleId,handler:ModuleActionHandler)=>()=>void;
+ openAction:(module:ModuleId,alert:ModuleAlert)=>void;
+};
 const C=createContext<ModuleNoticeAPI|null>(null);
 export function ModuleAlertsProvider({children}:{children:ReactNode}){
  // Different publishers (e.g. payroll cutoff monitor and Payroll workspace) must not overwrite each other.
  const [sources,setSources]=useState<AlertSources>({});
+ // Keep old module-level record-navigation callbacks without rendering duplicate bells.
+ const actionHandlers=useRef(new Map<ModuleId,ModuleActionHandler>());
+ const registerAction=useCallback((module:ModuleId,handler:ModuleActionHandler)=>{
+  actionHandlers.current.set(module,handler);
+  return ()=>{if(actionHandlers.current.get(module)===handler)actionHandlers.current.delete(module)};
+ },[]);
+ const openAction=useCallback((module:ModuleId,alert:ModuleAlert)=>{actionHandlers.current.get(module)?.(alert)},[]);
  const publish=useCallback((module:ModuleId,entries:ModuleAlert[],source="workspace")=>setSources(old=>{
   const current:Record<string,ModuleAlert[]>=old[module]||{};
   if(JSON.stringify(current[source]||[])===JSON.stringify(entries))return old;
@@ -19,7 +33,7 @@ export function ModuleAlertsProvider({children}:{children:ReactNode}){
  }),[]);
  const clear=useCallback(()=>setSources({}),[]);
  const registry=useMemo<Registry>(()=>mergeAlertSources(sources),[sources]);
- const value=useMemo<ModuleNoticeAPI>(()=>({registry,publish,clear}),[registry,publish,clear]);
+ const value=useMemo<ModuleNoticeAPI>(()=>({registry,publish,clear,registerAction,openAction}),[registry,publish,clear,registerAction,openAction]);
  return <C.Provider value={value}>{children}</C.Provider>;
 }
 export function useModuleAlerts(){const context=useContext(C);if(!context)throw new Error("ModuleAlertsProvider required");return context}
@@ -27,17 +41,17 @@ export function usePublishModuleAlerts(module:ModuleId,alerts:ModuleAlert[],sour
  const {publish}=useModuleAlerts();const serialized=JSON.stringify(alerts);
  useEffect(()=>{publish(module,JSON.parse(serialized) as ModuleAlert[],source)},[module,source,serialized,publish]);
 }
-export function ModuleAlertButton({module,branch,onOpen}:{module:ModuleId;branch:Branch;onOpen?:(alert:ModuleAlert)=>void}){
- const {registry}=useModuleAlerts();const [open,setOpen]=useState(false);
- const anchor=useRef<HTMLButtonElement>(null);
- const alerts=visibleAlerts(registry,module,branch);
- const floating=useFloatingPopover(open,anchor,355);
- useEffect(()=>{if(!open)return;const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setOpen(false)};
- const onOutside=(e:PointerEvent)=>{const node=e.target as Node;if(!anchor.current?.contains(node)&&!floating.panel.current?.contains(node))setOpen(false)};
- document.addEventListener("pointerdown",onOutside);document.addEventListener("keydown",onKey);
- return()=>{document.removeEventListener("pointerdown",onOutside);document.removeEventListener("keydown",onKey)};
- },[open,floating.panel]);
- return <div className="mu-bell-wrap"><button ref={anchor} type="button" className="mu-bell" aria-label={`${alerts.length} module notifications`} aria-expanded={open} aria-haspopup="true" onClick={()=>setOpen(p=>!p)}><Bell size={17}/>{alerts.length>0&&<span>{alerts.length}</span>}</button>{open&&createPortal(<div ref={floating.panel} style={floating.style} className="mu-notice-popover uc-fixed-popover" role="region" aria-label="Module notifications"><div className="mu-notice-head"><b>Module Notifications</b><button type="button" aria-label="Close notifications" onClick={()=>setOpen(false)}><X size={15}/></button></div>{alerts.length===0?<p className="mu-notice-empty">No pending actions in the loaded records.</p>:alerts.map(item=><button key={item.id} type="button" className="mu-notice-item" onClick={()=>{onOpen?.(item);if(module==="payroll"&&typeof window!=="undefined"){if(item.id.startsWith("loan-"))window.dispatchEvent(new CustomEvent("ucmm-payroll-open",{detail:{area:"loans"}}));else if(item.action?.startsWith("payroll:"))window.dispatchEvent(new CustomEvent("ucmm-payroll-open",{detail:{area:item.action.slice(8)}}));}setOpen(false)}}><span className={item.level==="urgent"?"mu-notice-dot is-urgent":"mu-notice-dot"}/><span><b>{item.title}</b><small>{item.detail}</small></span><ChevronRight size={14}/></button>)}</div>,document.body)}</div>;
+/**
+ * Compatibility action target for module-specific record navigation.
+ * The only visible bell is UniversalNotificationCenter in the app top bar.
+ * Keeping this action target prevents existing module callbacks from being removed.
+ */
+export function ModuleAlertButton({module,onOpen}:{module:ModuleId;branch:Branch;onOpen?:(alert:ModuleAlert)=>void}){
+ const {registerAction}=useModuleAlerts();
+ const handler=useRef(onOpen);
+ useEffect(()=>{handler.current=onOpen},[onOpen]);
+ useEffect(()=>registerAction(module,alert=>handler.current?.(alert)),[module,registerAction]);
+ return null;
 }
 export function ModuleAlertSummary({module,branch}:{module:ModuleId;branch:Branch}){const {registry}=useModuleAlerts();const alerts=visibleAlerts(registry,module,branch);if(!alerts.length)return <span>No pending actions in loaded records</span>;return <span>{alerts.length} requiring action · {alerts.filter(a=>a.level==="urgent").length} high priority</span>}
 export function DashboardModuleAlerts({branch,onNavigate,allowed}:{branch:Branch;onNavigate:(id:ModuleId)=>void;allowed:ModuleId[]}){
@@ -49,7 +63,7 @@ export function DashboardModuleAlerts({branch,onNavigate,allowed}:{branch:Branch
  * Pending actions only; no fabricated events, delivery/read state, or push notifications.
  */
 export function UniversalNotificationCenter({current,branch,allowed,onNavigate}:{current:ModuleId;branch:Branch;allowed:ModuleId[];onNavigate:(module:ModuleId)=>void}){
- const {registry}=useModuleAlerts();
+ const {registry,openAction}=useModuleAlerts();
  const [open,setOpen]=useState(false);
  const [scope,setScope]=useState<"module"|"all">("all");
  const anchor=useRef<HTMLButtonElement>(null);
@@ -59,9 +73,9 @@ export function UniversalNotificationCenter({current,branch,allowed,onNavigate}:
  const currentCount=groups.find(group=>group.id===current)?.items.length||0;
  const displayed=scope==="all"?groups:groups.filter(group=>group.id===current);
  const nameOf=(id:ModuleId)=>({loans:"Payroll Management",ir:"Incident Reports",lifecycle:"Recruitment & Hiring",employees:"Employee 201"} as Partial<Record<ModuleId,string>>)[id]||({dashboard:"Dashboard",submissions:"Submit Employee Documents",assets:"Assets & Devices",compliance:"Government Compliance",documents:"Employee Documents",payroll:"Payroll Management",leave:"Leave Management",filters:"Reports & Analytics",drive:"HRMS Drive",spreadsheets:"Spreadsheets",studio:"Document Library",audit:"Audit Logs",settings:"Settings"} as Partial<Record<ModuleId,string>>)[id]||id;
- useEffect(()=>{setOpen(false);setScope(current==="dashboard"?"all":"module")},[current]);
+ useEffect(()=>{setOpen(false);setScope(current==="dashboard"?"all":"module")},[current,branch]);
  useEffect(()=>{if(!open)return;
-  const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setOpen(false)};
+  const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape"){setOpen(false);anchor.current?.focus()}};
   const onOutside=(e:PointerEvent)=>{const node=e.target as Node;if(!anchor.current?.contains(node)&&!floating.panel.current?.contains(node))setOpen(false)};
   document.addEventListener("keydown",onKey);document.addEventListener("pointerdown",onOutside);
   return()=>{document.removeEventListener("keydown",onKey);document.removeEventListener("pointerdown",onOutside)};
@@ -80,7 +94,7 @@ export function UniversalNotificationCenter({current,branch,allowed,onNavigate}:
    <div className="mu-global-list">
     {displayed.length===0?<p className="mu-global-empty">No pending actions recorded {scope==="module"?`for ${nameOf(current)}`:"for the accessible modules"}. Modules without recorded action alerts will appear empty.</p>:displayed.map(group=><div key={group.id} className="mu-global-group">
      <div className="mu-global-group-heading"><strong>{nameOf(group.id)}</strong><span>{group.items.length}</span></div>
-     {group.items.slice(0,10).map(alert=><button className="mu-global-item" type="button" key={`${group.id}:${alert.id}`} onClick={()=>{setOpen(false);onNavigate(group.id)}} aria-label={`Open ${nameOf(group.id)}: ${alert.title}`}>
+     {group.items.slice(0,10).map(alert=><button className="mu-global-item" type="button" key={`${group.id}:${alert.id}`} onClick={()=>{setOpen(false);if(current===group.id){if(group.id==="payroll"&&typeof window!=="undefined"){const area=alert.id.startsWith("loan-")?"loans":alert.action?.startsWith("payroll:")?alert.action.slice(8):"";if(area)window.dispatchEvent(new CustomEvent("ucmm-payroll-open",{detail:{area}}))}else openAction(group.id,alert)}onNavigate(group.id)}} aria-label={`Open ${nameOf(group.id)}: ${alert.title}`}>
       <span className={alert.level==="urgent"?"mu-global-dot urgent":"mu-global-dot"}/><span className="mu-global-detail"><strong>{alert.title}</strong><small>{alert.detail}</small></span><ChevronRight size={15}/>
      </button>)}
      {group.items.length>10&&<button className="mu-global-more" type="button" onClick={()=>{setOpen(false);onNavigate(group.id)}}>Open {nameOf(group.id)} to review {group.items.length-10} more pending actions <ChevronRight size={14}/></button>}

@@ -1,18 +1,19 @@
-# Installation — GitHub website (HRMS Main V9 + PDF build fix)
+# Installation — HRMS Main V10 (GitHub website only)
 
-1. **Prerequisite:** Existing `main` branch includes HRMS Main V8 and the previous Ms Kate HR-role correction. This ZIP only contains incremental changes.
-2. Extract this ZIP on your computer. The source paths inside the ZIP begin at `app/`, `components/`, and `lib/` (no extra project root).
-3. On GitHub, edit/upload these six files into their exact corresponding paths:
-   - `components/SpreadsheetWorkspace.tsx` (replace)
-   - `lib/sheetSearch.ts` (new)
-   - `app/spreadsheets/spreadsheet.css` (replace)
-   - `app/studio/docs/[id]/page.tsx` (replace)
-   - `lib/studio/textSearch.ts` (new)
-   - `app/studio/pdf/[id]/page.tsx` (replace)
-4. Commit all changes together to `main`. Vercel will build the new commit.
-5. Check the **first** red error (if any). Do not mistake the nonfatal autoprefixer warnings about `start`/`flex-start` for the blocking error.
-6. Browser smoke tests: use Docs Find/Previous/Next in view-only mode; confirm Replace is disabled without approval. Use working sheets Find/Replace, verify formula cells cannot be replaced and HRMS report sheets stay read-only. Generate a fillable PDF and confirm its output opens in Document Library.
+**Prerequisite:** Your GitHub `main` branch should already contain V9, the combined PDF build fix, and Ms Kate's corrected HR inheritance.
 
-**Conflict caution:** This source is based on your latest locally available V8 snapshot, not a fresh checkout of live GitHub commit `9a6b455`. If GitHub has newer edits in these same files, merge changes instead of overwriting them.
+1. Extract this ZIP. Source files have relative paths starting at `app/`, `components/`, or `lib/` (no extra root folder).
+2. On GitHub, upload/replace **only** the five files listed below in their exact folders:
+   - `app/page.tsx` — **replace**
+   - `components/ModuleAlerts.tsx` — **replace**
+   - `components/AuditLogWorkspace.tsx` — **add**
+   - `components/AuditLogWorkspace.module.css` — **add**
+   - `lib/auditViews.ts` — **add**
+3. Commit them together to the `main` branch; check the resulting Vercel build before proceeding.
+4. Browser QA: sign in as HR, open Audit Logs, create a test action in a module, return to Audit Logs, search/filter and export; confirm the CSV contains the browser event, **not** the Dashboard sample activity. Repeat as Ms Kate. BM should have no Audit Logs menu; final approval remains Ms Kate-only.
+5. Open the universal bell, switch branch, confirm the popup closes. Reopen and press Escape: keyboard focus should return to the bell.
+6. Verify no old locally saved data is erased and that payroll, Docs, Sheets, and final-pay pages still open.
 
-No `package.json`/lockfile changes, no data migrations, no ERP, no live CMS or Accounting connection.
+**Important:** The source is reconstructed from the latest *locally available* V9 HRMS project, **not** fetched from your current live GitHub commit. If you've changed `app/page.tsx` or `components/ModuleAlerts.tsx` since V9, compare/merge before overwriting.
+
+**Known limitations:** Full Next.js production build/browser click-through could not be run in this environment because npm's offline cache lacked required project dependencies. Live Vercel deployment verification is still required. This patch doesn't add server-side tamper-proof auditing, branch-scoped audit metadata for older events, or production authorization.
