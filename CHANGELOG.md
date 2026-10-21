@@ -1,26 +1,17 @@
-# HRMS — Dashboard Analytics & Recruitment Calendar Revision
+# HRMS UI Layout Recovery V1 — Changelog
 
-Base: the user-uploaded `hrms-prot-main (1).zip` (not an older consolidated snapshot). Patch contains only seven new/changed source files.
+**Baseline:** User's `hrms-prot-main (1).zip` plus `hrms-premium-dashboard-employee201-add-filter-combined-patch-only.zip` (already delivered). Prepared October 21, 2026.
 
-## Dashboard
-- An analytics-first dashboard precedes Quick Actions and existing Module Alerts.
-- Employee 201: branch-specific headcount and recorded Male/Female/Other or unspecified counts; no invented gender values.
-- Last completed Philippine calendar month: new hires from recorded hire date; separations from *applied* Employee Lifecycle Offboard effective dates; terminations separated from other exits; role-protected position breakdown for HR/Super Admin/Ms Kate.
-- Last-month gross salary releases: only `Browser Review`, `Released`, `Salary` transactions actually recorded in HRMS. Excludes seeded sample releases, other kinds, and pending releases. Shows empty state if none exist. Branch is based on the employee's **current** branch; this is not a historical branch payroll ledger.
-- HR Forms and Incident Reports: counts of submitted/pending and documentation-approved/rejected or closed records, respecting available role/branch visibility. Demo incidents remain labeled.
-- Account-holder KPI: own pending/decided HR documentation requests and, for HR reviewers, submitted requests available for review and reviews recorded under their username. Does not pretend to be a complete employee performance KPI.
-- Quick Actions, alerts, links, and existing modules remain available.
+## Changes
 
-## Recruitment & Hiring
-- Restored previously existing `RecruitmentInterviewCalendar` on Recruitment home, showing actual available applicant interview schedules.
-- Desktop: three workflow cards stacked on the left, calendar on the right; responsive layout for smaller screens.
-- Calendar agenda and upcoming appointments link to the respective applicant; respects current branch filtering.
-- Restored calendar component styles, which were not present in the uploaded `app/globals.css`.
-
-## Employee 201
-- Renamed directory's `View` action to `Full View` in table and compact cards. Reuses the existing Employee 201 complete record and edit workflow; no duplicate data views created.
+1. `app/layout.tsx` — load new route-wide `layout-recovery.css` **after** the existing global and universal UI styles. No changes to metadata, components, or HRMS state.
+2. `app/layout-recovery.css` — repair previously unstyled `employee-full-*` fields; restore three/two/one-column responsive cards, clear label/value separation, edit input sizing, section spacing, compensation hints, and mobile styles. Restore the browser-only report spreadsheet (`rs-*` toolbar, tabs, cells, horizontal scrolling, sticky headers, and pagination); Leave add-request portal dialog (`uc-modal-*`); attendance controls and summary stats (`uc-attendance-*`); workbook cards; Studio document merge preview; applicant upload area; and a few previously missing supporting UI classes. Added safe flex/grid min-width and table-scroll safeguards without hiding overflowing content or changing records.
+3. `components/ReportsLanding.tsx` — add **Table preview / Worksheet view** switch for a selected government sample report. Both the existing paginated table and worksheet remain available, but are no longer simultaneously rendered with duplicate data. Switching reports defaults to Table preview. Export, print, and official-reference sections remain available.
 
 ## Preserved
-- No mutations to employee, payroll, CMS, Accounting, incident, form, or Ms Kate approval stores.
-- Existing Super Admin / HR / BM / Ms Kate role definitions retained.
-- No ERP or external system integration.
+
+No change to Employee 201 fields or records, salary math, Payroll batches, Ms Kate's inherited HR permissions/exclusive final-approval permission, request approvals, localStorage keys, notification data, backend setup, or external integrations. CMS/Accounting are not connected; ERP remains fully standalone.
+
+## Limitations
+
+Fixes confirmed missing-style cases and one duplicate report UI; it is **not** proof every module or control is bug-free. Full Next.js build could not be run because offline npm cache lacks TipTap dependencies. See `QA_REPORT.md` and `WHOLE_SITE_UI_AUDIT.md` for verification levels.
