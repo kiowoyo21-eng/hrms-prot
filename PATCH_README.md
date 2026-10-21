@@ -1,19 +1,21 @@
-# Installation — HRMS Main V10 (GitHub website only)
+# INSTALLATION — HRMS Employee Demographics & Forms Patch
 
-**Prerequisite:** Your GitHub `main` branch should already contain V9, the combined PDF build fix, and Ms Kate's corrected HR inheritance.
+This ZIP is **changed/new files only**. It is based on the latest locally available HRMS Main V10 workspace, NOT a live checkout of your GitHub branch.
 
-1. Extract this ZIP. Source files have relative paths starting at `app/`, `components/`, or `lib/` (no extra root folder).
-2. On GitHub, upload/replace **only** the five files listed below in their exact folders:
-   - `app/page.tsx` — **replace**
-   - `components/ModuleAlerts.tsx` — **replace**
-   - `components/AuditLogWorkspace.tsx` — **add**
-   - `components/AuditLogWorkspace.module.css` — **add**
-   - `lib/auditViews.ts` — **add**
-3. Commit them together to the `main` branch; check the resulting Vercel build before proceeding.
-4. Browser QA: sign in as HR, open Audit Logs, create a test action in a module, return to Audit Logs, search/filter and export; confirm the CSV contains the browser event, **not** the Dashboard sample activity. Repeat as Ms Kate. BM should have no Audit Logs menu; final approval remains Ms Kate-only.
-5. Open the universal bell, switch branch, confirm the popup closes. Reopen and press Escape: keyboard focus should return to the bell.
-6. Verify no old locally saved data is erased and that payroll, Docs, Sheets, and final-pay pages still open.
+## GitHub website installation
+1. Confirm the HRMS Main V10 and prior Ms Kate HR-role correction and previous patches are in your repository.
+2. Download/extract the ZIP. Open the `app/`, `lib/` and `components/` directories.
+3. For each source file in this package, upload or replace the corresponding file **at the identical relative repository path**. If GitHub has newer edits to any file, compare and merge rather than blindly overwrite.
+4. Commit changes together to `main`. Wait for Vercel and inspect the deployment. If it fails, send the first TypeScript/webpack error log.
+5. Sign in with existing HR, Ms Kate or Super Admin demo roles. Open **Employee Demographics**; for forms, open **HR Forms & Requests**. BM sees forms only.
+6. Verify the branch selector, missing-field counts, age groups, compensation summary, salary reference date, classification edits, data exports, form drafts, submission and separate reviewer actions, downloaded TXT draft, notification center and reset operation.
 
-**Important:** The source is reconstructed from the latest *locally available* V9 HRMS project, **not** fetched from your current live GitHub commit. If you've changed `app/page.tsx` or `components/ModuleAlerts.tsx` since V9, compare/merge before overwriting.
+## What is NOT in this patch
+- NO live CMS, Accounting or ERP integrations.
+- NO legal submission, real employment permit, government-certified minimum wage check, biometric verification, verified digital signature or guaranteed lawful employment document.
+- NO automatic posting from documentation request to Leave, Payroll, 201 status, attendance, funds release or government filing.
+- NO employee self-service login; BM/HR submit demo request records linked to Employee 201.
+- Browser localStorage remains demonstration-only and is not safe for real confidential HR or grievance records.
 
-**Known limitations:** Full Next.js production build/browser click-through could not be run in this environment because npm's offline cache lacked required project dependencies. Live Vercel deployment verification is still required. This patch doesn't add server-side tamper-proof auditing, branch-scoped audit metadata for older events, or production authorization.
+## Pending QA
+The npm dependency tree was unavailable locally; an end-to-end Next.js/Vercel build and browser screenshot/click-through were NOT verified. See `QA_REPORT.md`.

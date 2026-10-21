@@ -5,6 +5,7 @@ import {initialPayrollConfig,normalizePayrollConfig,type PayrollConfig} from "./
 import type {SalaryDestination} from "./salaryDisbursement";
 import {writeAuditEvent,changedFields} from "./auditTrail";
 import type {EmployeeLifecycleCase} from "./employeeLifecycle";
+import type {JobLevel,EmploymentArrangement} from "./employeeDemographics";
 import type {FinalPayCase} from "./finalPayReview";
 export type EmployeeAssignment={
  id:string;effectiveDate:string;kind:"Initial Assignment"|"Transfer"|"Promotion"|"Reassignment";
@@ -22,6 +23,8 @@ export type HRPerson=Person & {
  sssNumber?:string;philhealthNumber?:string;pagibigNumber?:string;tinNumber?:string;
  monthlyWorkDays?:number;hoursPerDay?:number;nationality?:string;placeOfBirth?:string;middleName?:string;suffix?:string;emergencyAddress?:string;
  onboardingApplicantId?:string;
+ /** Independent demographics axes, editable from the dedicated Demographics module. */
+ jobLevel?:JobLevel;employmentArrangement?:EmploymentArrangement;
 };
 export type PremiumProfile={ot:number;rdw:number;rdot:number;regular:number;special:number;effective:string;reason:string};
 export type AssetStatus="Free"|"Pending Turnover"|"Assigned"|"For Return"|"Inspection"|"Maintenance"|"Retired";

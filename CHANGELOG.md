@@ -1,22 +1,42 @@
-# HRMS Main V10 — Universal UI, Audit & Permission Consistency
+# HRMS Main Extension — Employee Demographics & HR Forms
+Date: 2026-10-21
 
-## Changes — October 21, 2026
+## New: Employee Demographics & Compensation
+- Dedicated sidebar module (not merely a filter in Reports).
+- Independent **job level** classification: Rank-and-File, Supervisory, Managerial, Not recorded.
+- Independent **employment arrangement**: Regular, Probationary (explicit assignment only), Contractual, Project-Based, Seasonal, Casual, Fixed-Term, Other, Not recorded.
+- Existing status remains distinct from arrangement. Legacy explicit Regular / Project-Based / etc status can be displayed as a fallback; a probationary lifecycle status alone never implies a contract type.
+- Records classification directly on Employee 201 HRPerson objects without altering salary, employment status, approval processes or payroll releases. Displays these fields within the Employee 201 full profile.
+- Branch, department, status, level, arrangement, age-band, tenure-band and recorded-gender summaries, including unknowns.
+- Male, female and unspecified basic-rate totals (monthly and annualized), with missing-conversion counts. Effective-dated rate changes are considered.
+- Daily-paid staff need a recorded monthly working-day divisor for estimated monthly/annualized totals. Monthly-paid staff need that divisor before a daily minimum-wage reference comparison.
+- User-selected historical wage-reference comparison: at, above, below or not comparable. This is **NOT a legal minimum-wage determination**.
+- Aggregate summary CSV and employee reference CSV, with formula-injection mitigation and without raw government IDs.
 
-### Audit History (functional correction)
-- Replace duplicate browser-event and illustrative sample timelines with **one browser-recorded audit workspace**. The Dashboard's separate sample-activity illustration remains untouched.
-- Search recorded events by non-sensitive metadata (module, actor, action, IDs, status); filter by module/actor/action; clear filters; paginate 50 at a time.
-- CSV download exports **the actual filtered browser events**, not fictional sample activity. CSV is labeled as browser-local demo, timestamps are Asia/Manila, and free-text summary/remarks are excluded.
-- Guard against malformed audit records, invalid timestamps, and duplicate event IDs in the *view*, without deleting or migrating saved browser data.
-- Show detailed summaries and recorded remarks only to Super Admin; role-specific audit access follows the existing permissions matrix.
-- Explicitly warn that legacy audit records lack reliable branch metadata and that localStorage evidence is not tamper-evident.
+## New: HR Forms & Document Requests
+- Separate sidebar workspace with a request register, dynamic typed forms, branch-scoped Employee 201 association, validations and searchable statuses.
+- 15 internal documentation templates: overtime, internal work authorization, leave documentation, dispute/grievance, document requests, attendance correction, schedule changes, incident statement, asset clearance, COE, policy acknowledgment, Notice to Explain response, return-to-work clearance, field assignment, separation/clearance.
+- Save drafts, submit, return for revision, revise/resubmit, approve documentation and reject; reason required for returns/rejections, and self-approval restricted.
+- Editable browser-local demo records with decision history, metadata-only audit events, and unsigned TXT draft downloads.
+- Browser-local registry is role/branch scoped, and reset-demo actions clear the new local store.
+- Universal notification bell shows pending documentation review and returned requests with no extra bell.
 
-### Universal UI consistency
-- Notification popover closes when the user changes branches or modules, preventing a stale popup after switching views.
-- Escape key closes the notification popover and returns keyboard focus to its trigger.
-- New Audit History filters and event rows have responsive narrow-screen layouts.
+## Permissions / preservation
+- HR and Ms Kate have normal HR access; Ms Kate retains her separate final-approval authority.
+- BM can submit and see only its own UC Mandaluyong demo forms; cannot approve.
+- Super Admin access is retained; demo maker-checker check applies.
+- Existing Docs, leave, payroll, legal/official forms, final pay and CMS/Accounting workflows are not mutated by documentation decisions.
+- No ERP connection. No new external database or service integration.
 
-### Preserved
-- Existing HRMS employees, payroll calculations, leaves, assets, incidents, Docs/Sheets, final-pay and Ms Kate final-approval logic.
-- HR and Ms Kate audit visibility; Ms Kate inherits HR modules while only her special role has final approval. No new account or authentication change.
-- Audit storage key (`uc-hr-ui-audit-trail-v2`) and existing audit event writers. No data reset or migration.
-- Browser-only design; no CMS/Accounting/ERP integration added.
+## Updated or new source files
+- app/page.tsx
+- lib/mock.ts
+- lib/hrState.tsx
+- lib/employeeDemographics.ts (new)
+- lib/hrForms.ts (new)
+- components/EmployeeDemographicsWorkspace.tsx (new)
+- components/HRFormsRequestsWorkspace.tsx (new)
+- components/HROperationsExtras.module.css (new)
+- components/workspace/EmployeeFullRecord.tsx
+- components/DashboardExtras.tsx
+- components/ModuleAlerts.tsx

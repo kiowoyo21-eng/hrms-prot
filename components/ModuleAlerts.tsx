@@ -72,7 +72,7 @@ export function UniversalNotificationCenter({current,branch,allowed,onNavigate}:
  const allCount=groups.reduce((sum,group)=>sum+group.items.length,0);
  const currentCount=groups.find(group=>group.id===current)?.items.length||0;
  const displayed=scope==="all"?groups:groups.filter(group=>group.id===current);
- const nameOf=(id:ModuleId)=>({loans:"Payroll Management",ir:"Incident Reports",lifecycle:"Recruitment & Hiring",employees:"Employee 201"} as Partial<Record<ModuleId,string>>)[id]||({dashboard:"Dashboard",submissions:"Submit Employee Documents",assets:"Assets & Devices",compliance:"Government Compliance",documents:"Employee Documents",payroll:"Payroll Management",leave:"Leave Management",filters:"Reports & Analytics",drive:"HRMS Drive",spreadsheets:"Spreadsheets",studio:"Document Library",audit:"Audit Logs",settings:"Settings"} as Partial<Record<ModuleId,string>>)[id]||id;
+ const nameOf=(id:ModuleId)=>({loans:"Payroll Management",ir:"Incident Reports",lifecycle:"Recruitment & Hiring",employees:"Employee 201"} as Partial<Record<ModuleId,string>>)[id]||({dashboard:"Dashboard",demographics:"Employee Demographics", "hr-forms":"HR Forms & Requests",submissions:"Submit Employee Documents",assets:"Assets & Devices",compliance:"Government Compliance",documents:"Employee Documents",payroll:"Payroll Management",leave:"Leave Management",filters:"Reports & Analytics",drive:"HRMS Drive",spreadsheets:"Spreadsheets",studio:"Document Library",audit:"Audit Logs",settings:"Settings"} as Partial<Record<ModuleId,string>>)[id]||id;
  useEffect(()=>{setOpen(false);setScope(current==="dashboard"?"all":"module")},[current,branch]);
  useEffect(()=>{if(!open)return;
   const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape"){setOpen(false);anchor.current?.focus()}};
