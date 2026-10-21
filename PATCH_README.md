@@ -1,31 +1,22 @@
-# Install: HRMS Main V5 (patch only)
+# GitHub Web Installation — HRMS Main V6
 
-**Required baseline:** The consolidated HRMS code with Main V4 Employee Lifecycle and the corrected Ms Kate HR role inheritance (not the earlier approval-only guard). This patch was assembled against the locally available prior patch archives, not a live checkout of GitHub `main`.
+This is an **incremental patch**, NOT the full HRMS project. It assumes Main V5 and the Ms Kate HR-role inheritance correction are already installed. Prefer the latest repository versions over earlier cumulative archives.
 
-## Exact source paths
+1. Extract the ZIP on your Mac.
+2. Open the existing HRMS repository on GitHub (main branch).
+3. Upload/replace files **inside matching folders**:
+   - `components/PayrollOperationsHub.tsx` (replace)
+   - `lib/attendanceUpload.ts` (replace)
+   - `lib/attendanceReview.ts` (new)
+   - `lib/payrollReconciliation.ts` (new)
+4. Keep every other source file and `package.json` unchanged. Commit all four files in one commit.
+5. In Vercel, review the new deployment's full build log (including TypeScript). If failed, share the FIRST build error.
+6. Test in browser: Payroll → Generate Payslips → attendance CSV import (valid/error), cutoff verification, draft review, branch switch, leave/loan reconciliation, approval/release guarding.
 
-1. `components/FinalPayReviewPanel.tsx` — NEW
-2. `components/FinalPayReviewPanel.module.css` — NEW
-3. `components/PayrollOperationsHub.tsx` — REPLACE
-4. `lib/finalPayReview.ts` — NEW
-5. `lib/hrState.tsx` — REPLACE
-6. `lib/payrollConfig.ts` — REPLACE
-7. `lib/employeeLifecycle.ts` — REPLACE (Ms Kate HR role access for lifecycle steps)
+Example CSV columns:
 
-For GitHub website upload, extract ZIP, upload files into those **existing folders**, commit all seven together to `main`, and verify Vercel. Never upload the ZIP as one repository file. Check for conflicts if your live repository has newer changes in any of the four replaced files.
+`Employee ID,Date,Time In,Time Out,Status,Approved OT Hours,OT Approved,Notes`
 
-## Demo exercise
+The selected **Cutoff Thursday** starts a seven-day period (Thu–Wed). Use exact Employee 201 IDs and branches. No save when any CSV issue remains. Complete employee/day coverage and human review are required to approve a new draft.
 
-1. Sign in with HR, Ms Kate, or Super Admin and open **Employee 201**. Submit and complete an **Offboard** lifecycle review with required checklists and physical asset returns. Super Admin must apply the lifecycle case (employee becomes Clearance Pending).
-2. Open **Payroll Management → Final Pay & Clearance**. Prepare a review from an eligible offboarding handoff.
-3. Fill each itemized field from verified source documents and enter the five reconciliation references, then **Save preparation** and **Submit saved draft for HR review**.
-4. Sign out and sign in as **another authorized HR user**. Review details, confirm the requirements, add an 8+ character decision reference, and record **HR Reviewed**. You cannot independently review your own preparation.
-5. Record **Accounting Handoff (Demo)**: this saves local preparation status only. It is not a real Accounting request, approval, Ms Kate final decision, or fund release.
-6. Try switching branches, reopening a returned draft, duplicate preparation, assigning an unreturned asset, or leaving a payslip draft unreleased; the review should block as described.
-
-## Important
-
-- Loan register currently stores an independent browser-local ledger and is not a verified bank/accounting ledger. The loan entry is a **manually reconciled** provisional amount, and a supporting SOA/authorization reference is mandatory. Do not import name-matched loans as definitive deductions.
-- Amount inputs are **not statutory entitlement calculations**. Validate applicable Philippine labor rules, final payroll cutoffs, remittances and lawful deductions externally before any payout.
-- Browser-local data and audit logs are not tamper-proof. Production requires shared database RLS, server-side access checks and immutable decision logs.
-- No connection to ERP under any circumstances.
+**Important:** In this frontend demo, `Verified` is a manually reviewed state, not proof of biometric authenticity or real approval. Existing browser data is not backed up or synced across devices. Do not upload real sensitive employee punch records or financial details until a secure production backend exists.

@@ -1,16 +1,20 @@
-# HRMS Main V5 QA report
+# HRMS Main V6 — QA Report
 
-## Executed and passed locally
-- 39 focused assertions for role/maker-checker restrictions, create/dedup, offboarding association, branch and status validation, asset and unreleased payroll blockers, required reconciliation references, negative and cent precision validation, arithmetic totals, last-day date rules, invalid transitions, return/resubmit, stale review rejection, independent reviewer, demo handoff, and history retention.
-- 121 TS/TSX source files parsed successfully with the global TypeScript parser in the reconstructed codebase; 0 missing relative imports detected.
-- `lib/finalPayReview.ts` passed standalone `tsc --strict --noEmit` with matching type stubs for its HRState dependencies.
-- New CSS module parsed with no syntax errors.
+## Completed checks
 
-## NOT VERIFIED
-- A complete `npm run build` was **not executed successfully**; `npm install --offline` failed because the project dependencies were not cached and network `npm install` timed out. Vercel production build and real desktop/mobile browser tests remain pending.
-- No production backend, real Accounting/CMS synchronization, immutable audit, actual payout or financial reconciliation tested.
-- Full HRMS-wide visual/functional regression remains pending. None of the original payroll calculation/release functions were modified by this patch. Employee Lifecycle role gates now include Ms Kate where HR access is required, but retain Super Admin final-signoff restriction.
+- 31 focused attendance import, cutoff coverage, duplicate/invalid CSV, submitted-draft blocking and attendance→draft comparison assertions: PASS.
+- 21 focused leave/loan reconciliation, conflicting approvals, status filtering, branch/name scoping and malformed local data assertions: PASS.
+- Isolated `tsc --strict --noEmit` for `lib/attendanceUpload.ts`, `lib/attendanceReview.ts`, `lib/payrollReconciliation.ts`: PASS.
+- Full assembled source parse/import scan (122 TS/TSX files, 345 relative imports): PASS, zero missing relative imports or syntax diagnostics.
+- Patch scope diffed against V5 workspace; only 4 new/modified source files.
+- ZIP paths and archive integrity verified.
 
-## Deployment smoke-test checklist
-- Confirm Vercel build, new Payroll card renders, mobile form does not overflow, branch switching hides out-of-scope records, lifecycle eligibility displays correct employees, no duplicate records, no stale data on change of selection.
-- Check HR/Ms Kate/Super Admin vs BM visibility, second-account review, asset hold, draft payroll hold, validation failures, return and reapproval, audit entries, no new payroll releases, and no notification duplicates.
+## Pending tests / limits
+
+- FULL `next build`, whole-project TS typecheck and Vercel deployment: NOT VERIFIED (no installed project npm dependencies locally).
+- Browser end-to-end clicking, modal responsiveness and real file-picker behavior: NOT VERIFIED.
+- Existing complete employee/payroll workflows regression requires deployed browser test with current user's local data. Synthetic logic tests do not prove full correctness.
+- Browser-local security is not server authorization; all decisions need backend-enforced maker-checker, durable audit, versioned evidence, and shared-database integration before production.
+- Leave and loan browser records are matched by legacy name+branch only. This is informational: not a safe basis for automated deductions or approved leave pay.
+- Uploaded CSV is untrusted. Verification reflects manual HR review only; attendance policy, paid/unpaid leave, OT rate, withholding and payroll amounts require independent review.
+- Existing older demo records without validated employee-day CSV rows do NOT satisfy the new approval gate. Reupload and review evidence as appropriate.

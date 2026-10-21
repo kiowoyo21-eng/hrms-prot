@@ -55,7 +55,7 @@ export function parseAttendanceImport(text:string,employees:readonly Person[],br
   const row=lines[i],get=(c:string)=>column(c)<0?'':(row[column(c)]||'').trim();
   const employeeId=get('id').toUpperCase(),employee=personMap.get(employeeId),day=get('date');
   if(!employee){issues.push(`Row ${i+1}: Employee ID ${employeeId||'(blank)'} is not in ${branch}`);continue}
-  if(!ISO.test(day)||new Date(`${day}T12:00:00`).toISOString().slice(0,10)!==day||day<start||day>end){issues.push(`Row ${i+1}: Date must be within ${start}–${end}`);continue}
+  if(!ISO.test(day)||!Number.isFinite(Date.parse(`${day}T12:00:00`))||new Date(`${day}T12:00:00`).toISOString().slice(0,10)!==day||day<start||day>end){issues.push(`Row ${i+1}: Date must be within ${start}–${end}`);continue}
   if(day<employee.hire){issues.push(`Row ${i+1}: Attendance predates this employee's hire date`);continue}
   const pair=`${employeeId}:${day}`;if(seen.has(pair)){issues.push(`Row ${i+1}: Duplicate employee/date ${pair}`);continue}seen.add(pair);
   const status=allowed[key(get('status'))];if(!status){issues.push(`Row ${i+1}: Invalid attendance status`);continue}
