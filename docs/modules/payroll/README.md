@@ -15,3 +15,7 @@ End-to-end payroll, history, and reference editing browser tests remain pending.
 Government deduction reference pop-ups use portaled, centered operational dialogs, small version/status/brackets chips, selectable saved version, a searchable 10-row paginated bracket scroller, and persistent approval/propose/import actions. SSS, PhilHealth, Pag-IBIG and BIR share the design; existing schedule versions, validation, handlers, and demo-only approvals remain.
 
 See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operational caveats.
+
+### Batch 08 UI migration note
+
+This module continues to use its existing business data and action handlers. Batch 08 adopts the shared UI tab, dialog accessibility or scoped styling patterns wherever applicable. See [Batch 08 revision record](../../revisions/batches/BATCH-08-UNIVERSAL-UI.md) for exact changed files and **unverified** browser checks; this does not certify the entire module as design-system migrated.

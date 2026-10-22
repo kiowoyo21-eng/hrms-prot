@@ -128,3 +128,17 @@ See [Batch 06](batches/BATCH-06-DASHBOARD.md). No non-dashboard modules changed.
 See [Batch 07](batches/BATCH-07-REVISED-UI.md) for exact data semantics and unresolved QA. All cross-app integrations remain separate and unconnected.
 
 The YTD calculation smoke test is under `scripts/check-dashboard-ytd.cjs` (source-level test, not interactive payroll certification).
+
+## Batch 08 — Universal UI component adoption (source edits; runtime not verified)
+
+| Revision | Real files | Scope | State | Test/remaining work |
+|---|---|---|---|---|
+| UI8-01 | `components/ui/HrmsPrimitives.tsx`, `app/hrms-components.css`, `app/layout.tsx` | Shared visual/control primitives | implemented | Parse/import checks; use in further legacy screens |
+| UI8-02 | `components/GroupedWorkspace.tsx`, `components/ReportsLanding.tsx`, `components/HRFormsRequestsWorkspace.tsx`, `components/RecruitmentWorkspace.tsx` | Consolidated working tabs | implemented | Source checks only; browser interactions outstanding |
+| UI8-03 | `components/HelpButton.tsx` | Shared help dialog | implemented | Focus/Escape browser test outstanding |
+| UI8-04 | `components/ui/useManagedDialog.ts`, `components/PayrollOperationsHub.tsx`, `components/LeaveManagementWorkspace.tsx`, `components/AssetWorkspace.tsx` | Topmost modal/keyboard behavior | implemented | Browser modal navigation/approvals outstanding |
+| UI8-05 | `app/hrms-migration.css` | Scoped legacy card/input/table/modal polish | implemented | Responsive screenshots and full cross-module QA outstanding |
+| UI8-06 | `scripts/check-ui-components.cjs` | Shared UI wiring smoke test | implemented | Script test passed; not a full UI test |
+| UI8-07 | All legacy UI modules and styles | Complete React primitive migration, strict stylelint/token enforcement, CSS cleanup | **planned** | Do not claim complete until runtime and codebase-wide migration |
+
+[Full Batch 08 mapping and limits](batches/BATCH-08-UNIVERSAL-UI.md).

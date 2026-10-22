@@ -1,5 +1,6 @@
 "use client";
 import type {ReactNode} from "react";
+import {HrmsTabs} from "./ui/HrmsPrimitives";
 import "../app/studio/studio.css";
 import "../app/spreadsheets/spreadsheet.css";
 import {ClipboardList,FileWarning,ChartNoAxesCombined,Users,HardDrive,FileSpreadsheet,Files} from "lucide-react";
@@ -16,9 +17,7 @@ type RequestTab="forms"|"incidents";
 type ReportTab="reports"|"demographics";
 type ToolTab="drive"|"spreadsheets"|"library";
 function Tabs<T extends string>({label,options,value,onChange}:{label:string;options:{id:T;title:string;icon:ReactNode}[];value:T;onChange:(value:T)=>void}){
- return <div className="hrms-unified-tabs" role="group" aria-label={label}>
-  {options.map(option=><button type="button" key={option.id} aria-pressed={value===option.id} className={value===option.id?"is-active":""} onClick={()=>onChange(option.id)}>{option.icon}<span>{option.title}</span></button>)}
- </div>;
+ return <HrmsTabs label={label} items={options.map(option=>({id:option.id,label:option.title,icon:option.icon}))} value={value} onChange={onChange}/>;
 }
 export function RequestReportsWorkspace({branch,role,username,tab,setTab}:{branch:Branch;role:Role;username:string;tab:RequestTab;setTab:(value:RequestTab)=>void}){
  return <div className="hrms-unified-workspace"><Tabs label="Request and Reports" value={tab} onChange={setTab} options={[{id:"forms",title:"HR Forms & Requests",icon:<ClipboardList size={17}/>},{id:"incidents",title:"Incident Reports",icon:<FileWarning size={17}/>}]} />

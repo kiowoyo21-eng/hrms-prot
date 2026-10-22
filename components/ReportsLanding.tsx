@@ -2,6 +2,7 @@
 import {useMemo,useState} from "react";
 import {ArrowLeft,ArrowRight,CalendarDays,Download,ExternalLink,FileSpreadsheet,FileText,Info,Landmark,Printer,Search,Users} from "lucide-react";
 import ReportsWorkspace from "./ReportsWorkspace";
+import {HrmsTabs} from "./ui/HrmsPrimitives";
 import ReportSpreadsheet from "./ReportSpreadsheet";
 import {WORKBOOKS} from "../lib/workbookRegistry";
 import HelpButton from "./HelpButton";
@@ -47,7 +48,7 @@ export default function ReportsLanding({branch,role}:{branch:Branch;role:Role}){
  if(role==="BM")return <section className="panel">Reports containing employee pay and government reporting data are restricted to authorized HR and Super Admin users.</section>;
  return <div className="gr-root">
   <div className="gr-module-head"><div><h2>Reports & Analytics</h2></div><HelpButton topic="reports" label="Info"/></div>
-  <div className="gr-main-tabs"><button type="button" className={view==="government"?"active":""} onClick={()=>setView("government")}><Landmark size={16}/> Government Reports</button><button type="button" className={view==="employee"?"active":""} onClick={()=>setView("employee")}><Users size={16}/> Employee Analytics</button><button type="button" className={view==="workbook"?"active":""} onClick={()=>setView("workbook")}><FileSpreadsheet size={16}/> Spreadsheet Workspace</button></div>
+  <HrmsTabs label="Reports workspace" value={view} onChange={setView} items={[{id:"government",label:"Government Reports",icon:<Landmark size={16}/>},{id:"employee",label:"Employee Analytics",icon:<Users size={16}/>},{id:"workbook",label:"Spreadsheet Workspace",icon:<FileSpreadsheet size={16}/>}]} />
   {view==="workbook"&&<section className="panel"><div className="panel-head"><div><h3>Module-specific spreadsheets</h3><p>Select a workbook. Each opens in its own browser tab with relevant worksheets only.</p></div></div><div className="hrms-workbook-cards">{WORKBOOKS.map(w=><a key={w.id} href={`/spreadsheets/${w.id}?branch=${encodeURIComponent(branch)}`} target="_blank" rel="noopener noreferrer"><FileSpreadsheet size={19}/><strong>{w.name}</strong><small>{w.description}</small><span>Open workbook ↗</span></a>)}</div></section>}
   {view==="government"&&<>
     {chosen&&sample?<>

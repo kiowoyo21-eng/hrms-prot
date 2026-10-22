@@ -10,3 +10,7 @@ The **Request and Reports** sidebar entry has two separate functional tabs: **HR
 - Ms Kate's normal HR role access remains. Cross-system CMS / Accounting routing is still **planned**, not live.
 
 Do not submit real sensitive complaints to local browser demo storage. Full browser QA of approval and document interactions remains unverified.
+
+### Batch 08 UI migration note
+
+This module continues to use its existing business data and action handlers. Batch 08 adopts the shared UI tab, dialog accessibility or scoped styling patterns wherever applicable. See [Batch 08 revision record](../../revisions/batches/BATCH-08-UNIVERSAL-UI.md) for exact changed files and **unverified** browser checks; this does not certify the entire module as design-system migrated.

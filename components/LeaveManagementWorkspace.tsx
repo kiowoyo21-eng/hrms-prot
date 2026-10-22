@@ -7,6 +7,7 @@ import {useHR,type HRPerson} from "../lib/hrState";
 import {useLocalRecords} from "../lib/useLocalRecords";
 import {ModuleAlertButton,usePublishModuleAlerts} from "./ModuleAlerts";
 import CalendarDatePicker from "./CalendarDatePicker";
+import {useManagedDialog} from "./ui/useManagedDialog";
 import type {Branch,Role} from "../lib/mock";
 
 type LeaveStatus="Pending"|"For Review"|"Approved"|"Rejected"|"Cancelled";
@@ -102,7 +103,9 @@ export default function LeaveManagementWorkspace({branch,role}:{branch:Branch;ro
   setArea(target);setStatusFilter(already?"All":chosen);setSearch("");setTypeFilter("All");setYearFilter("All");setMonthFilter("All");setPage(1);setShowAdd(false);setNotice("");
  };
  const chooseNotification=(action?:string)=>{if(!action)return;if(action.startsWith("leave:")){go("pending");openLeave(Number(action.slice(6)))}if(action.startsWith("credit:")){go("credits");openCredit(action.slice(7))}};
- useEffect(()=>{if(!showAdd)return;const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape")setShowAdd(false)};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)},[showAdd]);
+ useManagedDialog(showAdd,".uc-modal-dialog",()=>setShowAdd(false));
+ useManagedDialog(detailId!==null,".leave-modal",()=>setDetailId(null));
+ useManagedDialog(creditId!==null,".leave-modal",()=>setCreditId(null));
  function createLeave(e:React.FormEvent){e.preventDefault();if(!canEdit||!selection)return;const n=Math.round((new Date(`${to}T12:00:00`).getTime()-new Date(`${from}T12:00:00`).getTime())/86400000)+1;
   if(!(n>0)){setNotice("End date must be the same or later than start date.");return}if(!reason.trim()){setNotice("Please enter the employee's reason for leave.");return}
   setLeaves(old=>[{id:Math.max(0,...old.map(x=>x.id))+1,employee:selection.name,branch:selection.branch,type:leaveType,from,to,days:n,status:"Pending",notes:reason.trim(),decisionHistory:[]},...old]);setShowAdd(false);setReason("");go("pending");setNotice("Leave request added to Pending Leave Requests (browser-only record).");

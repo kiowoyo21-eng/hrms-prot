@@ -10,6 +10,7 @@ import {basicRateOnDate,initialPayrollConfig,normalizePayrollConfig,roundMoney,t
 import {printHRDocument} from "../lib/printDocument";
 import HelpButton from "./HelpButton";
 import CalendarDatePicker from "./CalendarDatePicker";
+import {useManagedDialog} from "./ui/useManagedDialog";
 import PeopleOperationsWorkspace from "./PeopleOperationsWorkspace";
 import FinalPayReviewPanel from "./FinalPayReviewPanel";
 
@@ -50,7 +51,7 @@ export default function PayrollOperationsHub({branch,role,initialEmployeeId}:{br
  const [area,setArea]=useState<PayrollArea|null>(initialEmployeeId?"rates":null),[notice,setNotice]=useState(""),[q,setQ]=useState(""),[page,setPage]=useState(1),[rowsPer,setRowsPer]=useState(10),[filterBranch,setFilterBranch]=useState("All Branches");
  const [agency,setAgency]=useState<Agency>("SSS"),[govModal,setGovModal]=useState(false),[govConfirm,setGovConfirm]=useState(false),[selectedGovVersion,setSelectedGovVersion]=useState(""),[bracketQuery,setBracketQuery]=useState(""),[editingVersion,setEditingVersion]=useState<DeductionVersion|null>(null),[versionDate,setVersionDate]=useState(currentIso()),[versionSource,setVersionSource]=useState("");
  const [govPage,setGovPage]=useState(1);
- useEffect(()=>{if(!govModal)return;const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape"){setGovModal(false);setEditingVersion(null)}};window.addEventListener("keydown",onKey);document.querySelector<HTMLElement>(".pc-gov-dialog")?.focus();const previous=document.body.style.overflow;document.body.style.overflow="hidden";return()=>{window.removeEventListener("keydown",onKey);document.body.style.overflow=previous}},[govModal]);
+ useManagedDialog(govModal,".pc-gov-dialog",()=>{setGovModal(false);setEditingVersion(null)});
  const [editingWage,setEditingWage]=useState(""),[newMin,setNewMin]=useState(""),[newMinDate,setNewMinDate]=useState(currentIso());
  const [premiumDraft,setPremiumDraft]=useState<PremiumProfile>(defaultRate);const [editingEmployee,setEditingEmployee]=useState(initialEmployeeId||""),[newRate,setNewRate]=useState(""),[rateDate,setRateDate]=useState(addDays(currentIso(),1)),[rateReason,setRateReason]=useState("");
  const [holidayDate,setHolidayDate]=useState(currentIso()),[holidayName,setHolidayName]=useState(""),[holidayType,setHolidayType]=useState<HolidayRule["type"]>("Regular Holiday"),[holidayBranch,setHolidayBranch]=useState("All Branches"),[holidayDepartment,setHolidayDepartment]=useState("All Departments"),[holidayDeptRate,setHolidayDeptRate]=useState(""),[holidayPerson,setHolidayPerson]=useState(""),[holidayPersonRate,setHolidayPersonRate]=useState(""),[holidayNotes,setHolidayNotes]=useState("");

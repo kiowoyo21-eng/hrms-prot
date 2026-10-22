@@ -1,6 +1,7 @@
 "use client";
-import {useEffect,useState} from "react";
-import {CircleHelp,X,BookOpen} from "lucide-react";
+import {useState} from "react";
+import {HrmsButton,HrmsDialog} from "./ui/HrmsPrimitives";
+import {CircleHelp} from "lucide-react";
 type Guide={purpose:string;why:string;steps:string[];example:string;access:string;next:string;reminder:string};
 const library:Record<string,Guide>={
  dashboard:{purpose:"A quick view of work waiting for action, employee statistics and reporting shortcuts.",why:"HR can prioritize urgent items without searching each module.",steps:["Choose a shop or All Shops if authorized.","Review action counts grouped by module.","Open the relevant module to handle the record in its own workflow."],example:"A recruitment interview appears in Recruitment notifications and on the Dashboard module summary after records are loaded.",access:"HR and Super Admin can see authorized reports; Branch Managers see permitted operational items only.",next:"Selecting a record opens its owning module.",reminder:"The dashboard cannot replace a review or approval process."},
@@ -22,6 +23,10 @@ const library:Record<string,Guide>={
 };
 export default function HelpButton({topic,label="How it works"}:{topic:string;label?:string}){
  const [open,setOpen]=useState(false);const d=library[topic]||library.workflow;
- useEffect(()=>{if(!open)return;const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setOpen(false)};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)},[open]);
- return <><button type="button" className="help-trigger" onClick={()=>setOpen(true)} title={label} aria-label={`Information: ${label}`}><CircleHelp size={17}/><span>{label}</span></button>{open&&<div className="help-overlay" role="presentation" onMouseDown={()=>setOpen(false)}><section role="dialog" aria-modal="true" aria-label={`${label} guide`} className="help-modal" onMouseDown={e=>e.stopPropagation()}><header><div><BookOpen size={20}/><strong>{label}</strong></div><button type="button" onClick={()=>setOpen(false)} aria-label="Close help"><X size={21}/></button></header><div className="help-content"><h4>What is this?</h4><p>{d.purpose}</p><h4>Why is it needed?</h4><p>{d.why}</p><h4>How to use it</h4><ol>{d.steps.map((step,i)=><li key={i}>{step}</li>)}</ol><h4>Example</h4><p>{d.example}</p><h4>Who has access?</h4><p>{d.access}</p><h4>What happens next?</h4><p>{d.next}</p><h4>Important reminders</h4><p>{d.reminder}</p></div><footer><button type="button" className="primary" onClick={()=>setOpen(false)}>Got it</button></footer></section></div>}</>;
+ return <>
+  <button type="button" className="help-trigger" onClick={()=>setOpen(true)} title={label} aria-label={`Information: ${label}`}><CircleHelp size={17}/><span>{label}</span></button>
+  <HrmsDialog open={open} title={label} onClose={()=>setOpen(false)} size="md" footer={<HrmsButton variant="primary" onClick={()=>setOpen(false)}>Got it</HrmsButton>}>
+   <div className="help-content"><h4>What is this?</h4><p>{d.purpose}</p><h4>Why is it needed?</h4><p>{d.why}</p><h4>How to use it</h4><ol>{d.steps.map((step,i)=><li key={i}>{step}</li>)}</ol><h4>Example</h4><p>{d.example}</p><h4>Who has access?</h4><p>{d.access}</p><h4>What happens next?</h4><p>{d.next}</p><h4>Important reminders</h4><p>{d.reminder}</p></div>
+  </HrmsDialog>
+ </>;
 }

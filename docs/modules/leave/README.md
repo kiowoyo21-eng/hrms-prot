@@ -21,3 +21,7 @@ Primary source: [`components/LeaveManagementWorkspace.tsx`](../../../components/
 Aligned Payroll and Leave hub cards to one icon-left compact card anatomy, responsive grid and typography; leave business processes unchanged.
 
 See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operational caveats.
+
+### Batch 08 UI migration note
+
+This module continues to use its existing business data and action handlers. Batch 08 adopts the shared UI tab, dialog accessibility or scoped styling patterns wherever applicable. See [Batch 08 revision record](../../revisions/batches/BATCH-08-UNIVERSAL-UI.md) for exact changed files and **unverified** browser checks; this does not certify the entire module as design-system migrated.

@@ -8,6 +8,7 @@ import {assetVisible} from "../lib/branchRecordViews";
 import {canStartAssetAction,canAssignAssetToEmployee,nextAssetId,requestAssetReturn,receiveAssetReturn,closeAssetInspection} from "../lib/assetLifecycle";
 import {useHR,type AssetRecord,type AssetStatus} from "../lib/hrState";
 import HelpButton from "./HelpButton";
+import {useManagedDialog} from "./ui/useManagedDialog";
 import {ModuleAlertButton} from "./ModuleAlerts";
 import {printHRDocument} from "../lib/printDocument";
 
@@ -78,6 +79,9 @@ const asset=assets.find(a=>a.id===selected&&assetVisible(a,people,branch));
  const scopedAssets=assets.filter(a=>assetVisible(a,people,branch));
  const count=(status:AssetStatus)=>scopedAssets.filter(a=>a.status===status).length;
  const resetProcess=()=>{setProcess(null);setSelected(null);setReturnTarget(null);setReturnReason("");setStage(0);setMessage("")};
+ useManagedDialog(adding,'.hrms-modal-sheet[aria-label="Add device"]',()=>setAdding(false));
+ useManagedDialog(Boolean(asset)&&!process,'.hrms-modal-sheet[aria-label$="asset details"]',()=>{setSelected(null);setReturnTarget(null);setReturnReason("")});
+ useManagedDialog(Boolean(asset)&&Boolean(process),'.hrms-modal-sheet.acc-process',resetProcess);
  const begin=(id:string,type:Process)=>{
   const a=assets.find(x=>x.id===id);
   if(!a||!editable||!assetVisible(a,people,branch))return;

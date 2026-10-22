@@ -13,3 +13,7 @@ No demographic or payroll calculation is fabricated and no wage-order reference 
 Metric and breakdown cards plus employee reference listing rows now expose clickable, keyboard-accessible detail drilldowns with filtered actual Employee 201 demographics and pay-reference data; no invented history or salary releases.
 
 See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operational caveats.
+
+### Batch 08 UI migration note
+
+This module continues to use its existing business data and action handlers. Batch 08 adopts the shared UI tab, dialog accessibility or scoped styling patterns wherever applicable. See [Batch 08 revision record](../../revisions/batches/BATCH-08-UNIVERSAL-UI.md) for exact changed files and **unverified** browser checks; this does not certify the entire module as design-system migrated.

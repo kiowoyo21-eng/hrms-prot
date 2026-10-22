@@ -6,6 +6,7 @@ import {useHR} from "../lib/hrState";
 import {FORM_STORE_EVENT,FORM_STORE_KEY,formSchemas,validateFields,readForms,persistForms,transitionForm,canReviewForm,canViewForm,formDraftText,type FormKind,type HRFormRecord,type FormStatus} from "../lib/hrForms";
 import {writeAuditEvent} from "../lib/auditTrail";
 import styles from "./HROperationsExtras.module.css";
+import {HrmsTabs} from "./ui/HrmsPrimitives";
 const nowISO=()=>new Date().toISOString();
 const prettyDate=(value:string)=>{try{return new Date(value).toLocaleString("en-PH",{timeZone:"Asia/Manila",dateStyle:"medium",timeStyle:"short"})}catch{return value}};
 const downloadForm=(record:HRFormRecord)=>{const link=document.createElement("a"),url=URL.createObjectURL(new Blob([formDraftText(record)],{type:"text/plain;charset=utf-8"}));link.href=url;link.download=`${record.id.replace(/[^a-zA-Z0-9-]/g,"")}-UNSIGNED-DRAFT.txt`;link.click();window.setTimeout(()=>URL.revokeObjectURL(url),500)};
@@ -57,7 +58,7 @@ export default function HRFormsRequestsWorkspace({branch,role,username}:{branch:
  return <div className={`${styles.wrap} ${styles.requestRegister}`}>
   <div className={styles.head}><div><h2>HR Forms & Document Requests</h2><p>Document intake and review register · {branch} · {role}</p></div><div className={styles.actions}><button className={styles.primary} type="button" onClick={()=>{setTab("create");setEditingId("");setValues({});setEvidence("");setEmployeeId("");setMessage("");setError("")}}>New form request</button></div></div>
   <div className={styles.notice}><b>Frontend review only:</b> This module does NOT create official leave approvals, valid work permits, payable overtime, disciplinary judgments, or released documents. Evidence is a text reference, not a signed or secure upload. Keep confidential facts out of browser demo storage. Final legally required wording and signatories require HR/legal review.</div>
-  <div className={styles.subtabs} role="tablist"><button type="button" role="tab" aria-selected={tab==="requests"} onClick={()=>setTab("requests")}>Request register ({visible.length})</button><button type="button" role="tab" aria-selected={tab==="create"} onClick={()=>setTab("create")}>{editingId?"Edit request":"Create / submit"}</button></div>
+  <HrmsTabs label="HR forms and requests" value={tab} onChange={setTab} items={[{id:"requests",label:`Request register (${visible.length})`},{id:"create",label:editingId?"Edit request":"Create / submit"}]} />
   {error&&<div className={styles.error} role="alert">{error}</div>}{message&&<div className={styles.success} role="status">{message}</div>}
   {tab==="create"?<section className={styles.panel}><h3>{editingId?`Update ${editingId}`:"New HR documentation request"}</h3><div className={styles.formGrid}>
    <label className={styles.field}>Form type<select value={category} disabled={!!editingId} onChange={e=>changeType(e.target.value as FormKind)}>{formSchemas.map(s=><option key={s.kind}>{s.kind}</option>)}</select></label>
