@@ -8,3 +8,9 @@
 - No modifications to local storage keys, initial record schemas, decisions, leave-credit allocation formula or payroll amounts.
 
 These are implemented source changes, **not browser-tested release certification**.
+
+## 2026-10-22 — Post-Batch-04 UI correction (Batch 05)
+
+Aligned Payroll and Leave hub cards to one icon-left compact card anatomy, responsive grid and typography; leave business processes unchanged.
+
+Affected source: `app/globals.css`. **Source-level changes only; browser QA remains unverified.**

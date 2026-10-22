@@ -9,3 +9,9 @@
 - Reworked Pending Actions by Module into actionable, urgency-first cards based on published alert records, preserving role/branch filters.
 
 Files: `app/page.tsx`, `components/DashboardOverview.tsx`, `components/DashboardOverview.module.css`, `components/DashboardExtras.tsx`, `components/ModuleAlerts.tsx`, `app/globals.css`.
+
+## 2026-10-22 — Post-Batch-04 UI correction (Batch 05)
+
+Removed narrow fixed three-card columns, aligned workforce and movement cards to a common 3-column grid, and made metric cards navigate to source modules.
+
+Affected source: `components/DashboardOverview.tsx`, `components/DashboardOverview.module.css`. **Source-level changes only; browser QA remains unverified.**

@@ -9,3 +9,9 @@ The ₱718/day tier for qualifying small retail/service establishments (15 worke
 Payroll configuration, historical minimum wage versions (including the lower tier), employee pay-rate changes, individual premiums, payroll releases, payslips, government deductions, holiday rules, loan evidence, and final-pay review data are **not migrated or overwritten**. The existing proposed-reference revision action remains for browser-only review; it does not become the displayed statutory baseline or adjust individual employee payroll.
 
 End-to-end payroll, history, and reference editing browser tests remain pending. This is a frontend-only demo, not legally certified payroll calculation.
+
+## 2026-10-22 display/interaction corrections
+
+Government deduction reference pop-ups use portaled, centered operational dialogs, small version/status/brackets chips, selectable saved version, a searchable 10-row paginated bracket scroller, and persistent approval/propose/import actions. SSS, PhilHealth, Pag-IBIG and BIR share the design; existing schedule versions, validation, handlers, and demo-only approvals remain.
+
+See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operational caveats.

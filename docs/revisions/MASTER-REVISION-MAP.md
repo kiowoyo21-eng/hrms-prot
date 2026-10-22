@@ -23,6 +23,15 @@ Status follows **actual code changes**, not intention. `implemented` does not im
 | RQ-01 | Request/incident feature polish and validation | 04 | implemented (browser QA pending) | components/HRFormsRequestsWorkspace.tsx; components/HROperationsExtras.module.css; app/globals.css; components/GroupedWorkspace.tsx |
 | QA-01 | Cross-module UI and approval regressions | 04 | partial; runtime QA blocked | lib/mock.ts; app/page.tsx; components/GroupedWorkspace.tsx; app/drive/; app/spreadsheets/; app/studio/ |
 
+| FIX-01 | Dashboard common card grid and spacing | 05 | implemented (browser QA pending) | components/DashboardOverview.module.css |
+| FIX-02 | Hiring common width and calendar reflow | 05 | implemented (browser QA pending) | app/globals.css |
+| FIX-03 | Employee 201 Overview primary, directory rows clickable, editing fields preserved | 05 | implemented (browser QA pending) | components/EmployeeWorkspace.tsx |
+| FIX-04 | Payroll/Leave landing card consistency | 05 | implemented (browser QA pending) | app/globals.css |
+| FIX-05 | Assets true modal action flows and accessible record rows | 05 | implemented (browser QA pending) | components/AssetWorkspace.tsx; app/globals.css |
+| FIX-06 | Dashboard/demographics data card and record drill-downs | 05 | partial overall; named surfaces implemented; browser QA pending | components/DashboardOverview.tsx; components/EmployeeDemographicsWorkspace.tsx; components/EmployeeWorkspace.tsx; components/AssetWorkspace.tsx |
+| FIX-07 | SSS/PhilHealth/Pag-IBIG/BIR compact dialog and bracket pagination | 05 | implemented (browser QA pending) | components/PayrollOperationsHub.tsx; app/globals.css |
+| FIX-08 | Whole-system interactive controls and responsive QA | 05 | partial; live browser QA blocked | app/globals.css; components/ affected above |
+
 ## Original 58-item review checklist
 
 The following tracks each originally numbered requirement. `Implemented (unverified browser)` is **not** equivalent to QA passed. See batch reports for file paths and verification.

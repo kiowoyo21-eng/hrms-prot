@@ -8,3 +8,9 @@
 - Kept report/employee CSVs, government report sample export and print, wage reference filters, and Employee 201 classification controls.
 
 Files: `components/ReportsLanding.tsx`, `components/EmployeeDemographicsWorkspace.tsx`, `components/HROperationsExtras.module.css`, `app/globals.css`.
+
+## 2026-10-22 — Post-Batch-04 UI correction (Batch 05)
+
+Metric and breakdown cards plus employee reference listing rows now expose clickable, keyboard-accessible detail drilldowns with filtered actual Employee 201 demographics and pay-reference data; no invented history or salary releases.
+
+Affected source: `components/EmployeeDemographicsWorkspace.tsx`, `components/DashboardOverview.tsx`. **Source-level changes only; browser QA remains unverified.**

@@ -15,3 +15,9 @@ Primary source: [`components/LeaveManagementWorkspace.tsx`](../../../components/
 **Security:** This is browser-local demo state. Role controls and branch filtering are client-side only; real security, approvals, audit integrity, and durable storage require a backend. Seed sample leaves may appear and are not real approvals.
 
 **Validation:** source-level checks were run in Batch 04. End-to-end clicking, responsive screenshots and server-side auth were **not browser verified** in this environment; see [`Batch 04`](../../revisions/batches/BATCH-04.md).
+
+## 2026-10-22 display/interaction corrections
+
+Aligned Payroll and Leave hub cards to one icon-left compact card anatomy, responsive grid and typography; leave business processes unchanged.
+
+See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operational caveats.

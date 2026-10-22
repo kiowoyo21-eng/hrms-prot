@@ -203,7 +203,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const openProfile=(id:string,edit=false,view:"overview"|"full"="overview")=>{
   const target=data.people.find(p=>p.id===id&&(inBranch(p.branch,branch)));
   if(!target)return;
-  setSelected(id);setTab("Profile");setProfileView(edit?"full":view);setAction(null);setEditing(edit);setPersonal(edit&&target?toPersonalDraft(target):null);
+  setSelected(id);setTab("Profile");setProfileView(edit?"full":"overview");setAction(null);setEditing(edit);setPersonal(edit&&target?toPersonalDraft(target):null);
   setEmploymentDraft(edit&&target?{probation:target.probation,sil:target.sil,vil:target.vil}:null);
   setHistoryKind(null);setRequestedMemo(null);setRequestedFolder(null);setDetailKind(null);
   setMessage("");setAdd(false);
@@ -257,7 +257,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   if(!draft||!draft.name.trim()){setMessage("Employee full name is required.");return}
   if((draft.monthlyWorkDays!==undefined&&(!Number.isFinite(draft.monthlyWorkDays)||draft.monthlyWorkDays<=0||draft.monthlyWorkDays>31))||(draft.hoursPerDay!==undefined&&(!Number.isFinite(draft.hoursPerDay)||draft.hoursPerDay<=0||draft.hoursPerDay>24))){setMessage("Invalid divisor or hours per day.");return}
   updatePerson(p=>({...p,...draft,...(employmentDraft||{}),hire:p.hire,name:draft.name.trim(),timeline:[`${new Date().toISOString().slice(0,10)} · Personal details updated`,...p.timeline]}));
-  setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("Employee details saved to this browser.");
+  setEditing(false);setProfileView("overview");setPersonal(null);setEmploymentDraft(null);setMessage("Employee details saved to this browser.");
  };
  const savePersonal=(e:FormEvent)=>{e.preventDefault();persistProfile()};
  const hasUnsavedEdit=()=>Boolean(person&&editing&&((personal&&JSON.stringify(personal)!==JSON.stringify(toPersonalDraft(person)))||(employmentDraft&&JSON.stringify(employmentDraft)!==JSON.stringify({probation:person.probation,sil:person.sil,vil:person.vil}))));
@@ -439,7 +439,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
     <p className="employee201-tablehint">Open a record for details. On narrow screens, use the compact cards or scroll the table.</p>
     <div className="table-wrap employee201-tablewrap"><table className="employee201-table"><thead><tr>
      <th>Employee / ID</th><th>Branch</th><th>Department & Position</th><th>Gender</th><th>Employment Status</th><th>Date Hired</th><th>Salary / Type</th><th>Document Status</th><th>Actions</th>
-    </tr></thead><tbody>{shown.map(p=><tr key={p.id}>
+    </tr></thead><tbody>{shown.map(p=><tr key={p.id} className="hrms-clickable-row" tabIndex={0} role="button" aria-label={`Open ${p.name} Employee 201 overview`} onClick={()=>openProfile(p.id)} onKeyDown={e=>{if(e.target===e.currentTarget&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openProfile(p.id)}}}>
      <td><strong>{p.name}</strong><small className="pay-small">{p.id}</small></td>
      <td>{p.branch}</td>
      <td><strong>{p.position}</strong><small className="pay-small">{p.department}</small></td>
@@ -448,15 +448,15 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      <td>{formatDate(p.hire)}</td>
      <td><div className="employee201-salary"><strong className="employee201-salary-amount">{salaryAmount(p,data.payrollConfig?.rateChanges||[])}</strong><small className="employee201-salary-type">{p.salaryType}</small></div></td>
      <td><div className="employee201-docprogress"><strong>{verified(p)}/{p.documents.length} verified</strong><small>{missing(p)>0?`${missing(p)} missing`:"No missing documents"}</small></div></td>
-     <td><div className="rev-actions emp201-rowactions"><button type="button" className="secondary" onClick={()=>openProfile(p.id,false,"full")}><Eye size={15}/> Full View</button><button type="button" className="secondary" onClick={()=>openProfile(p.id,true)}><Pencil size={15}/> Edit</button></div></td>
+     <td onClick={e=>e.stopPropagation()}><div className="rev-actions emp201-rowactions"><button type="button" className="secondary" onClick={()=>openProfile(p.id,true)}><Pencil size={15}/> Edit</button></div></td>
     </tr>)}</tbody></table>
     {shown.length===0&&<div className="empty"><strong>No employees match these filters.</strong><p>Try another branch or status, remove a filter chip above, or use Clear All Filters.</p><button type="button" className="secondary" onClick={resetFilters}>Show All Employees</button></div>}
     </div>
     <div className="emp201-responsive-cards" aria-label="Employee directory cards for compact screens">
-      {shown.map(p=><article className="emp201-responsive-card" key={p.id}>
+      {shown.map(p=><article className="emp201-responsive-card hrms-clickable-row" key={p.id} role="button" tabIndex={0} onClick={()=>openProfile(p.id)} onKeyDown={e=>{if(e.target===e.currentTarget&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openProfile(p.id)}}}>
        <div className="emp201-responsive-head"><div><strong>{p.name}</strong><small>{p.id} · {p.branch}</small></div><span className="tag">{p.status}</span></div>
        <dl><div><dt>Department / Position</dt><dd>{p.department} · {p.position}</dd></div><div><dt>Gender</dt><dd>{p.gender}</dd></div><div><dt>Hire Date</dt><dd>{formatDate(p.hire)}</dd></div><div><dt>Salary / Type</dt><dd>{salaryAmount(p,data.payrollConfig?.rateChanges||[])} · {p.salaryType}</dd></div><div><dt>Documents</dt><dd>{verified(p)}/{p.documents.length} verified · {missing(p)} missing</dd></div></dl>
-       <div className="emp201-responsive-actions"><button className="secondary" type="button" onClick={()=>openProfile(p.id,false,"full")}><Eye size={15}/> Full View</button><button className="secondary" type="button" onClick={()=>openProfile(p.id,true)}><Pencil size={15}/> Edit</button></div>
+       <div className="emp201-responsive-actions" onClick={e=>e.stopPropagation()}><button className="secondary" type="button" onClick={()=>openProfile(p.id,true)}><Pencil size={15}/> Edit</button></div>
       </article>)}
      {shown.length===0&&<p className="muted">No matching employees.</p>}
     </div>
@@ -473,20 +473,21 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   {person&&!add&&<>
    <button className="rev-back" onClick={backToDirectory}><ArrowLeft size={16}/> Back to Employee Directory</button>
    <section className="panel">
-    <div className={`${premium.profileHeader} rev-title employee201-profiletitle`}><div><h3><UserRound size={19}/> {person.name}</h3><p>{person.id} · {person.department} / {person.position} · {person.branch}</p></div><div className="rev-actions"><span className="tag">{person.status}</span><button type="button" className="secondary" onClick={()=>{setProfileView("full");setAction(null)}}><Eye size={15}/> Full Record</button><button type="button" className={editing?"primary":"secondary"} onClick={startEdit}><Pencil size={15}/> Edit</button></div></div>
+    <div className={`${premium.profileHeader} rev-title employee201-profiletitle`}><div><h3><UserRound size={19}/> {person.name}</h3><p>{person.id} · {person.department} / {person.position} · {person.branch}</p></div><div className="rev-actions"><span className="tag">{person.status}</span><button type="button" className={editing?"primary":"secondary"} onClick={startEdit}><Pencil size={15}/> Edit</button></div></div>
     {!action&&<>
      <nav className="rev-tabs employee201-profiletabs" aria-label="Employee 201 tabs">{profileSections.map(({id,label})=><button type="button" key={id} className={tab===id?"active":""} aria-current={tab===id?"page":undefined} onClick={()=>{setTab(id);setMessage("")}}>{label}</button>)}</nav>
-     {tab==="Profile"&&!action&&<div className={premium.profileSwitch} role="group" aria-label="Employee profile view"><button type="button" className={profileView==="overview"?premium.switchOn:""} onClick={()=>{if(!editing)setProfileView("overview")}} disabled={editing}>Overview</button><button type="button" className={profileView==="full"?premium.switchOn:""} onClick={()=>setProfileView("full")}>Complete Employee 201</button></div>}
+     
      {tab==="Profile"&&profileView==="full"&&<nav className="emp201-jumplinks" aria-label="Jump to employee profile section">{[["Employee Details","personal"],["Employment","employment"],["Salary & Benefits","compensation"],["Reviews","evaluations"],["History","history"],["Clearance & Assets","clearance"],["Employee Actions","actions"]].map(([label,id])=><a key={id} href={`#emp201-${id}`}>{label}</a>)}</nav>}
      <div className="rev-detail employee201-detail">
       {tab==="Profile"&&profileView==="overview"&&!editing&&<div className={premium.overviewCards}>
-       <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("employee")}><span className={premium.overviewIcon}><UserRound size={20}/></span><span><small>01 · IDENTITY</small><b>Personal & Contact</b><em>{person.gender} · {person.civilStatus||"Civil status not recorded"}</em><em>{person.email||"Email not recorded"}</em></span><ArrowRight size={17}/></button>
+       <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("personal")}><span className={premium.overviewIcon}><UserRound size={20}/></span><span><small>01 · IDENTITY</small><b>Personal Information</b><em>{person.gender} · {person.civilStatus||"Civil status not recorded"}</em><em>{person.email||"Email not recorded"}</em></span><ArrowRight size={17}/></button>
        <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("employment")}><span className={premium.overviewIcon}><BriefcaseBusiness size={20}/></span><span><small>02 · EMPLOYMENT</small><b>Position & Assignment</b><em>{person.position} · {person.department}</em><em>{person.branch}</em></span><ArrowRight size={17}/></button>
        <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("salary")}><span className={premium.overviewIcon}><Wallet size={20}/></span><span><small>03 · COMPENSATION</small><b>Salary & Benefits</b><em>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</em><em>{person.salaryType} basic rate</em></span><ArrowRight size={17}/></button>
        <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("reviews")}><span className={premium.overviewIcon}><ClipboardList size={20}/></span><span><small>04 · PERFORMANCE</small><b>Reviews</b><em>{evaluations.length} assessment records</em><em>{evaluations[0]||"No review recorded"}</em></span><ArrowRight size={17}/></button>
        <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("history")}><span className={premium.overviewIcon}><FileText size={20}/></span><span><small>05 · TIMELINE</small><b>Employment History</b><em>{person.timeline.length} activity records</em><em>{person.timeline[0]||"No activity recorded"}</em></span><ArrowRight size={17}/></button>
        <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("assets")}><span className={premium.overviewIcon}><Laptop size={20}/></span><span><small>06 · ACCOUNTABILITY</small><b>Clearance & Devices</b><em>{assignedAssets.length} outstanding device{assignedAssets.length===1?"":"s"}</em><em>{person.status}</em></span><ArrowRight size={17}/></button>
-       <button type="button" className={premium.fullRecordCTA} onClick={()=>setProfileView("full")}><span><b>Complete Employee 201 Record</b><small>Personal details, government IDs, compensation and all recorded fields</small></span><ArrowRight size={19}/></button>
+       <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("emergency")}><span className={premium.overviewIcon}><UserRound size={20}/></span><span><small>07 · EMERGENCY</small><b>Emergency Contact</b><em>{person.emergencyName||"Not recorded"}</em><em>{person.emergencyPhone||"No phone recorded"}</em></span><ArrowRight size={17}/></button>
+       <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("government")}><span className={premium.overviewIcon}><ShieldCheck size={20}/></span><span><small>08 · STATUTORY</small><b>Government & Statutory</b><em>SSS, PhilHealth, Pag-IBIG, TIN</em><em>Restricted records · open details</em></span><ArrowRight size={17}/></button>
       </div>}
       {tab==="Profile"&&profileView==="full"&&<><EmployeeFullRecord person={person} editing={editing} draft={personal} onDraft={setPersonal} probation={employmentDraft?.probation??person.probation} sil={employmentDraft?.sil??person.sil} vil={employmentDraft?.vil??person.vil} rateChanges={data.payrollConfig?.rateChanges||[]} rates={data.rates} onOpenPayroll={openPayRates} onOpenSection={setDetailKind}/><div className="emp201-card-grid">
        <section className="employee201-profile-section emp201-summary-card" id="emp201-evaluations">
@@ -504,7 +505,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
       </div></>}
       {tab==="Documents"&&<EmployeeDocumentLibrary person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} requestedFolder={requestedFolder} onFolderHandled={()=>setRequestedFolder(null)} onUpload={(folder,file,memoId)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId}]}));return id}}/>}
      </div>
-     {tab==="Profile"&&editing&&<div className="emp201-savebar"><span>Editing employee information · Save changes before leaving this profile</span><div className="rev-actions"><button type="button" className="secondary" onClick={()=>{setEditing(false);setPersonal(null);setEmploymentDraft(null)}}>Cancel</button><button type="button" className="primary" onClick={persistProfile}>Save Profile Changes</button></div></div>}
+     {tab==="Profile"&&editing&&<div className="emp201-savebar"><span>Editing employee information · Save changes before leaving this profile</span><div className="rev-actions"><button type="button" className="secondary" onClick={()=>{setEditing(false);setProfileView("overview");setPersonal(null);setEmploymentDraft(null)}}>Cancel</button><button type="button" className="primary" onClick={persistProfile}>Save Profile Changes</button></div></div>}
     </>}
     {detailKind&&createPortal(<div className="emp201-history-overlay" onMouseDown={e=>{if(e.target===e.currentTarget)setDetailKind(null)}}>
      <section className="emp201-detail-modal" role="dialog" aria-modal="true" aria-labelledby="emp201-detail-dialog-title">

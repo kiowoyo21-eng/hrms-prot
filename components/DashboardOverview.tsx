@@ -44,11 +44,11 @@ export default function DashboardOverview({branch,role,username,onNavigate}:{bra
  return <section className={styles.overview} aria-label="Dashboard analytics">
   <header className={styles.header}><div><h2>HR Dashboard</h2><p>Workforce and requests <span aria-hidden="true">·</span> {branch}</p></div><div className={styles.headerRight}><span className={styles.period}>Completed month <b>{month}</b></span>{showHR&&<button type="button" onClick={()=>onNavigate("demographics")}>Demographics <ArrowRight size={15}/></button>}</div></header>
   <div className={styles.sectionHeading}><h3>Workforce at a glance</h3><span>Headcount as recorded · movements in {month}</span></div>
-  <div className={styles.cards}>{metrics.map(({label,value,icon:Icon,hint})=><article className={styles.metric} key={label}>
+  <div className={styles.cards}>{metrics.map(({label,value,icon:Icon,hint})=><button type="button" className={`${styles.metric} hrms-data-clickable`} key={label} onClick={()=>onNavigate(label==="Hired this period"||label==="Separated this period"?"lifecycle":label==="Gross salary released"?"payroll":"demographics")} aria-label={`Open records for ${label}`}>
    <div className={styles.metricTitle}><span className={styles.iconBox}><Icon size={17}/></span><span>{label}</span></div>
    <strong className={typeof value==="string"&&value.startsWith("No ")?styles.textValue:undefined}>{value}</strong>
    {hint&&<small>{hint}</small>}
-  </article>)}</div>
+  </button>)}</div>
   <div className={styles.sectionHeading}><h3>People movements & requests</h3></div>
   <div className={styles.panels}>
    {showHR&&<section className={styles.panel}><div className={styles.panelTitle}><span className={styles.panelIcon}><BriefcaseBusiness size={17}/></span><h3>Hiring & separation by position</h3></div>

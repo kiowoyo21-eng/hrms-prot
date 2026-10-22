@@ -11,3 +11,9 @@ Data source: `lib/dashboardAnalytics.ts` (Employee 201/current branch, applied o
 - Actions navigate through the app's existing module routing. Report summary selector is retained in a collapsible section to avoid duplicating primary metrics.
 
 No production authentication, live Accounting releases, secure server storage or real-time alerts are implied.
+
+## 2026-10-22 display/interaction corrections
+
+Removed narrow fixed three-card columns, aligned workforce and movement cards to a common 3-column grid, and made metric cards navigate to source modules.
+
+See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operational caveats.

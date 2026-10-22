@@ -20,3 +20,9 @@ Card headers and bodies open corresponding existing portal-based detail dialogs;
 SSS, PhilHealth, Pag-IBIG and TIN are masked in **read-only summary/detail views**. Authorized HR profile editing retains existing browser-stored values so it can save without data loss; this browser-only demo is not production-secure. Real identifiers require server authorization and encryption before launch. Do not enter real government identifiers into the demo.
 
 Browser/history regression testing remains necessary before calling this fully verified.
+
+## 2026-10-22 display/interaction corrections
+
+Overview is now the primary read-only Employee 201 entry, with separate interactive Emergency and Government detail cards; redundant Full/Complete view links were removed from read-only navigation. The existing FullRecord remains exclusively accessible for editing; all field values, dialogs, and histories remain. Employee directory table rows and compact cards open Overview directly.
+
+See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operational caveats.

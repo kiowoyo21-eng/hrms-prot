@@ -1003,3 +1003,63 @@ button{min-width:0}
 .hrms-tools .studio-top h1{font-size:18px}
 @media(max-width:930px){.leave-mini-metrics{grid-template-columns:repeat(2,minmax(0,225px))}.uc-leave-card-grid{grid-template-columns:repeat(2,minmax(205px,285px))}}
 @media(max-width:650px){.leave-mini-metrics{grid-template-columns:minmax(0,225px)}.leave-searchbar{width:100%;max-width:100%}.leave-searchbar .leave-search{flex:1 1 100%}.leave-searchbar select{flex:1 1 145px;max-width:none;min-width:0}.uc-leave-card-grid,.ir2 .ir2-cards{grid-template-columns:minmax(0,285px)}.leave-hub-head{gap:9px}.leave-hub-actions{width:100%;justify-content:flex-start}}
+
+/* 2026-10-22 post-batch layout corrections: consistent workspace widths and responsive reflow */
+.hire-root{max-width:1360px;margin-inline:auto;width:100%}
+.hire-home-kpis{width:100%;max-width:100%;}
+.hire-home-layout{width:100%;max-width:100%;grid-template-columns:minmax(275px,0.31fr) minmax(570px,0.69fr);gap:14px;justify-content:stretch}
+.hire-home-layout>.hire-workspace-grid{width:100%;max-width:none;grid-template-columns:minmax(0,1fr)}
+.hire-home-layout>.hire-workspace-grid .hire-workspace-card{max-width:none;width:100%}
+.hire-home-layout>.uc-hire-calendar-panel{width:100%;max-width:none;min-width:0}
+.hire-home-layout .uc-hire-calendar-month{grid-template-columns:repeat(7,minmax(46px,1fr))}
+@container (max-width:925px){.hire-home-layout{grid-template-columns:minmax(0,1fr);max-width:none}.hire-home-layout>.hire-workspace-grid{grid-template-columns:repeat(3,minmax(0,1fr));width:100%}.hire-home-layout>.uc-hire-calendar-panel{width:100%;max-width:none}}
+@container (max-width:610px){.hire-home-layout>.hire-workspace-grid{grid-template-columns:minmax(0,1fr)}.hire-home-layout>.uc-hire-calendar-panel{width:100%}.hire-home-layout .uc-hire-calendar-month{width:max-content;min-width:100%;grid-template-columns:repeat(7,minmax(46px,1fr))}}
+
+/* Shared operational pop-up shell. Portaled dialogs avoid table and sidebar clipping. */
+.hrms-modal-backdrop{position:fixed;inset:0;z-index:10050;background:#152334ad;display:grid;place-items:center;padding:16px;overflow:hidden}
+.hrms-modal-sheet{position:relative;width:min(860px,100%);max-width:100%;max-height:min(86dvh,860px);overflow-y:auto;overscroll-behavior:contain;box-shadow:0 22px 65px #0e182d45;min-width:0;padding:18px;border-radius:13px}
+.hrms-modal-sheet .table-wrap{max-width:100%;overflow-x:auto}
+.hrms-clickable-row{cursor:pointer}.hrms-clickable-row:hover{background:#f3f7fb}.hrms-clickable-row:focus-visible{outline:2px solid #d6a52a;outline-offset:-2px}
+@media(max-width:680px){.hrms-modal-backdrop{padding:8px}.hrms-modal-sheet{max-height:94dvh;padding:12px}.hrms-modal-sheet .rev-actions{flex-wrap:wrap}}
+
+/* Government schedule operational modal: tiny metadata, central bracket scroller, anchored actions. */
+.pc-gov-overlay{z-index:10060;padding:12px}
+.pc-gov-dialog{width:min(900px,calc(100vw - 24px));height:min(82dvh,740px);max-height:calc(100dvh - 24px);padding:0;display:flex;flex-direction:column;gap:0;overflow:hidden;border-radius:13px;box-shadow:0 20px 60px #0c1c3245}
+.pc-gov-compact{display:flex;flex:1;flex-direction:column;min-height:0;overflow:hidden;padding:12px 15px 9px;gap:9px}
+.pc-gov-compact-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;border-bottom:1px solid #edf0f4;padding-bottom:8px}
+.pc-gov-compact-head h3{font-size:16px;margin:0 0 3px}.pc-gov-compact-head small{font-size:11px;color:#6e7a8d}
+.pc-gov-compact-head button{flex:none;padding:7px 10px}
+.pc-gov-meta{display:flex;gap:6px;flex-wrap:wrap}.pc-gov-meta span{display:flex;gap:7px;align-items:center;background:#f4f7fa;border:1px solid #e7ebf0;border-radius:7px;padding:6px 9px;font-size:11px;min-width:0}.pc-gov-meta small{font-size:10px;color:#68778a}.pc-gov-meta b{font-size:11px;overflow-wrap:anywhere}
+.pc-gov-toolbar{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}.pc-gov-toolbar label{display:grid;gap:4px;font-size:10px;font-weight:650;color:#536276;flex:1 1 220px;min-width:0}.pc-gov-toolbar label:nth-child(2){flex:2 1 280px}
+.pc-gov-toolbar input,.pc-gov-toolbar select{min-height:34px;width:100%;padding:7px 10px;background:#fff;border:1px solid #dbe3ec;border-radius:7px;font-size:12px;min-width:0}
+.pc-gov-brackets{flex:1;min-height:110px;overflow:auto;border:1px solid #e3e8f0;border-radius:8px;overscroll-behavior:contain}
+.pc-gov-brackets table{width:100%;border-collapse:collapse}.pc-gov-brackets th{position:sticky;top:0;z-index:1;background:#f3f6fa;white-space:nowrap}.pc-gov-brackets td,.pc-gov-brackets th{padding:10px;font-size:11px}
+.pc-gov-pages{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#64738a;font-size:11px}.pc-gov-pages>div{display:flex;gap:6px}.pc-gov-pages button{padding:6px 9px;font-size:11px}
+.pc-gov-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-top:1px solid #e8edf3;padding-top:10px;background:white;flex-shrink:0}
+.pc-gov-checkbox{font-size:11px;align-items:center}.pc-gov-checkbox input{margin:0}.pc-gov-action-buttons{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}.pc-gov-action-buttons .secondary,.pc-gov-action-buttons .primary{padding:8px 10px;font-size:11px}
+.pc-gov-disclaimer{font-size:10px;color:#718095;margin:0;display:flex;align-items:center;gap:5px}.pc-gov-disclaimer svg{flex:none}
+.pc-gov-dialog:has(> .panel){overflow-y:auto;height:min(86dvh,780px)}.pc-gov-dialog:has(> .panel) .pc-gov-compact{overflow:visible;flex:none;min-height:420px}.pc-gov-dialog:has(> .panel)>.panel{flex:none;overflow:visible;padding:12px;margin:0}
+@media(max-width:640px){.pc-gov-overlay{padding:6px}.pc-gov-dialog{width:100%;height:92dvh;max-height:92dvh}.pc-gov-compact{padding:9px;gap:7px}.pc-gov-action-buttons{justify-content:flex-start}.pc-gov-meta span{padding:4px 7px}.pc-gov-actions{align-items:stretch}.pc-gov-brackets{min-height:90px}.pc-gov-brackets table{min-width:590px}}
+
+/* Compact data drill-down cards are full-surface click targets with actual filtered records. */
+.hrms-data-clickable{cursor:pointer;text-align:left;color:inherit;appearance:none;font:inherit}
+.hrms-data-clickable:hover{background:#f8fbff;border-color:#b8cce2}
+.hrms-data-clickable:focus-visible{outline:2px solid #d6a528;outline-offset:2px}
+.hrms-drilldown-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.hrms-drilldown-header h3{margin:0;font-size:16px}.hrms-drilldown-header small{display:block;font-size:11px;color:#64748b;margin-top:3px}
+.hrms-modal-sheet .tableScroll{max-height:65dvh;overflow:auto}
+
+/* Consistent Payroll and Leave hub cards: single operational card language. */
+.pc-root{max-width:1360px;margin-inline:auto;width:100%}
+.pc-card-grid,.uc-leave-card-grid{grid-template-columns:repeat(3,minmax(0,1fr));width:100%;max-width:1360px;gap:11px;justify-content:stretch}
+.pc-card-grid .pc-card,.uc-leave-card-grid .uc-leave-card{display:flex!important;flex-direction:row!important;align-items:stretch!important;min-height:125px!important;width:100%;gap:0!important;border:1px solid #e1e6ee!important;border-radius:12px!important;background:#fff!important;box-shadow:0 2px 8px #14243809!important;padding:0!important}
+.pc-card-grid .pc-card-visual,.uc-leave-card-grid .uc-leave-card-visual{flex:0 0 66px!important;width:66px!important;height:auto!important;min-height:0!important;border-radius:0!important;display:grid!important;place-items:center!important}
+.pc-card-grid .pc-card-visual svg,.uc-leave-card-grid .uc-leave-card-visual svg{width:26px!important;height:26px!important}
+.pc-card-grid .pc-card-body,.uc-leave-card-grid .uc-leave-card-content{flex:1;display:flex!important;flex-direction:column!important;gap:8px!important;padding:14px!important;min-width:0}
+.pc-card-grid .pc-card-body strong,.uc-leave-card-grid .uc-leave-card-content>strong{font-size:13px!important;line-height:1.35}
+.pc-card-grid .pc-card-body>span,.uc-leave-card-grid .uc-leave-card-desc{min-height:0!important;font-size:11px!important;line-height:1.45!important;color:#728094}
+.pc-card-grid .pc-card-body small,.uc-leave-card-grid .uc-leave-card-bottom{margin-top:auto!important;padding-top:7px!important;border-top:1px solid #eef1f5!important;font-size:11px!important}
+@media(max-width:1200px){.pc-card-grid,.uc-leave-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){.pc-card-grid,.uc-leave-card-grid{grid-template-columns:minmax(0,1fr)}.pc-card-grid .pc-card,.uc-leave-card-grid .uc-leave-card{min-height:110px!important}}
+
+.pc-gov-mini-notice{background:#fff9e9;border:1px solid #eedaa0;border-radius:7px;padding:7px 9px;color:#735414;font-size:11px;margin:0}
