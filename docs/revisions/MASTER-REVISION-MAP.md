@@ -101,3 +101,14 @@ The following tracks each originally numbered requirement. `Implemented (unverif
 
 See [Batch 03 revision map](batches/BATCH-03.md) and the Employee 201/Hiring/Payroll module docs. Source and CSS parse, relative imports, and documentation links were checked. Full Next.js type-check/build and real browser testing remain blocked or pending; therefore no Batch 03 item is marked **verified**.
 
+
+
+## Batch 06 — Dashboard-only polish (2026-10-22)
+
+| Revision ID | Module | Actual paths | Target | Batch | State | Verification |
+|---|---|---|---|---|---|---|
+| DASH-ALIGN-06 | dashboard | `app/page.tsx`, `app/globals.css` | One coherent centered bounded content grid for KPIs, alerts and shortcuts | 06 | Implemented | Static checks; browser pending |
+| DASH-ACTIONS-06 | dashboard | `app/page.tsx`, `app/globals.css` | Alert priority, compact shortcuts, preserved collapsible reports and demo history | 06 | Implemented | Static checks; browser pending |
+| DASH-COPY-06 | dashboard | `components/DashboardOverview.tsx` | Shorter accurate salary-source note | 06 | Implemented | Static checks; browser pending |
+
+See [Batch 06](batches/BATCH-06-DASHBOARD.md). No non-dashboard modules changed.

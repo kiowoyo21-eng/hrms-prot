@@ -17,3 +17,15 @@ No production authentication, live Accounting releases, secure server storage or
 Removed narrow fixed three-card columns, aligned workforce and movement cards to a common 3-column grid, and made metric cards navigate to source modules.
 
 See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operational caveats.
+
+## 2026-10-22 Dashboard-only alignment pass (Batch 06)
+
+- Dashboard components share one centered, bounded `.dashboard-home` content grid
+  rather than different widths for KPI sections versus Quick Actions/alerts.
+- Action alerts are placed before shortcuts to surface actual pending work earlier.
+- Quick Actions remain functional but are presented as compact wrapping action chips;
+  the report selector and existing illustrative activity remain available in collapsible sections.
+- Salary provenance note is shorter with the same exclusion and non-Accounting caveats.
+- Data selectors, metric calculations, roles, demo storage, module navigation and
+  other module layouts are **unchanged**.
+- Browser/responsive validation is required before marking this visual change verified.

@@ -64,6 +64,6 @@ export default function DashboardOverview({branch,role,username,onNavigate}:{bra
     <div className={styles.links}><button type="button" onClick={()=>onNavigate("hr-forms")}>Open My Tasks <ArrowRight size={14}/></button></div>
    </section>
   </div>
-  {showHR&&<p className={styles.disclaimer}><ShieldCheck size={14}/> Salary is based only on browser-reviewed gross releases for {month}, not on basic pay estimates or a verified Accounting expense report. Sample releases are excluded.</p>}
+  {showHR&&<p className={styles.disclaimer}><ShieldCheck size={14}/> Salary: browser-reviewed gross releases for {month} only; samples excluded. Not a verified Accounting expense or basic-pay total.</p>}
  </section>;
 }

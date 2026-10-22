@@ -15,3 +15,15 @@ Files: `app/page.tsx`, `components/DashboardOverview.tsx`, `components/Dashboard
 Removed narrow fixed three-card columns, aligned workforce and movement cards to a common 3-column grid, and made metric cards navigate to source modules.
 
 Affected source: `components/DashboardOverview.tsx`, `components/DashboardOverview.module.css`. **Source-level changes only; browser QA remains unverified.**
+
+## 2026-10-22 — Dashboard-only spacing/alignment correction (Batch 06; runtime QA pending)
+
+- Wrapped dashboard metrics, pending alerts, quick links, optional reports and
+  demo activity under one max-width-centered dashboard container.
+- Moved Pending Actions ahead of shortcuts without altering alert computation.
+- Removed the giant Quick Actions wrapper and collapsed illustrative demo activity
+  by default while retaining all actions, navigation and content.
+- Condensed the salary disclosure without changing the underlying computation.
+
+Files: `app/page.tsx`, `app/globals.css`, `components/DashboardOverview.tsx`.
+Static inspection is not browser verification.
