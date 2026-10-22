@@ -2,7 +2,6 @@
 import {createContext,useContext,useEffect,useMemo,useRef,useState,type ReactNode} from "react";
 import {employees as samples,type Person} from "./people";
 import {demoProfileFor,enrichExistingDemoProfiles} from "./demoEmployeeProfiles";
-import {demoProfileFor,enrichExistingDemoProfiles} from "./demoEmployeeProfiles";
 import {initialPayrollConfig,normalizePayrollConfig,type PayrollConfig} from "./payrollConfig";
 import type {SalaryDestination} from "./salaryDisbursement";
 import {writeAuditEvent,changedFields} from "./auditTrail";
