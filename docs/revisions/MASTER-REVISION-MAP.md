@@ -112,3 +112,19 @@ See [Batch 03 revision map](batches/BATCH-03.md) and the Employee 201/Hiring/Pay
 | DASH-COPY-06 | dashboard | `components/DashboardOverview.tsx` | Shorter accurate salary-source note | 06 | Implemented | Static checks; browser pending |
 
 See [Batch 06](batches/BATCH-06-DASHBOARD.md). No non-dashboard modules changed.
+
+## Batch 07 — revised 2026-10-22 UI/UX proposal, YTD Dashboard and visible reports
+
+| ID | Module | Actual source paths | Outcome | Status | Verification |
+|---|---|---|---|---|---|
+| UI7-01 | Shared UI | `app/tokens.css`, `app/ui.css`, `app/layout.tsx`, `app/globals.css` | Foundations and aligned shell | implemented | Source syntax/CSS; browser pending |
+| UI7-02 | Navigation | `app/page.tsx`, `lib/mock.ts`, `app/ui.css` | Four sidebar groups and distinct main icons | implemented | Source syntax; role browser QA pending |
+| DASH7-01 | Dashboard | `lib/dashboardAnalytics.ts`, `components/DashboardOverview.tsx` | Current-year hires, applied offboarding and reviewed gross salary released | implemented | Synthetic YTD calculations passed; browser pending |
+| DASH7-02 | Dashboard | `app/page.tsx` | Remove demo Sample Activity UI (retain audit data) | implemented | Source inspection; browser pending |
+| DASH7-03 | Dashboard | `components/DashboardExtras.tsx`, `components/DashboardExtras.module.css` | Visible clickable additional reports, compact actions | implemented | Syntax/CSS; browser pending |
+| DASH7-04 | Dashboard | `components/DashboardOverview.module.css` | Aligned three-column card layout/reflow | implemented | CSS parse; browser pending |
+| UI7-03 | All modules | Existing module-specific CSS and components | Migrate Buttons, Fields, Tabs, Dialogs, Tables and legacy styles to shared primitives | planned | Not implemented in Batch 07; broad runtime QA required |
+
+See [Batch 07](batches/BATCH-07-REVISED-UI.md) for exact data semantics and unresolved QA. All cross-app integrations remain separate and unconnected.
+
+The YTD calculation smoke test is under `scripts/check-dashboard-ytd.cjs` (source-level test, not interactive payroll certification).

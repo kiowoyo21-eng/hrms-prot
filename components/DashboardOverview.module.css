@@ -33,3 +33,38 @@
 
 /* Correction batch: coherent dashboard grid; fit content area without clipping or narrow left anchoring. */
 .overview{width:100%;max-width:1360px;margin-inline:auto}.metric{min-height:110px}.panels>.panel{min-height:0}
+
+/* Revised UI reference: aligned three-column dashboard grid and six stable KPI tiles. */
+.overview{max-width:none;gap:24px;width:100%;margin:0}
+.header{padding:16px 20px;gap:16px;border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:none}
+.header h2{font-size:24px;line-height:32px;letter-spacing:0;font-weight:700;color:var(--ink-900)}
+.header p{font-size:13px;line-height:20px;color:var(--ink-500);margin:0}
+.headerRight{gap:8px}
+.period{font-size:12px;line-height:16px;color:var(--ink-500);border:1px solid var(--line);background:var(--surface-1);padding:8px;border-radius:var(--r-md)}
+.headerRight button{font-size:13px;line-height:20px;font-weight:600;min-height:40px;padding:8px 12px;border:1px solid var(--line-strong);border-radius:var(--r-md)}
+.sectionHeading{align-items:center;gap:12px}
+.sectionHeading h3{font-size:16px;line-height:24px;color:var(--ink-900);font-weight:700}
+.sectionHeading>span{font-size:12px;line-height:16px;color:var(--ink-500)}
+.cards,.panels{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+.metric,.panel{border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:none;padding:20px;min-width:0;background:var(--surface)}
+.metric{gap:8px;min-height:116px;text-align:left;cursor:pointer;align-content:start}
+.metric:hover,.metric:focus-visible{border-color:var(--line-strong);background:var(--surface-1)}
+.metricTitle{font-size:12px;line-height:16px;color:var(--ink-500);font-weight:600;gap:8px}
+.iconBox,.panelIcon{width:36px;height:36px;border-radius:var(--r-md);color:var(--accent-ink);background:var(--accent-soft)}
+.metric strong{font-size:28px;line-height:32px;font-weight:700;letter-spacing:0;color:var(--ink-900)}
+.metric .textValue{font-size:16px;line-height:24px;letter-spacing:0}
+.metric small{font-size:12px;line-height:16px;color:var(--ink-500)}
+.panel{gap:12px;align-content:start}
+.panelTitle h3{font-size:14px;line-height:20px;font-weight:600;color:var(--ink-900)}
+.mini{gap:0 16px}
+.mini span{font-size:12px;line-height:16px;color:var(--ink-500)}
+.mini b{font-size:16px;line-height:24px}
+.links button{min-height:32px;padding:6px 12px;font-size:12px;font-weight:600;border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-700)}
+.empty{font-size:12px;line-height:20px;background:var(--surface-1);color:var(--ink-500);padding:12px}
+.tablewrap table{font-size:12px}.tablewrap td,.tablewrap th{padding:8px 12px;font-size:12px}
+.disclaimer{font-size:12px;line-height:20px;color:var(--ink-500)}
+@media(max-width:900px){.cards,.panels{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.cards,.panels{grid-template-columns:minmax(0,1fr)}.metric,.panel{padding:16px}.header{padding:16px}.header h2{font-size:24px}}
+
+/* Page header is not another nested card: it aligns with the breadcrumb and every section. */
+.header{border:0;background:transparent;padding:0;box-shadow:none;border-radius:0}

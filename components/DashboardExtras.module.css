@@ -1,0 +1,26 @@
+.root{display:grid;gap:24px;min-width:0}
+.reports,.actions{min-width:0}
+.heading{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+.heading h3{margin:0;font-size:16px;font-weight:700;line-height:24px;color:var(--ink-900,#1a2533)}
+.heading>span{font-size:12px;color:var(--ink-500,#64748b)}
+.reportGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+.reportCard{font:inherit;appearance:none;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:8px;min-width:0;padding:16px 20px;background:var(--surface,#fff);color:var(--ink-900,#1a2533);border:1px solid var(--line,#e2e8f0);border-radius:var(--r-lg,12px)}
+.reportCard:hover{background:var(--surface-1,#f8fafc);border-color:var(--line-strong,#cbd5e1)}
+.reportCard:focus-visible,.shortcutGrid button:focus-visible{outline:2px solid var(--ink-700,#334155);outline-offset:2px}
+.cardTitle{display:flex;align-items:center;gap:8px;min-width:0;margin-bottom:4px;font-size:14px;line-height:20px}
+.cardTitle>svg:first-child{flex:none;color:var(--ink-500,#64748b)}
+.cardTitle b{font-weight:600}
+.chevron{flex:none;margin-left:auto;color:var(--ink-500,#64748b)}
+.dataRow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-block:4px;border-bottom:1px solid var(--line-soft,#eef1f5);font-size:13px;line-height:20px;color:var(--ink-700,#334155)}
+.dataRow:last-child{border-bottom:0}
+.dataRow strong{color:var(--ink-900,#1a2533);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right;overflow-wrap:anywhere}
+.complianceTags{font-size:13px;line-height:20px;color:var(--ink-700,#334155)}
+.cardLink{margin-top:auto;padding-top:12px;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-700,#334155);font-weight:600}
+.rateNote{margin:8px 0 0;font-size:12px;line-height:16px;color:var(--ink-500,#64748b)}
+.shortcutGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.shortcutGrid button{appearance:none;font:inherit;display:flex;align-items:center;gap:8px;min-height:40px;min-width:0;text-align:left;padding:8px 12px;background:var(--surface,#fff);color:var(--ink-700,#334155);border:1px solid var(--line,#e2e8f0);border-radius:var(--r-md,8px);font-size:13px;font-weight:600;cursor:pointer}
+.shortcutGrid button:hover{background:var(--surface-1,#f8fafc)}
+.shortcutGrid button svg{flex:none}
+.shortcutGrid button span{flex:1;min-width:0}
+@media(max-width:900px){.reportGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.shortcutGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.reportGrid,.shortcutGrid{grid-template-columns:minmax(0,1fr)}.reportCard{padding:16px}}

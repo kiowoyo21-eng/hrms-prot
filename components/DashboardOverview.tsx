@@ -7,7 +7,7 @@ import {isHrRole,type Branch,type ModuleId,type Role} from "../lib/mock";
 import {FORM_STORE_EVENT,FORM_STORE_KEY,readForms,type HRFormRecord} from "../lib/hrForms";
 import {seedIncidents,type IncidentCase} from "../lib/incidentRecords";
 import {watchAuditEvents} from "../lib/auditTrail";
-import {dashboardEmployeeSummary,dashboardRequestSummary,lastCompletedMonth} from "../lib/dashboardAnalytics";
+import {dashboardEmployeeSummary,dashboardRequestSummary,dashboardTodayPH} from "../lib/dashboardAnalytics";
 import styles from "./DashboardOverview.module.css";
 
 const INCIDENT_STORAGE_KEY="uc-hr-ui-incident";
@@ -20,7 +20,8 @@ export default function DashboardOverview({branch,role,username,onNavigate}:{bra
  const [forms,setForms]=useState<HRFormRecord[]>([]);
  const [incidents,setIncidents]=useState<IncidentCase[]>([]);
  const [loaded,setLoaded]=useState(false);
- const [month]=useState(()=>lastCompletedMonth());
+ const [today]=useState(()=>dashboardTodayPH());
+ const year=today.slice(0,4);
  useEffect(()=>{
   const sync=()=>{setForms(readForms());setIncidents(readIncidents());setLoaded(true)};
   sync();const unwatch=watchAuditEvents(sync);
@@ -28,23 +29,24 @@ export default function DashboardOverview({branch,role,username,onNavigate}:{bra
   window.addEventListener(FORM_STORE_EVENT,sync);window.addEventListener("storage",onStorage);window.addEventListener("focus",sync);
   return()=>{unwatch();window.removeEventListener(FORM_STORE_EVENT,sync);window.removeEventListener("storage",onStorage);window.removeEventListener("focus",sync)};
  },[]);
- const employee=useMemo(()=>dashboardEmployeeSummary(data,branch,month),[data,branch,month]);
+ const employee=useMemo(()=>dashboardEmployeeSummary(data,branch,today),[data,branch,today]);
  const requests=useMemo(()=>dashboardRequestSummary(forms,incidents,branch,role,username),[forms,incidents,branch,role,username]);
  const showHR=isHrRole(role)||role==="Super Admin";
+ const yearRange=`Jan 1 – ${new Intl.DateTimeFormat("en-PH",{timeZone:"Asia/Manila",month:"short",day:"numeric",year:"numeric"}).format(new Date(`${today}T12:00:00+08:00`))}`;
  const metrics:Metric[]=[
   {label:"Total employees",value:ready?employee.total:"—",icon:Users,hint:ready&&employee.unspecified?`${employee.unspecified} gender unspecified`:undefined},
   {label:"Male",value:ready?employee.male:"—",icon:UserRound},
   {label:"Female",value:ready?employee.female:"—",icon:Users},
-  {label:"Hired this period",value:ready?employee.hires:"—",icon:TrendingUp},
-  {label:"Separated this period",value:ready?employee.exits:"—",icon:TrendingDown,hint:ready&&employee.terminations?`${employee.terminations} terminations`:undefined},
-  ...(showHR?[{label:"Gross salary released",value:ready?(employee.salaryCount?php(employee.salaryGross):"No releases"):"—",icon:Wallet,hint:ready?`${employee.salaryCount} reviewed release(s) · ${employee.sampleReleasesExcluded} sample excluded`:undefined}]:[])
+  {label:"Hired this year",value:ready?employee.hires:"—",icon:TrendingUp},
+  {label:"Separated this year",value:ready?employee.exits:"—",icon:TrendingDown,hint:ready&&employee.terminations?`${employee.terminations} terminations`:undefined},
+  ...(showHR?[{label:"Gross salary released",value:ready?(employee.salaryCount?php(employee.salaryGross):"₱0.00"):"—",icon:Wallet,hint:ready?`${employee.salaryCount} reviewed release(s) · ${employee.sampleReleasesExcluded} sample excluded`:undefined}]:[])
  ];
  const requestStats=[{label:"Requests",value:requests.totalRequests},{label:"Incident reports",value:requests.totalReports},{label:"Pending / open",value:requests.pending},{label:"Resolved / closed",value:requests.resolved}];
  const taskStats=[{label:"My pending",value:requests.ownPending},{label:"My resolved",value:requests.ownCompleted},...(showHR?[{label:"For my review",value:requests.toReview},{label:"Reviewed",value:requests.completedReviews}]:[])];
  return <section className={styles.overview} aria-label="Dashboard analytics">
-  <header className={styles.header}><div><h2>HR Dashboard</h2><p>Workforce and requests <span aria-hidden="true">·</span> {branch}</p></div><div className={styles.headerRight}><span className={styles.period}>Completed month <b>{month}</b></span>{showHR&&<button type="button" onClick={()=>onNavigate("demographics")}>Demographics <ArrowRight size={15}/></button>}</div></header>
-  <div className={styles.sectionHeading}><h3>Workforce at a glance</h3><span>Headcount as recorded · movements in {month}</span></div>
-  <div className={styles.cards}>{metrics.map(({label,value,icon:Icon,hint})=><button type="button" className={`${styles.metric} hrms-data-clickable`} key={label} onClick={()=>onNavigate(label==="Hired this period"||label==="Separated this period"?"lifecycle":label==="Gross salary released"?"payroll":"demographics")} aria-label={`Open records for ${label}`}>
+  <header className={styles.header}><div><h2>HR Dashboard</h2><p>Workforce and requests <span aria-hidden="true">·</span> {branch}</p></div><div className={styles.headerRight}><span className={styles.period}>Year to date <b>{year}</b></span>{showHR&&<button type="button" onClick={()=>onNavigate("demographics")}>Demographics <ArrowRight size={15}/></button>}</div></header>
+  <div className={styles.sectionHeading}><h3>Workforce at a glance</h3><span>Current headcount · hires and separations: {yearRange}</span></div>
+  <div className={styles.cards}>{metrics.map(({label,value,icon:Icon,hint})=><button type="button" className={`${styles.metric} hrms-data-clickable`} key={label} onClick={()=>onNavigate(label==="Hired this year"||label==="Separated this year"?"lifecycle":label==="Gross salary released"?"payroll":"demographics")} aria-label={`Open records for ${label}`}>
    <div className={styles.metricTitle}><span className={styles.iconBox}><Icon size={17}/></span><span>{label}</span></div>
    <strong className={typeof value==="string"&&value.startsWith("No ")?styles.textValue:undefined}>{value}</strong>
    {hint&&<small>{hint}</small>}
@@ -52,7 +54,7 @@ export default function DashboardOverview({branch,role,username,onNavigate}:{bra
   <div className={styles.sectionHeading}><h3>People movements & requests</h3></div>
   <div className={styles.panels}>
    {showHR&&<section className={styles.panel}><div className={styles.panelTitle}><span className={styles.panelIcon}><BriefcaseBusiness size={17}/></span><h3>Hiring & separation by position</h3></div>
-    {employee.positions.length?<div className={styles.tablewrap}><table><thead><tr><th>Position</th><th>Hired</th><th>Separated</th><th>Terminated</th></tr></thead><tbody>{employee.positions.map(row=><tr key={row.position}><td>{row.position}</td><td>{row.gained}</td><td>{row.lost}</td><td>{row.terminations}</td></tr>)}</tbody></table></div>:<p className={styles.empty}>No recorded hires or applied separations in {month}.</p>}
+    {employee.positions.length?<div className={styles.tablewrap}><table><thead><tr><th>Position</th><th>Hired</th><th>Separated</th><th>Terminated</th></tr></thead><tbody>{employee.positions.map(row=><tr key={row.position}><td>{row.position}</td><td>{row.gained}</td><td>{row.lost}</td><td>{row.terminations}</td></tr>)}</tbody></table></div>:<p className={styles.empty}>No recorded hires or applied offboarding cases in {yearRange}.</p>}
     <div className={styles.links}><button type="button" onClick={()=>onNavigate("lifecycle")}>Open Hiring <ArrowRight size={14}/></button></div>
    </section>}
    <section className={styles.panel}><div className={styles.panelTitle}><span className={styles.panelIcon}><FileWarning size={17}/></span><h3>Requests & complaints</h3></div>
@@ -64,6 +66,6 @@ export default function DashboardOverview({branch,role,username,onNavigate}:{bra
     <div className={styles.links}><button type="button" onClick={()=>onNavigate("hr-forms")}>Open My Tasks <ArrowRight size={14}/></button></div>
    </section>
   </div>
-  {showHR&&<p className={styles.disclaimer}><ShieldCheck size={14}/> Salary: browser-reviewed gross releases for {month} only; samples excluded. Not a verified Accounting expense or basic-pay total.</p>}
+  {showHR&&<p className={styles.disclaimer}><ShieldCheck size={14}/> Salary: eligible browser-reviewed gross releases, {yearRange}; samples excluded. Not an estimated wage, net payroll or verified Accounting expense. Offboarding cases are recorded workflow events, not automatically finalized separations.</p>}
  </section>;
 }

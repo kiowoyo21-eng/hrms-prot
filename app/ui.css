@@ -1,0 +1,35 @@
+/* Progressive shared UI migration. Scope to HRMS shell to preserve editor-specific chrome. */
+.app-shell{font-family:Inter,Arial,system-ui,sans-serif;color:var(--ink-900);background:var(--page)}
+.app-shell .sidebar{width:256px;z-index:var(--layer-shell);background:var(--surface)}
+.app-shell .side-brand,.app-shell .topbar{height:64px;min-height:64px;box-sizing:border-box;border-bottom:1px solid var(--line)}
+.app-shell .side-brand{padding:0 16px;gap:12px;align-items:center}
+.app-shell .side-brand .brand-mark{width:40px;height:40px;flex:none}
+.app-shell .topbar{padding:0;background:var(--surface);height:64px;display:flex;align-items:center}
+.app-shell .topbar-inner{width:100%;max-width:1440px;min-width:0;margin-inline:auto;padding-inline:24px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.app-shell .content{width:100%;max-width:1440px;box-sizing:border-box;margin-inline:auto;padding:24px 24px 32px}
+.app-shell .crumb{font-size:12px;line-height:16px;color:var(--ink-500)}
+.app-shell .crumb b{color:var(--ink-900);font-weight:600}
+.app-shell .top-actions{display:flex;align-items:center;gap:8px}
+.app-shell .nav-link{min-height:40px;border-radius:var(--r-md);font-size:13px;line-height:20px;font-weight:400;gap:12px;padding:8px 12px}
+.app-shell .nav-link svg{width:20px;height:20px;flex:none}
+.app-shell .nav-link.selected{font-weight:600;color:var(--ink-900);background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.app-shell .nav-link .nav-count{font-variant-numeric:tabular-nums}
+.app-shell .side-section-label{color:var(--ink-500);font-size:12px;letter-spacing:0;font-weight:600}
+.app-shell :is(button,a,input,select,textarea,[tabindex]):focus-visible{outline:2px solid var(--ink-700);outline-offset:2px}
+.app-shell .panel{box-shadow:none;border:1px solid var(--line);border-radius:var(--r-lg)}
+.app-shell :is(button,select,input,textarea){font-family:inherit}
+.app-shell :is(button,.nav-count,.mu-dashboard-grid strong){font-variant-numeric:tabular-nums}
+@media(max-width:900px){.app-shell .sidebar{position:fixed;left:0;transform:translateX(-100%);transition:transform .2s;z-index:var(--layer-drawer)}.app-shell .sidebar.mobile-open{transform:translateX(0)}.app-shell .topbar-inner{padding-inline:16px}.app-shell .content{padding:16px 16px 24px}}
+@media(max-width:640px){.app-shell .side-brand,.app-shell .topbar{height:56px;min-height:56px}.app-shell .topbar-inner{padding-inline:16px}.app-shell .content{padding:16px}.app-shell .top-actions{gap:8px}}
+.app-shell .side-nav-group{margin-bottom:8px}
+.app-shell .side-nav-group .side-section-label{margin:16px 12px 8px;padding:0}
+.app-shell .side-nav-group:first-child .side-section-label{margin-top:16px}
+.app-shell .sidebar nav{padding:0 8px 12px;overflow-y:auto}
+.app-shell .sidebar .nav-link{margin-bottom:4px}
+
+/* The topbar breadcrumb and each page share exactly one horizontal content frame. */
+.app-shell .dashboard-home{max-width:none;width:100%;margin-inline:0}
+.app-shell :is(.primary,.secondary){min-height:40px;border-radius:var(--r-md);font-size:13px;font-weight:600;gap:8px}
+.app-shell .primary{background:var(--accent);color:var(--ink-900)}
+.app-shell .secondary{background:var(--surface);border:1px solid var(--line-strong);color:var(--ink-700)}
+.app-shell :is(.primary,.secondary):not(:disabled):hover{filter:brightness(.98)}

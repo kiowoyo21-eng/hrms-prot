@@ -12,17 +12,35 @@ export function lastCompletedMonth(now=new Date()){
 }
 const inBranch=(record:{branch:string},branch:Branch)=>branch==="All Shops"||record.branch===branch;
 const validMoney=(n:number)=>Number.isFinite(n)&&n>=0;
-export function dashboardEmployeeSummary(state:HRState,branch:Branch,period:string){
+/** Calendar date in Manila, not UTC or the operator's browser time zone. */
+export function dashboardTodayPH(now=new Date()){
+ const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Manila",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(now);
+ const part=(key:"year"|"month"|"day")=>parts.find(p=>p.type===key)?.value||"";
+ return `${part("year")}-${part("month")}-${part("day")}`;
+}
+const recordedOnOrBefore=(date:string,start:string,end:string)=>/^\d{4}-\d{2}-\d{2}/.test(date)&&date.slice(0,10)>=start&&date.slice(0,10)<=end;
+/**
+ * Current headcount + actual year-to-date recorded movements and payroll releases.
+ * "Separated" is based on applied Offboard cases, not an assumed status change.
+ * Salary totals count only browser-reviewed, released Salary entries; never basic-pay estimates.
+ */
+export function dashboardEmployeeSummary(state:HRState,branch:Branch,asOf:string){
+ const today=/^\d{4}-\d{2}-\d{2}$/.test(asOf)?asOf:dashboardTodayPH();
+ const start=`${today.slice(0,4)}-01-01`;
  const people=state.people.filter(p=>inBranch(p,branch));
- const hires=people.filter(p=>p.hire?.startsWith(period));
+ const ids=new Set(people.map(p=>p.id));
+ const hires=people.filter(p=>recordedOnOrBefore(p.hire,start,today));
  const byPosition=new Map<string,{position:string;gained:number;lost:number;terminations:number}>();
  const add=(position:string,key:"gained"|"lost",terminated=false)=>{const safe=position.trim()||"Not recorded";const row=byPosition.get(safe)||{position:safe,gained:0,lost:0,terminations:0};row[key]++;if(terminated)row.terminations++;byPosition.set(safe,row)};
  hires.forEach(p=>add(p.position,"gained"));
- // Only explicitly applied offboarding cases are separation events; inactive statuses are not assumed to be terminations.
- const exits=(state.lifecycleCases||[]).filter(c=>c.action==="Offboard"&&c.status==="Applied (Demo)"&&c.effectiveDate?.startsWith(period)&& (branch==="All Shops"||c.sourceBranch===branch));
+ // A separated employee may no longer be present in people; the recorded source branch is authoritative.
+ const exits=(state.lifecycleCases||[]).filter(c=>c.action==="Offboard"&&c.status==="Applied (Demo)"&&recordedOnOrBefore(c.effectiveDate,start,today)&&(branch==="All Shops"||c.sourceBranch===branch));
  exits.forEach(c=>add(c.snapshot.position,"lost",c.separationType==="Termination"));
- const salaryReleases=state.payrollReleases.filter(r=>r.status==="Released"&&r.source==="Browser Review"&&r.kind==="Salary"&&r.paidAt.startsWith(period)&&people.some(p=>p.id===r.employeeId)&&validMoney(r.gross));
- const sampleReleasesExcluded=state.payrollReleases.filter(r=>r.status==="Released"&&r.source==="Sample"&&r.kind==="Salary"&&r.paidAt.startsWith(period)&&people.some(p=>p.id===r.employeeId)).length;
+ const uniqueReleases=new Map<string,(typeof state.payrollReleases)[number]>();
+ for(const r of state.payrollReleases){if(!uniqueReleases.has(r.id))uniqueReleases.set(r.id,r);}
+ const eligible=[...uniqueReleases.values()].filter(r=>r.status==="Released"&&r.kind==="Salary"&&recordedOnOrBefore(r.paidAt,start,today)&&ids.has(r.employeeId));
+ const salaryReleases=eligible.filter(r=>r.source==="Browser Review"&&validMoney(r.gross));
+ const sampleReleasesExcluded=eligible.filter(r=>r.source==="Sample").length;
  return {total:people.length,male:people.filter(p=>p.gender==="Male").length,female:people.filter(p=>p.gender==="Female").length,unspecified:people.filter(p=>p.gender!=="Male"&&p.gender!=="Female").length,hires:hires.length,exits:exits.length,terminations:exits.filter(c=>c.separationType==="Termination").length,positions:[...byPosition.values()].sort((a,b)=>b.gained+b.lost-(a.gained+a.lost)||a.position.localeCompare(b.position)),salaryGross:salaryReleases.reduce((v,r)=>v+r.gross,0),salaryCount:salaryReleases.length,sampleReleasesExcluded};
 }
 export function dashboardRequestSummary(forms:readonly HRFormRecord[],incidents:readonly IncidentCase[],branch:Branch,role:Role,username:string){

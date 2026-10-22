@@ -29,3 +29,15 @@ See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operationa
 - Data selectors, metric calculations, roles, demo storage, module navigation and
   other module layouts are **unchanged**.
 - Browser/responsive validation is required before marking this visual change verified.
+
+## 2026-10-22 — Revised UI / year-to-date follow-up (Batch 07)
+
+- The Dashboard's active period is **current Manila year to date** (January 1 through today); former completed-month-only KPI behavior was replaced for hires, applied offboarding and reviewed gross salary releases.
+- Total Employees, Male, Female remain branch-scoped **current** recorded Employee 201 headcounts.
+- Eligible salary totals include only deduplicated ID / Browser Review / Released / Salary records, linked to in-scope employees, with nonnegative gross and dates up to today. No generated salary estimates or sample payslips included.
+- Applied Offboard cases are the only available recorded separation-like events; they are not final legal terminations. Pending/future actions are excluded.
+- The redundant Sample Activity section is removed from the Dashboard, not from the audit store.
+- Additional HR Reports now shows **visible clickable** Employment Status, Basic Pay Rates and Compliance cards, not a collapsed/empty-looking wrapper. Report numbers are actual Employee 201 breakdowns; linked full views reside in their owning modules.
+- App shell and Dashboard use aligned content margins and a responsive three-column main grid. Existing role/branch navigation is preserved.
+
+See [Batch 07 revision](../../revisions/batches/BATCH-07-REVISED-UI.md) and [design system](../../architecture/UI-DESIGN-SYSTEM.md). Browser build/screenshot QA remains pending.
