@@ -17,3 +17,13 @@ See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operationa
 ### Batch 08 UI migration note
 
 This module continues to use its existing business data and action handlers. Batch 08 adopts the shared UI tab, dialog accessibility or scoped styling patterns wherever applicable. See [Batch 08 revision record](../../revisions/batches/BATCH-08-UNIVERSAL-UI.md) for exact changed files and **unverified** browser checks; this does not certify the entire module as design-system migrated.
+
+## Batch 10 — PSA Data Support (2026 OWS / ISLE)
+
+`components/ReportsLanding.tsx` now exposes **PSA Data Support** as an internal tab; Demographics remains a separate internal top-level Reports & Analytics tab. The new `components/PsaDataSupportWorkspace.tsx` uses read-only dataset selectors in `lib/psaDataSupport.ts`.
+
+This is **not** a survey form editor, PSA automatic filing/submission feature or automatic questionnaire answer engine. Authorized HR staff can select **one** real reporting establishment, reference/period dates and a requested OWS/ISLE dataset; inspect the source rows, search/paginate, export CSV or print. The filing officer still fills and submits PSA paperwork separately.
+
+Coverage is deliberately conservative. Employee/occupation/pay support is limited by missing historical snapshots, pay/assignment evidence and absent PSOC mapping; ISLE special subjects not recorded reliably in the app appear as **Not tracked**. The panel distinguishes Recorded, Partial, No records and Not tracked and carries visible source limitations. Data are frontend browser-local (including demo seeds), not government-certified figures. Restrict exports to staff already authorized to see employee/pay data.
+
+See [Batch 10 notes](../../revisions/batches/BATCH-10-PSA-DATA-SUPPORT.md).

@@ -152,3 +152,14 @@ The YTD calculation smoke test is under `scripts/check-dashboard-ytd.cjs` (sourc
 | DASH9-02 | Same | Full browser accessibility/regression across users/modules | blocked / not yet verified | Requires installed Next.js/React dependencies and interactive QA |
 
 See [Batch 09 scope](batches/BATCH-09-EMPLOYEE-DOCUMENTS-DASHBOARD-DRILLDOWN.md).
+
+## Batch 10 — PSA OWS / ISLE supporting datasets (manual government filing aid)
+
+| Revision | Files | Status | Checks / constraints |
+|---|---|---|---|
+| PSA10-01 — Reports integration | `components/ReportsLanding.tsx`, `components/PsaDataSupportWorkspace.tsx`, `.module.css` | implemented (source) | Separate OWS/ISLE, single establishment/date filters, traceable tables; browser tab navigation pending |
+| PSA10-02 — read-only datasets | `lib/psaDataSupport.ts` | implemented (source) | Employment, occupation, evidenced basic pay, dated releases, hires/separations; absent datasets flagged; historical records partial |
+| PSA10-03 — file support | `components/PsaDataSupportWorkspace.tsx`, `lib/psaDataSupport.ts` | implemented (source) | CSV+print supporting rows with explicit warnings; export/browser interaction unverified |
+| PSA10-04 — QA & documentation | `scripts/check-psa-data-support.cjs`, module README, changelog, this map and `docs/revisions/batches/BATCH-10-PSA-DATA-SUPPORT.md` | source checks completed | Full Next.js build and interactive desktop/mobile tests outstanding |
+
+[Batch 10 detailed scope](batches/BATCH-10-PSA-DATA-SUPPORT.md).
