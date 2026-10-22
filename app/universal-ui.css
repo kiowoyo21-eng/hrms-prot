@@ -1,5 +1,0 @@
-/* Universal UI V1: popovers render at document.body so they cannot be clipped by cards, tables or sidebars. */
-.uc-fixed-popover.mu-notice-popover,.uc-fixed-popover.uc-date-popover{position:fixed;inset:auto;z-index:10050;box-sizing:border-box;overscroll-behavior:contain;box-shadow:0 16px 45px rgba(15,23,42,.24)}
-.uc-fixed-popover.uc-date-popover{min-width:0;max-width:calc(100vw - 16px)}
-.uc-fixed-popover.mu-notice-popover{max-width:calc(100vw - 16px)}
-@media(max-width:480px){.uc-fixed-popover.uc-date-popover,.uc-fixed-popover.mu-notice-popover{border-radius:10px}}
