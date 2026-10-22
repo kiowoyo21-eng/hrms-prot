@@ -1,6 +1,8 @@
 "use client";
 import {createContext,useContext,useEffect,useMemo,useRef,useState,type ReactNode} from "react";
 import {employees as samples,type Person} from "./people";
+import {demoProfileFor,enrichExistingDemoProfiles} from "./demoEmployeeProfiles";
+import {demoProfileFor,enrichExistingDemoProfiles} from "./demoEmployeeProfiles";
 import {initialPayrollConfig,normalizePayrollConfig,type PayrollConfig} from "./payrollConfig";
 import type {SalaryDestination} from "./salaryDisbursement";
 import {writeAuditEvent,changedFields} from "./auditTrail";
@@ -44,7 +46,7 @@ export const initialState:HRState={
  lifecycleCases:[],
  finalPayCases:[],
  payrollConfig:initialPayrollConfig,
- people:samples.map((p,i)=>({...p,email:"",phone:"",probation:p.status==="Probationary"?6:0,sil:5,vil:i%2?5:0,documents:requirements.map((name,j)=>({name,status:j===0?"Verified":j===1?"Missing":"Submitted"})),timeline:[`${p.hire} · Hired at ${p.branch}`],assignmentHistory:[{id:`initial-${p.id}`,effectiveDate:p.hire,kind:"Initial Assignment" as const,branch:p.branch,department:p.department,position:p.position}]})),
+ people:samples.map((p,i)=>({...p,...demoProfileFor(i),probation:p.status==="Probationary"?6:0,sil:5,vil:i%2?5:0,documents:requirements.map((name,j)=>({name,status:j===0?"Verified":j===1?"Missing":"Submitted"})),timeline:[`${p.hire} · Hired at ${p.branch}`],assignmentHistory:[{id:`initial-${p.id}`,effectiveDate:p.hire,kind:"Initial Assignment" as const,branch:p.branch,department:p.department,position:p.position}]})),
  rates:{"UC-0001":{...defaultRate,ot:200,rdw:200,rdot:260,effective:"2026-10-01",reason:"Approved individual reference profile"}},
  assets:[
  {id:"AST-1001",homeBranch:"UC Mandaluyong",name:"Mac mini M2",serial:"UC-MAC-1001",status:"Assigned",employeeId:"UC-0001",condition:"Good",accessories:"Keyboard, power cable",history:["2026-10-03 · Assigned to UC-0001"],signed:true,date:"2026-10-03"},
@@ -67,7 +69,7 @@ const HRContext=createContext<ContextValue|null>(null);
 export function HRProvider({children}:{children:ReactNode}){
  const [data,setData]=useState<HRState>(initialState);const [ready,setReady]=useState(false);
  const previousSaved=useRef<string|null>(null);
- useEffect(()=>{try{const raw=window.localStorage.getItem(KEY);if(raw){const loaded=JSON.parse(raw) as Partial<HRState>;if(Array.isArray(loaded.people)&&Array.isArray(loaded.assets))setData({...initialState,...loaded,lifecycleCases:Array.isArray(loaded.lifecycleCases)?loaded.lifecycleCases:[],finalPayCases:Array.isArray(loaded.finalPayCases)?loaded.finalPayCases:[],earnings:loaded.earnings||{},deductions:loaded.deductions||{},payrollReleases:loaded.payrollReleases||initialState.payrollReleases,payrollConfig:normalizePayrollConfig(loaded.payrollConfig)});}}catch{}setReady(true)},[]);
+ useEffect(()=>{try{const raw=window.localStorage.getItem(KEY);if(raw){const loaded=JSON.parse(raw) as Partial<HRState>;if(Array.isArray(loaded.people)&&Array.isArray(loaded.assets)){const seedKey="uc-hr-demo-profile-enrichment-v1";const shouldSeed=window.localStorage.getItem(seedKey)!=="1";setData({...initialState,...loaded,people:shouldSeed?enrichExistingDemoProfiles(loaded.people):loaded.people,lifecycleCases:Array.isArray(loaded.lifecycleCases)?loaded.lifecycleCases:[],finalPayCases:Array.isArray(loaded.finalPayCases)?loaded.finalPayCases:[],earnings:loaded.earnings||{},deductions:loaded.deductions||{},payrollReleases:loaded.payrollReleases||initialState.payrollReleases,payrollConfig:normalizePayrollConfig(loaded.payrollConfig)});if(shouldSeed)window.localStorage.setItem(seedKey,"1");}}}catch{}setReady(true)},[]);
  useEffect(()=>{if(!ready)return;
   const next=JSON.stringify(data),prior=previousSaved.current;
   if(next===prior)return;

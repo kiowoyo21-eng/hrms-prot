@@ -32,3 +32,7 @@ See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operationa
 The Personal Information **Overview detail dialog** now displays its existing `person.documents` required-document checklist, counts of `Missing` / `Submitted` / `Verified`, available checklist filenames, and matching `data.submissions` filename + HR review state (`Pending HR Review`, `Approved`, `Rejected`). Submission and verification are shown as **distinct** facts; an uploaded file does not automatically certify verification. An additional recorded submission is shown separately when it does not match a checklist label. The summary card shows checklist counts. **View / Manage Documents** opens the original Employee 201 `Documents` tab / `Onboarding Files` folder. No document storage or review workflow was changed.
 
 Sources: `components/EmployeeWorkspace.tsx`, `lib/hrState.tsx`, `components/EmployeeDocumentLibrary.tsx`, `app/hrms-migration.css`. Full browser click/attachment persistence test pending.
+
+### Batch 11 fictional profile enrichment
+
+The 35 original demonstration employees have fictional DOB, age, contact/emergency and demographic test fields; profile age is derived from DOB using the Philippine date. An existing browser seed is enriched once on empty fields without overwriting nonempty edits, unrelated identities or government ID values. These are neither verified identities nor production records. See [Batch 11](../../revisions/batches/BATCH-11-PSA-ENTITY-DEMO-PROFILES.md).

@@ -27,3 +27,7 @@ This is **not** a survey form editor, PSA automatic filing/submission feature or
 Coverage is deliberately conservative. Employee/occupation/pay support is limited by missing historical snapshots, pay/assignment evidence and absent PSOC mapping; ISLE special subjects not recorded reliably in the app appear as **Not tracked**. The panel distinguishes Recorded, Partial, No records and Not tracked and carries visible source limitations. Data are frontend browser-local (including demo seeds), not government-certified figures. Restrict exports to staff already authorized to see employee/pay data.
 
 See [Batch 10 notes](../../revisions/batches/BATCH-10-PSA-DATA-SUPPORT.md).
+
+### Batch 11 PSA reporting entity correction
+
+For the **PSA Data Support** tab only, `Underchargers` is a consolidated reporting entity across UC Las Piñas, UC Mandaluyong and UC Quezon City; `Mastermind` is a separate reporting entity. A UC branch filter maps to UC's entity selection rather than creating a branch-by-branch filing dataset. Table details now open in accessible dialogs, not inline. Employee demo profiles have fictional DOB/age data for preview only; historical and certified source limitations continue to apply. See [Batch 11](../../revisions/batches/BATCH-11-PSA-ENTITY-DEMO-PROFILES.md).

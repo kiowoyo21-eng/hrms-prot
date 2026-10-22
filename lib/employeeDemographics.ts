@@ -18,6 +18,14 @@ export const getArrangement=(p:HRPerson):EmploymentArrangement=>enumOf(p.employm
 export const getGender=(p:HRPerson):"Male"|"Female"|"Unspecified"=>p.gender==="Male"?"Male":p.gender==="Female"?"Female":"Unspecified";
 const validDivisor=(n:unknown)=>typeof n==="number"&&Number.isFinite(n)&&n>0&&n<=31;
 const round=(n:number)=>Math.round((n+Number.EPSILON)*100)/100;
+export function ageOnDate(birth:string|undefined,asOf:string):number|null{
+ if(!birth||!/^(\d{4})-(\d{2})-(\d{2})$/.test(birth)||!/^\d{4}-\d{2}-\d{2}$/.test(asOf))return null;
+ const born=new Date(`${birth}T00:00:00Z`),on=new Date(`${asOf}T00:00:00Z`);
+ if(Number.isNaN(born.getTime())||Number.isNaN(on.getTime())||born.toISOString().slice(0,10)!==birth||on.toISOString().slice(0,10)!==asOf||born>on)return null;
+ let years=on.getUTCFullYear()-born.getUTCFullYear();
+ if(on.getUTCMonth()<born.getUTCMonth()||(on.getUTCMonth()===born.getUTCMonth()&&on.getUTCDate()<born.getUTCDate()))years--;
+ return years;
+}
 export function ageBand(birth:string|undefined,asOf:string){
  if(!birth||!/^\d{4}-\d{2}-\d{2}$/.test(birth))return "Not recorded";
  const d=new Date(`${birth}T00:00:00Z`),now=new Date(`${asOf}T00:00:00Z`);

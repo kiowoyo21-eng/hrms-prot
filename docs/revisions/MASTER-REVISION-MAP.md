@@ -163,3 +163,14 @@ See [Batch 09 scope](batches/BATCH-09-EMPLOYEE-DOCUMENTS-DASHBOARD-DRILLDOWN.md)
 | PSA10-04 — QA & documentation | `scripts/check-psa-data-support.cjs`, module README, changelog, this map and `docs/revisions/batches/BATCH-10-PSA-DATA-SUPPORT.md` | source checks completed | Full Next.js build and interactive desktop/mobile tests outstanding |
 
 [Batch 10 detailed scope](batches/BATCH-10-PSA-DATA-SUPPORT.md).
+
+## Batch 11 — PSA Entity + Dataset Popup + Demo Profile Review (2026-10-22)
+
+| ID | Scope | State | Paths |
+|---|---|---|---|
+| PSA-11-01 | UC LP + MD + QC combined; MM fully separate, correct historical grouping | Implemented; browser QA pending | `lib/psaReportingEntity.ts`, `lib/psaDataSupport.ts`, `components/PsaDataSupportWorkspace.tsx` |
+| PSA-11-02 | PSA dataset click opens modal, no inline dataset detail | Implemented; browser QA pending | `components/PsaDataSupportWorkspace.tsx`, `.module.css` |
+| EMP-11-01 | Fictional DOB, age and personal/emergency/demographic sample fields across 35 original demo employees | Implemented; browser QA pending | `lib/demoEmployeeProfiles.ts`, `lib/hrState.tsx`, `lib/employeeDemographics.ts`, `components/EmployeeWorkspace.tsx` |
+| UI-11-01 | Dashboard record-row details now open a modal; remaining legacy no-inline surfaces | Dashboard implemented; **system-wide audit pending** | `components/DashboardRecordsDialog.tsx` and `.module.css`; other legacy modules untouched |
+
+See [Batch 11](batches/BATCH-11-PSA-ENTITY-DEMO-PROFILES.md). The HRMS is frontend/browser-local; no official PSA submission or certified data output.

@@ -4,8 +4,8 @@
  * Missing records never become numerical zeroes or assumed form answers.
  */
 import type {HRState,HRPerson,PayrollRelease,EmployeeAssignment} from "./hrState";
-import type {Shop} from "./people";
-import {ageBand,getArrangement,getLevel} from "./employeeDemographics";
+import {ageBand,ageOnDate,getArrangement,getLevel} from "./employeeDemographics";
+import {psaEntityForBranch,type PsaReportingEntity} from "./psaReportingEntity";
 
 export type PsaSurvey="OWS"|"ISLE";
 export type DatasetAvailability="Recorded"|"Partial"|"No records"|"Not tracked";
@@ -27,16 +27,16 @@ export function assignmentAt(person:HRPerson,asOf:string):EmployeeAssignment|nul
  const events=(person.assignmentHistory||[]).filter(a=>validDate(a.effectiveDate)&&a.effectiveDate<=asOf).sort((a,b)=>b.effectiveDate.localeCompare(a.effectiveDate));
  return events[0]||null;
 }
-export function employeesAt(state:HRState,establishment:Shop,asOf:string,today:string){
+export function employeesAt(state:HRState,establishment:PsaReportingEntity,asOf:string,today:string){
  const historical=asOf<today;
  const offboarded=new Set((state.lifecycleCases||[]).filter(c=>c.action==="Offboard"&&c.status==="Applied (Demo)"&&validDate(c.effectiveDate)&&c.effectiveDate<=asOf).map(c=>c.employeeId));
  const uncertain:string[]=[];
  const rows=state.people.filter(p=>{
   if(!validDate(p.hire)||p.hire>asOf||offboarded.has(p.id))return false;
-  if(!historical)return p.branch===establishment;
+  if(!historical)return psaEntityForBranch(p.branch)===establishment;
   const assignment=assignmentAt(p,asOf);
   if(!assignment){uncertain.push(p.id);return false}
-  return assignment.branch===establishment;
+  return psaEntityForBranch(assignment.branch)===establishment;
  });
  return {rows,historical,uncertain};
 }
@@ -46,20 +46,20 @@ function dataset(id:string,survey:PsaSurvey,title:string,source:string,columns:s
 function notTracked(survey:PsaSurvey,id:string,title:string,reference:string,reason:string):PsaDataset{
  return dataset(id,survey,title,"No structured source in current HRMS",[],[],reference,[reason],"Not tracked");
 }
-export function buildPsaDatasets(state:HRState,survey:PsaSurvey,establishment:Shop,asOf:string,from:string,today:string):PsaDataset[]{
+export function buildPsaDatasets(state:HRState,survey:PsaSurvey,establishment:PsaReportingEntity,asOf:string,from:string,today:string):PsaDataset[]{
  if(!validDate(asOf)||!validDate(from)||!validDate(today)||asOf>today||from>asOf)return [];
  const {rows:people,historical,uncertain}=employeesAt(state,establishment,asOf,today);
  const assignments=new Map(people.map(p=>[p.id,historical?assignmentAt(p,asOf):null]));
  const position=(p:HRPerson)=>historical?clean(assignments.get(p.id)?.position):clean(p.position);
  const department=(p:HRPerson)=>historical?clean(assignments.get(p.id)?.department):clean(p.department);
- const core=people.map(p=>[p.id,clean(p.name),establishment,department(p),position(p),clean(p.gender),clean(p.status),p.hire]);
+ const core=people.map(p=>[p.id,clean(p.name),establishment,clean(historical?assignments.get(p.id)?.branch:p.branch),department(p),position(p),clean(p.gender),clean(p.status),p.hire,clean(p.birthDate),String(ageOnDate(p.birthDate,asOf)??"Not recorded")]);
  const snapshotNote=historical
-  ?"Historical snapshot is incomplete: only currently retained Employee 201 records with dated assignment evidence are included. Departed/archived workers and earlier employment statuses may be missing. Verify before filing."
+  ?"Historical snapshot is incomplete: only currently retained Employee 201 records with dated assignment evidence are included. Departed/archived workers and earlier employment statuses may be missing. UC branches are consolidated by entity. Verify before filing."
   :"Current Employee 201 data is browser-local and may contain demo records; verify against official HR registers.";
  const common=[snapshotNote,...(uncertain.length?[`${uncertain.length} current employee(s) lack dated assignment history and were excluded from the historical branch estimate.`]:[])];
  const tracked=(id:string,s:PsaSurvey,title:string,source:string,columns:string[],rows:string[][],reference:string,notes:string[]=[],forced?:DatasetAvailability)=>dataset(id,s,title,source,columns,rows,reference,[...common,...notes],forced??recordStatus(rows,historical));
  if(survey==="OWS"){
-  const occupations=group(core,[4,5]);
+  const occupations=group(core,[5,6]);
   const classifications=group(people.map(p=>[position(p),clean(p.salaryType),getArrangement(p)]),[0,1,2]);
   // A current basic rate is not proof of an earlier rate. Use only applied rate-change events as historical evidence.
   const changes=state.payrollConfig?.rateChanges||[];
@@ -77,11 +77,11 @@ export function buildPsaDatasets(state:HRState,survey:PsaSurvey,establishment:Sh
    const p=state.people.find(p=>p.id===r.employeeId);
    if(!p)return []; // No reliable branch mapping for deleted employee in current browser state
    const a=assignmentAt(p,r.paidAt);
-   if((r.paidAt<today?a?.branch:p.branch)!==establishment)return [];
+   if(psaEntityForBranch(r.paidAt<today?a?.branch:p.branch)!==establishment)return [];
    return [[r.id,p.id,r.kind,r.paidAt,money(r.gross),"Browser Review (unverified)"]];
   });
   return [
-   tracked("ows-roster","OWS","Employee roster at reference date","Employee 201 + assignment history",["Employee ID","Employee","Establishment","Department","Position","Sex","Current status*","Hire date"],core,`As of ${asOf}`,["*Current status is NOT reconstructed as of the reference date."]),
+   tracked("ows-roster","OWS","Employee roster at reference date","Employee 201 + assignment history",["Employee ID","Employee","Entity","Recorded branch","Department","Position","Sex","Current status*","Hire date","Birth date","Age at reference"],core,`As of ${asOf}`,["*Current status is NOT reconstructed as of the reference date."]),
    tracked("ows-occupation-sex","OWS","Occupation and sex breakdown","Employee 201 position (not a PSA/PSOC code)",["Recorded position","Recorded sex","Employees"],occupations,`As of ${asOf}`,["Internal job titles are not verified PSA occupation codes; classification must be reviewed."]),
    tracked("ows-pay-basis","OWS","Pay basis and employment arrangement","Employee 201 compensation/arrangement",["Recorded position","Pay basis","Employment arrangement","Employees"],classifications,`As of ${asOf}`,["Commission-based and output-based arrangements are not independently verified."]),
    tracked("ows-basic-pay","OWS","Recorded individual basic pay references","Employee 201 rate + applied payroll rate-change history",["Employee ID","Position","Sex","Pay basis","Basic pay PHP","Rate evidence"],pay,`As of ${asOf}`,["A current rate is never backdated. 'Not verified' indicates no recorded applicable historical rate event.","Basic rate is NOT wages actually paid; no conversion without workdays/hours evidence."],historical?"Partial":recordStatus(pay,false)),
@@ -95,27 +95,27 @@ export function buildPsaDatasets(state:HRState,survey:PsaSurvey,establishment:Sh
  const classifications=group(people.map(p=>[getArrangement(p),getLevel(p),clean(p.status)]),[0,1,2]);
  const hires=state.people.filter(p=>validDate(p.hire)&&p.hire>=from&&p.hire<=asOf).flatMap(p=>{
   const history=assignmentAt(p,p.hire);
-  if((p.hire<today?history?.branch:p.branch)!==establishment)return [];
+  if(psaEntityForBranch(p.hire<today?history?.branch:p.branch)!==establishment)return [];
   return [[p.id,clean(p.name),p.hire,clean(history?.position||p.position),"Present in current Employee 201"]];
  });
- const exits=(state.lifecycleCases||[]).filter(c=>c.action==="Offboard"&&c.status==="Applied (Demo)"&&c.sourceBranch===establishment&&validDate(c.effectiveDate)&&c.effectiveDate>=from&&c.effectiveDate<=asOf).map(c=>[c.id,c.employeeId,c.effectiveDate,clean(c.separationType),clean(c.snapshot.position),clean(c.status)]);
+ const exits=(state.lifecycleCases||[]).filter(c=>c.action==="Offboard"&&c.status==="Applied (Demo)"&&psaEntityForBranch(c.sourceBranch)===establishment&&validDate(c.effectiveDate)&&c.effectiveDate>=from&&c.effectiveDate<=asOf).map(c=>[c.id,c.employeeId,c.effectiveDate,clean(c.separationType),clean(c.snapshot.position),clean(c.status)]);
  const wage=state.payrollReleases.filter(r=>{
   if(r.source!=="Browser Review"||r.status!=="Released"||!validDate(r.paidAt)||r.paidAt<from||r.paidAt>asOf)return false;
   const p=state.people.find(p=>p.id===r.employeeId);
   if(!p)return false;
   // Never use the employee's CURRENT branch for a historical wage/payment record.
   const dated=assignmentAt(p,r.paidAt);
-  return dated?.branch===establishment;
+  return psaEntityForBranch(dated?.branch)===establishment;
  });
  const unique=new Map<string,PayrollRelease>();wage.forEach(r=>{if(!unique.has(r.id))unique.set(r.id,r)});
  const wageRows=[...unique.values()].map(r=>[r.id,r.employeeId,r.paidAt,r.kind,clean(r.salaryDestination?.channel),money(r.gross)]);
  return [
-  tracked("isle-roster","ISLE","Employment roster at reference date","Employee 201 + assignment history",["Employee ID","Employee","Establishment","Department","Position","Sex","Current status*","Hire date"],core,`As of ${asOf}`,["*Status reflects stored current record, not certified prior status."]),
+  tracked("isle-roster","ISLE","Employment roster at reference date","Employee 201 + assignment history",["Employee ID","Employee","Entity","Recorded branch","Department","Position","Sex","Current status*","Hire date","Birth date","Age at reference"],core,`As of ${asOf}`,["*Status reflects stored current record, not certified prior status."]),
   tracked("isle-age-sex","ISLE","Age group and sex","Employee 201: date of birth and sex",["Age group","Sex","Employees"],ageRows,`As of ${asOf}`,["'Not recorded' birthdays remain unknown; do not infer ages."]),
   tracked("isle-employment","ISLE","Employment arrangement and job level","Employee 201 classifications",["Arrangement","Job level","Current status*","Employees"],classifications,`As of ${asOf}`,["*Historical employment status is not reconstructed; not a verified ISLE response."]),
   tracked("isle-hires","ISLE","Recorded new hires","Employee 201 recorded hire dates",["Employee ID","Employee","Hire date","Position at hire","Record coverage"],hires,`${from} to ${asOf}`,["Departed or deleted hires may not appear in current Employee 201; counts are incomplete."],"Partial"),
   tracked("isle-separations","ISLE","Applied separation cases","Employee lifecycle applied Offboard records",["Case ID","Employee ID","Effective date","Separation category","Last position","Case status"],exits,`${from} to ${asOf}`,["Only approved/applied recorded offboarding cases are shown; other exits may be untracked."],"Partial"),
-  tracked("isle-digital-wages","ISLE","Recorded salary payment references","Payroll releases with browser review",["Release ID","Employee ID","Paid date","Release type","Recorded payment channel","Gross PHP"],wageRows,`${from} to ${asOf}`,["This is not a company-wide assessment of digital wage payment or payslip coverage. Payment channel may be unrecorded.","Uses currently associated employee branch; older transfers may require manual reconciliation."],"Partial"),
+  tracked("isle-digital-wages","ISLE","Recorded salary payment references","Payroll releases with browser review",["Release ID","Employee ID","Paid date","Release type","Recorded payment channel","Gross PHP"],wageRows,`${from} to ${asOf}`,["This is not a company-wide assessment of digital wage payment or payslip coverage. Payment channel may be unrecorded.","Payment is attributed using dated assignment evidence at paid date; releases without that evidence are excluded."],"Partial"),
   notTracked("ISLE","isle-vacancies","Vacancies and hard-to-fill occupations",`${from} to ${asOf}`,"Recruitment vacancy records are not available as a reliable dated, establishment-scoped reporting dataset here."),
   notTracked("ISLE","isle-recruitment-channels","Recruitment channels and applicant counts",`${from} to ${asOf}`,"No verified, survey-period recruitment channel counts are integrated in this data support view."),
   notTracked("ISLE","isle-training","Job-related training, providers and costs",`${from} to ${asOf}`,"No structured dated training-and-cost ledger for the survey is available."),
