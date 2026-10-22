@@ -41,3 +41,11 @@ See `../../revisions/batches/BATCH-05.md` for scope, remaining QA and operationa
 - App shell and Dashboard use aligned content margins and a responsive three-column main grid. Existing role/branch navigation is preserved.
 
 See [Batch 07 revision](../../revisions/batches/BATCH-07-REVISED-UI.md) and [design system](../../architecture/UI-DESIGN-SYSTEM.md). Browser build/screenshot QA remains pending.
+
+## Batch 09 — Actual record drill-downs (source-level)
+
+Clickable **workforce KPI**, **people-movement position**, **Requests & Complaints** count, **My Workload** count, **Additional HR Report** and **Pending Actions by Module** cards now open a read-only **in-dashboard modal** with searchable, expandable actual source records rather than navigating to an unrelated analytics page. Totals and record lists share selectors in `lib/dashboardAnalytics.ts`; transformation models are in `lib/dashboardRecordViews.ts`; common dialog in `components/DashboardRecordsDialog.tsx` and `.module.css`.
+
+Data provenance: live browser Employee 201 records for gender/headcount/hired, recorded applied offboarding events for separated, eligible unique/browser-reviewed Salary releases for gross YTD; filtered browser HR forms and incidents for requests/workload; pending actions are registry alerts published by modules, not their full databases. Report cards disclose configured basic-pay **rate units**, and Government Compliance details show masked identifier-presence only—not legal compliance verification. The selected branch and role rules are preserved. Quick Actions and explicit **Open ...** module buttons remain intentional navigation links, separate from drill-down data cards.
+
+Search, pagination, row expansions, Esc/focus behaviour use the shared UI dialog primitives. UI is source-implemented, but full browser, payroll privacy and responsive interaction QA is still required.

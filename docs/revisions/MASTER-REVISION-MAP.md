@@ -142,3 +142,13 @@ The YTD calculation smoke test is under `scripts/check-dashboard-ytd.cjs` (sourc
 | UI8-07 | All legacy UI modules and styles | Complete React primitive migration, strict stylelint/token enforcement, CSS cleanup | **planned** | Do not claim complete until runtime and codebase-wide migration |
 
 [Full Batch 08 mapping and limits](batches/BATCH-08-UNIVERSAL-UI.md).
+
+## Batch 09 — Employee 201 Overview required documents + Dashboard actual records
+
+| Revision | Actual source paths | Desired and implemented behavior | Status | Validation / outstanding |
+|---|---|---|---|---|
+| DOC9-01 | `components/EmployeeWorkspace.tsx`, `app/hrms-migration.css` | Restore Required Documents statuses/filename/HR review in Personal Information; working Documents tab action | implemented (source) | Source inspection + smoke assertion; browser attachment/navigation check pending |
+| DASH9-01 | `lib/dashboardAnalytics.ts`, `lib/dashboardRecordViews.ts`, `components/DashboardOverview.tsx`, `components/DashboardExtras.tsx`, `components/ModuleAlerts.tsx`, `components/DashboardRecordsDialog.tsx`, module CSS | In-dashboard actual-data popups for displayed data cards, parity with filtered KPIs, expandable records | implemented (source) | Count/branch/date/role unit checks + parse/import; browser actions/responsive pending |
+| DASH9-02 | Same | Full browser accessibility/regression across users/modules | blocked / not yet verified | Requires installed Next.js/React dependencies and interactive QA |
+
+See [Batch 09 scope](batches/BATCH-09-EMPLOYEE-DOCUMENTS-DASHBOARD-DRILLDOWN.md).

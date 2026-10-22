@@ -24,7 +24,7 @@ const recordedOnOrBefore=(date:string,start:string,end:string)=>/^\d{4}-\d{2}-\d
  * "Separated" is based on applied Offboard cases, not an assumed status change.
  * Salary totals count only browser-reviewed, released Salary entries; never basic-pay estimates.
  */
-export function dashboardEmployeeSummary(state:HRState,branch:Branch,asOf:string){
+export function dashboardEmployeeRecords(state:HRState,branch:Branch,asOf:string){
  const today=/^\d{4}-\d{2}-\d{2}$/.test(asOf)?asOf:dashboardTodayPH();
  const start=`${today.slice(0,4)}-01-01`;
  const people=state.people.filter(p=>inBranch(p,branch));
@@ -41,9 +41,14 @@ export function dashboardEmployeeSummary(state:HRState,branch:Branch,asOf:string
  const eligible=[...uniqueReleases.values()].filter(r=>r.status==="Released"&&r.kind==="Salary"&&recordedOnOrBefore(r.paidAt,start,today)&&ids.has(r.employeeId));
  const salaryReleases=eligible.filter(r=>r.source==="Browser Review"&&validMoney(r.gross));
  const sampleReleasesExcluded=eligible.filter(r=>r.source==="Sample").length;
- return {total:people.length,male:people.filter(p=>p.gender==="Male").length,female:people.filter(p=>p.gender==="Female").length,unspecified:people.filter(p=>p.gender!=="Male"&&p.gender!=="Female").length,hires:hires.length,exits:exits.length,terminations:exits.filter(c=>c.separationType==="Termination").length,positions:[...byPosition.values()].sort((a,b)=>b.gained+b.lost-(a.gained+a.lost)||a.position.localeCompare(b.position)),salaryGross:salaryReleases.reduce((v,r)=>v+r.gross,0),salaryCount:salaryReleases.length,sampleReleasesExcluded};
+ return {people,hireRecords:hires,exitRecords:exits,salaryReleases,total:people.length,male:people.filter(p=>p.gender==="Male").length,female:people.filter(p=>p.gender==="Female").length,unspecified:people.filter(p=>p.gender!=="Male"&&p.gender!=="Female").length,hires:hires.length,exits:exits.length,terminations:exits.filter(c=>c.separationType==="Termination").length,positions:[...byPosition.values()].sort((a,b)=>b.gained+b.lost-(a.gained+a.lost)||a.position.localeCompare(b.position)),salaryGross:salaryReleases.reduce((v,r)=>v+r.gross,0),salaryCount:salaryReleases.length,sampleReleasesExcluded};
 }
-export function dashboardRequestSummary(forms:readonly HRFormRecord[],incidents:readonly IncidentCase[],branch:Branch,role:Role,username:string){
+export function dashboardEmployeeSummary(state:HRState,branch:Branch,asOf:string){
+ const {people,hireRecords,exitRecords,salaryReleases,...summary}=dashboardEmployeeRecords(state,branch,asOf);
+ return summary;
+}
+/** Shared visible record selectors used by both dashboard counts and their drill-downs. */
+export function dashboardRequestRecords(forms:readonly HRFormRecord[],incidents:readonly IncidentCase[],branch:Branch,role:Role,username:string){
  const visibleForms=forms.filter(f=>inBranch(f,branch)&&(role!=="BM"||(f.branch==="UC Mandaluyong"&&f.requestor===username)));
  const visibleIncidents=incidents.filter(c=>inBranch(c,branch)&&(role!=="BM"||(c.handler==="BM"&&!c.respondentIsBM)));
  const pendingForms=visibleForms.filter(f=>f.status==="Submitted"||f.status==="Returned for Revision");
@@ -54,5 +59,10 @@ export function dashboardRequestSummary(forms:readonly HRFormRecord[],incidents:
  const reviewer=role!=="BM";
  const toReview=reviewer?visibleForms.filter(f=>f.status==="Submitted"&&f.requestor!==username).length:0;
  const completedReviews=reviewer?visibleForms.filter(f=>f.reviewedBy===username&&(f.status==="Approved (Documentation Only)"||f.status==="Rejected"||f.status==="Returned for Revision")).length:0;
- return {totalRequests:visibleForms.length,totalReports:visibleIncidents.length,pending:pendingForms.length+pendingIncidents.length,resolved:resolvedForms.length+resolvedIncidents.length,drafts:visibleForms.filter(f=>f.status==="Draft").length,ownPending:mine.filter(f=>f.status==="Submitted"||f.status==="Returned for Revision").length,ownCompleted:mine.filter(f=>f.status==="Approved (Documentation Only)"||f.status==="Rejected").length,toReview,completedReviews};
+ return {forms:visibleForms,incidents:visibleIncidents,pendingForms,resolvedForms,pendingIncidents,resolvedIncidents,mine,totalRequests:visibleForms.length,totalReports:visibleIncidents.length,pending:pendingForms.length+pendingIncidents.length,resolved:resolvedForms.length+resolvedIncidents.length,drafts:visibleForms.filter(f=>f.status==="Draft").length,ownPending:mine.filter(f=>f.status==="Submitted"||f.status==="Returned for Revision").length,ownCompleted:mine.filter(f=>f.status==="Approved (Documentation Only)"||f.status==="Rejected").length,toReview,completedReviews};
+}
+
+export function dashboardRequestSummary(forms:readonly HRFormRecord[],incidents:readonly IncidentCase[],branch:Branch,role:Role,username:string){
+ const {forms:visibleForms,incidents:visibleIncidents,pendingForms,resolvedForms,pendingIncidents,resolvedIncidents,mine,...summary}=dashboardRequestRecords(forms,incidents,branch,role,username);
+ return summary;
 }

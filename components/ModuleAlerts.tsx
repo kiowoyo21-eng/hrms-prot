@@ -6,6 +6,8 @@ import {visibleAlerts,dashboardAlertGroups,mergeAlertSources,type AlertRegistry,
 export type {ModuleAlert} from "../lib/moduleAlertViews";
 import {Bell,ChevronRight,X,Users,BriefcaseBusiness,Wallet,CalendarCheck,FileWarning,Laptop,Files,Landmark,ClipboardList,ShieldCheck,FolderOpen} from "lucide-react";
 import type {Branch,ModuleId} from "../lib/mock";
+import type {DashboardRecordView} from "../lib/dashboardRecordViews";
+import DashboardRecordsDialog from "./DashboardRecordsDialog";
 type Registry=AlertRegistry;
 type ModuleActionHandler=(alert:ModuleAlert)=>void;
 type ModuleNoticeAPI={
@@ -58,15 +60,17 @@ const alertCardIcons={lifecycle:BriefcaseBusiness,employees:Users,payroll:Wallet
 const alertCardNames:Partial<Record<ModuleId,string>>={lifecycle:"Recruitment & Hiring",employees:"Employee 201",payroll:"Payroll Management",leave:"Leave Management",ir:"Incident Reports",assets:"Assets & Devices",documents:"Employee Documents",compliance:"Government Compliance","hr-forms":"HR Forms & Requests","final-approvals":"Final Approvals",submissions:"Employee Documents"};
 export function DashboardModuleAlerts({branch,onNavigate,allowed}:{branch:Branch;onNavigate:(id:ModuleId)=>void;allowed:ModuleId[]}){
  const {registry}=useModuleAlerts();
+ const [recordView,setRecordView]=useState<DashboardRecordView|null>(null);
+ useEffect(()=>setRecordView(null),[branch,allowed.join("|")]);
  const groups=dashboardAlertGroups(registry,allowed,branch)
   .map(group=>({...group,urgent:group.items.filter(item=>item.level==="urgent").length}))
   .sort((a,b)=>b.urgent-a.urgent||b.items.length-a.items.length||a.id.localeCompare(b.id));
- return <section className="mu-dashboard-alerts" aria-label="Pending Actions by Module">
+ return <section className="mu-dashboard-alerts" aria-label="Pending Actions by Module"><DashboardRecordsDialog view={recordView} onClose={()=>setRecordView(null)}/>
   <div className="mu-dashboard-heading"><h3>Pending Actions by Module</h3><span>Recorded action alerts only — not total module records</span></div>
   {groups.length===0?<p className="mu-dashboard-empty">No pending action alerts in the loaded records for this branch.</p>:
    <div className="mu-dashboard-grid">{groups.map(group=>{
     const Icon=alertCardIcons[group.id as keyof typeof alertCardIcons]||ClipboardList;
-    return <button type="button" key={group.id} onClick={()=>onNavigate(group.id)} aria-label={`Open ${alertCardNames[group.id]||group.id}: ${group.items.length} pending actions${group.urgent?`, ${group.urgent} urgent`:""}`}>
+    return <button type="button" key={group.id} onClick={()=>setRecordView({title:`${alertCardNames[group.id]||group.id} — pending actions`,scope:branch,columns:["Reference","Action","Branch","Priority","Details"],rows:group.items.map((alert,index)=>({id:`${group.id}-${alert.id||index}`,cells:[alert.id||"—",alert.title,alert.branch||"All Shops",alert.level==="urgent"?"Urgent":"Normal",alert.detail],details:[["Reference",alert.id||"Not recorded"],["Action",alert.action||"Review"],["Title",alert.title],["Branch",alert.branch||"All Shops"],["Priority",alert.level||"Normal"],["Details",alert.detail]]})),total:`${group.items.length} alert(s)`,note:"Published module alerts in currently loaded records. Alerts are not the total number of module records."})} aria-label={`Show records for ${alertCardNames[group.id]||group.id}: ${group.items.length} pending actions${group.urgent?`, ${group.urgent} urgent`:""}`}>
      <span className="mu-card-top"><span className="mu-card-icon"><Icon size={17}/></span>{group.urgent>0&&<span className="mu-card-urgent">{group.urgent} urgent</span>}</span>
      <span className="mu-card-label">{alertCardNames[group.id]||group.id}</span>
      <span className="mu-card-bottom"><strong>{group.items.length}</strong><small>Pending actions <ChevronRight size={14}/></small></span>

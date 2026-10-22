@@ -39,3 +39,10 @@ Static inspection is not browser verification.
 Actual sources: `components/DashboardOverview.tsx`, `components/DashboardOverview.module.css`, `components/DashboardExtras.tsx`, `components/DashboardExtras.module.css`, `lib/dashboardAnalytics.ts`, `app/page.tsx`, `app/ui.css`. Full Next.js build and browser tests not verified.
 
 Focused, rerunnable YTD calculation checks: `scripts/check-dashboard-ytd.cjs` (Node + project TypeScript dev dependency).
+
+## 2026-10-22 — Batch 09 · Record-based dashboard drill-down
+
+- Replaced data cards' generic module redirects with source-record modal drill-downs for workforce, payroll releases, requests, incidents, workload, report summaries and module-alert counts.
+- Reused branch/role source filters from Dashboard analytics for count-to-row parity; no data mutation.
+- Changed `DashboardOverview.tsx`, `DashboardExtras.tsx`, `ModuleAlerts.tsx`, `dashboardAnalytics.ts`, new `dashboardRecordViews.ts`, `DashboardRecordsDialog.tsx` and CSS.
+- Local source parsing, targeted assertions and archive checks passed; full Next.js build/browser testing remain pending.

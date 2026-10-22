@@ -189,6 +189,8 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const draft=personal;
  const evaluations=person?person.timeline.filter(t=>/evaluat|assessment/i.test(t)):[];
  const documentSubmissions=person?data.submissions.filter(s=>s.employeeId===person.id):[];
+ const requiredDocs=person?.documents||[];
+ const docStatusCount=(status:"Missing"|"Submitted"|"Verified")=>requiredDocs.filter(d=>d.status===status).length;
  const renderProfileFieldHistory=(kind:"personal"|"emergency"|"government")=>{
   const keys=new Set(profileAuditFields[kind]);
   const matching=person?employeeAudit.filter(e=>e.module==="Employee 201"&&e.recordId===person.id&&actualChangedKeys(e).some(k=>keys.has(k))):[];
@@ -480,7 +482,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      {tab==="Profile"&&profileView==="full"&&<nav className="emp201-jumplinks" aria-label="Jump to employee profile section">{[["Employee Details","personal"],["Employment","employment"],["Salary & Benefits","compensation"],["Reviews","evaluations"],["History","history"],["Clearance & Assets","clearance"],["Employee Actions","actions"]].map(([label,id])=><a key={id} href={`#emp201-${id}`}>{label}</a>)}</nav>}
      <div className="rev-detail employee201-detail">
       {tab==="Profile"&&profileView==="overview"&&!editing&&<div className={premium.overviewCards}>
-       <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("personal")}><span className={premium.overviewIcon}><UserRound size={20}/></span><span><small>01 · IDENTITY</small><b>Personal Information</b><em>{person.gender} · {person.civilStatus||"Civil status not recorded"}</em><em>{person.email||"Email not recorded"}</em></span><ArrowRight size={17}/></button>
+       <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("personal")}><span className={premium.overviewIcon}><UserRound size={20}/></span><span><small>01 · IDENTITY</small><b>Personal Information</b><em>{person.gender} · {person.civilStatus||"Civil status not recorded"}</em><em>{person.email||"Email not recorded"}</em><em>{docStatusCount("Verified")} verified · {docStatusCount("Submitted")} submitted · {docStatusCount("Missing")} missing documents</em></span><ArrowRight size={17}/></button>
        <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("employment")}><span className={premium.overviewIcon}><BriefcaseBusiness size={20}/></span><span><small>02 · EMPLOYMENT</small><b>Position & Assignment</b><em>{person.position} · {person.department}</em><em>{person.branch}</em></span><ArrowRight size={17}/></button>
        <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("salary")}><span className={premium.overviewIcon}><Wallet size={20}/></span><span><small>03 · COMPENSATION</small><b>Salary & Benefits</b><em>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</em><em>{person.salaryType} basic rate</em></span><ArrowRight size={17}/></button>
        <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("reviews")}><span className={premium.overviewIcon}><ClipboardList size={20}/></span><span><small>04 · PERFORMANCE</small><b>Reviews</b><em>{evaluations.length} assessment records</em><em>{evaluations[0]||"No review recorded"}</em></span><ArrowRight size={17}/></button>
@@ -513,6 +515,13 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
       <div className="emp201-detail-modalbody">
        {detailKind==="personal"&&<>
         <h4>Recorded Personal Information</h4><div className="emp201-dialog-facts">{[["Legal full name",person.name],["Middle name",empty(person.middleName)],["Suffix",empty(person.suffix)],["Gender",person.gender],["Date of birth",formatDate(person.birthDate)],["Place of birth",empty(person.placeOfBirth)],["Nationality",empty(person.nationality)],["Civil status",empty(person.civilStatus)],["Residence address",empty(person.address)],["Email",empty(person.email)],["Mobile / phone",empty(person.phone)]].map(([label,value])=><div key={label}><small>{label}</small><b>{value}</b></div>)}</div>
+        <div className="emp201-dialog-subhead"><h4>Required Documents</h4><button type="button" className="secondary" onClick={()=>goToDocuments("Onboarding Files")}><FileText size={14}/> View / Manage Documents</button></div>
+        <div className="emp201-required-summary" aria-label="Document status counts"><span><b>{docStatusCount("Verified")}</b> Verified</span><span><b>{docStatusCount("Submitted")}</b> Submitted</span><span><b>{docStatusCount("Missing")}</b> Missing</span></div>
+        <div className="emp201-required-list">
+         {requiredDocs.length?requiredDocs.map((d,i)=>{const submissions=documentSubmissions.filter(s=>s.type.trim().toLocaleLowerCase()===d.name.trim().toLocaleLowerCase());return <div className="emp201-required-row" key={`${d.name}-${i}`}><div><strong>{d.name}</strong>{d.fileName&&<small>Recorded checklist file: {d.fileName}</small>}{submissions.length===0&&d.status==="Submitted"&&!d.fileName&&<small>Checklist marked submitted; no linked file or HR review record.</small>}{submissions.map(s=><small key={s.id}>Submission {s.id}: {s.fileName} · HR review: {s.status}{s.reason?` · ${s.reason}`:""}</small>)}</div><span className={`emp201-required-status status-${d.status.toLowerCase()}`}>{d.status}</span></div>}):<p className="muted">No required-document checklist has been recorded for this employee.</p>}
+         {documentSubmissions.filter(s=>!requiredDocs.some(d=>d.name.trim().toLocaleLowerCase()===s.type.trim().toLocaleLowerCase())).map(s=><div className="emp201-required-row" key={s.id}><div><strong>{s.type}</strong><small>{s.fileName} · HR review: {s.status}{s.reason?` · ${s.reason}`:""}</small></div><span className="emp201-required-status">Additional submission</span></div>)}
+        </div>
+        <p className="muted">Checklist status and HR submission review are separate. Submitted is not Verified; an uploaded file alone does not prove verification.</p>
         <div className="emp201-dialog-subhead"><h4>Recorded Field Changes</h4></div>{renderProfileFieldHistory("personal")}
        </>}
        {detailKind==="emergency"&&<>

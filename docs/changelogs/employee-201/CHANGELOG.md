@@ -11,3 +11,9 @@ Refer to `docs/revisions/batches/BATCH-03.md` for file mapping and validation st
 Overview is now the primary read-only Employee 201 entry, with separate interactive Emergency and Government detail cards; redundant Full/Complete view links were removed from read-only navigation. The existing FullRecord remains exclusively accessible for editing; all field values, dialogs, and histories remain. Employee directory table rows and compact cards open Overview directly.
 
 Affected source: `components/EmployeeWorkspace.tsx`. **Source-level changes only; browser QA remains unverified.**
+
+## 2026-10-22 — Batch 09 · Required Documents visibility restored
+
+- Added required-document status breakdown and submission-specific file/review rows to the Personal Information Overview dialog; linked existing Documents tab.
+- Changed display only (`EmployeeWorkspace.tsx`, `hrms-migration.css`). No attachment bytes, document statuses, or review records altered.
+- Focused source wiring checks passed; browser QA outstanding.

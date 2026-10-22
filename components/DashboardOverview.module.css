@@ -68,3 +68,8 @@
 
 /* Page header is not another nested card: it aligns with the breadcrumb and every section. */
 .header{border:0;background:transparent;padding:0;box-shadow:none;border-radius:0}
+
+/* Dashboard source-data drilldowns: same alignment as metric cards. */
+.miniAction{appearance:none;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border:0;border-bottom:1px solid var(--line-soft);min-width:0;background:transparent;text-align:left;cursor:pointer}.miniAction:hover,.miniAction:focus-visible,.rowDetail:hover,.rowDetail:focus-visible{color:var(--accent-ink);text-decoration:underline}.miniAction span{font-size:12px;color:var(--ink-500)}.miniAction b{font-size:16px;color:var(--ink-900);font-variant-numeric:tabular-nums}.rowDetail{cursor:pointer;background:transparent;border:0;text-align:left;padding:0;color:var(--ink-700);font:inherit;font-weight:600}
+
+.metric:disabled,.miniAction:disabled{cursor:default;opacity:.65}.miniAction:focus-visible{outline:2px solid var(--ink-700);outline-offset:2px}
