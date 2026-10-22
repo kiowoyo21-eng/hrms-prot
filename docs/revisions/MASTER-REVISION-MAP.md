@@ -174,3 +174,10 @@ See [Batch 09 scope](batches/BATCH-09-EMPLOYEE-DOCUMENTS-DASHBOARD-DRILLDOWN.md)
 | UI-11-01 | Dashboard record-row details now open a modal; remaining legacy no-inline surfaces | Dashboard implemented; **system-wide audit pending** | `components/DashboardRecordsDialog.tsx` and `.module.css`; other legacy modules untouched |
 
 See [Batch 11](batches/BATCH-11-PSA-ENTITY-DEMO-PROFILES.md). The HRMS is frontend/browser-local; no official PSA submission or certified data output.
+
+
+## Batch 12 — Responsive table action visibility (focused)
+
+- [x] Supported legacy scrollable tables with final-cell actions keep that column visible on tablet/phone screens.
+- [x] Asset record popup exposes status/permission-appropriate actions without requiring the user to locate a hidden last column.
+- [ ] Continue module-by-module responsive audit: non-final action cells, special table wrappers, mobile button labelling, and interactive device/browser testing. See [Batch 12](batches/BATCH-12-RESPONSIVE-TABLE-ACTIONS.md).
