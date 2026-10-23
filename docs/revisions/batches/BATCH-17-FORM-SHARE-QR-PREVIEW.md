@@ -1,0 +1,7 @@
+# Batch 17 — Tools Form Builder: Share / QR preview
+
+**Implemented (frontend only):** Published custom forms now have a `Share / QR` action that opens a modal (no inline expansion) with Copy Link, native Share (when available), a cross-device questionnaire preview link, QR code and downloadable QR PNG. QR encodes a compressed **fixed version** of form title, description, questions and options, never respondents' answers or employee profiles. Form edits require a new share link. The public intake route decodes and validates that questionnaire schema. Unsupported browser compression or an oversized form displays an actionable error, rather than a broken QR.
+
+**Not implemented / not allowed to misrepresent:** No synchronized form definition storage, central HR response inbox for external devices, revocation, confidentiality assurances, rate limiting, authentication, spam prevention, automated workflow delivery, or real submissions. The QR is for layout and usability preview only. The standalone respondent page explicitly warns that it cannot submit answers; entering real employee/applicant personal data is not appropriate. Existing browser-only local test submissions remain separate. Core application/incident/request workflows are not exposed as allegedly synchronized custom share links.
+
+**Validation:** `node scripts/check-intake-share.cjs` and `node scripts/check-intake-forms.cjs`; syntax, local imports, CSS parsing, existing related regression tests. Full Next.js build and device/browser testing require project dependencies and deployment.

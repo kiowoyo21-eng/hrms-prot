@@ -220,3 +220,14 @@ See [Batch 15 source form inventory](batches/BATCH-15-SOURCE-FORMS-REVIEW-IMPORT
 | FORM-16-05 | **Pending** | Secure backend, cross-device publishing, real email/HR delivery, server permissions, evidence uploads, response retention and production QA |
 
 See [Batch 16](batches/BATCH-16-FORM-BUILDER-INTAKE.md) and [Form Builder guide](../modules/form-builder/README.md).
+
+## Batch 17 — Form link sharing and QR preview (2026-10-23)
+
+| Revision | Status | Scope / limitations |
+|---|---|---|
+| FORM-17-01 | Implemented, source tests passed | Published custom intake: share modal, portable URL, Copy Link, browser Share API, open preview, QR PNG download |
+| FORM-17-02 | Implemented, source tests passed | URL carries compressed versioned *questions only*; respondent can preview form on another device without the author's browser data |
+| FORM-17-03 | Implemented | The remote preview validates answers but does not store/transmit them to HR; local test collection retained separately |
+| FORM-17-04 | **Pending** | True Google Forms-style cross-device live publishing, secure response collection, form revocation, spam protection, access controls, notification/routing, production device QA |
+
+See [Batch 17](batches/BATCH-17-FORM-SHARE-QR-PREVIEW.md). No backend integration added.

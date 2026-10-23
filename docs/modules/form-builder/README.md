@@ -28,3 +28,11 @@ Editing happens in a responsive modal, not inline. Template list has visible Act
 ## Validation
 
 `NODE_PATH=/opt/nvm/versions/node/v22.16.0/lib/node_modules node scripts/check-intake-forms.cjs` (if globally installed TypeScript is available). Full Next.js build and actual browser testing must run in an installed Next.js environment before deployment.
+
+## Patch 17 — Share / QR (portable preview only)
+
+- For a **Published Custom** form, Tools → Form Builder → **Share / QR** creates a compressed, versioned snapshot of *questionnaire metadata only*. Click **Copy link**, use the native **Share** dialog, open in a new tab, or download a **QR PNG**.
+- The portable `/intake/<id>?s=<snapshot>` URL can display the same questions on a different phone or tablet on the deployed public HRMS domain. It is **not a server-published form**: the link contains a fixed version of questions, not live draft edits. Regenerate the link after editing. An existing portable link cannot be revoked remotely without backend support.
+- **No responses are delivered to HR**. Portable links only validate inputs locally; no sensitive information should be entered or collected. Existing same-browser response testing remains available through `/intake/<id>` without a snapshot.
+- Core job applications and incident reports retain their current existing routes; extra questions and internal HR request routing are still browser-local. Do not represent these links as published, synchronized forms.
+- QR URL length is bounded; for lengthy questionnaires a shared server-backed datastore and short route will be required. Neither backend persistence nor secure employee intake has been implemented.
