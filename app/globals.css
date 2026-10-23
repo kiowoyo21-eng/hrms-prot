@@ -1096,3 +1096,6 @@ button{min-width:0}
  .dashboard-home .dashboard-quick-actions .rev-shortcuts button{flex:1 1 100%;max-width:none}
  .dashboard-home .dashboard-sample-activity summary span{flex-basis:100%}
 }
+
+/* Employee 201 to lifecycle document records: separate page, no inline expansion. */
+.empdoc-lifecycle-link{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:9px 12px;border:1px solid #dce5ee;border-radius:9px;background:#fafbfe;font-size:12px;margin-bottom:10px}.empdoc-lifecycle-link a{font-weight:700;color:#265e99;text-decoration:none}.empdoc-lifecycle-link span{color:#718096;font-size:11px}

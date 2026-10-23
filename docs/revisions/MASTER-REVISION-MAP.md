@@ -181,3 +181,17 @@ See [Batch 11](batches/BATCH-11-PSA-ENTITY-DEMO-PROFILES.md). The HRMS is fronte
 - [x] Supported legacy scrollable tables with final-cell actions keep that column visible on tablet/phone screens.
 - [x] Asset record popup exposes status/permission-appropriate actions without requiring the user to locate a hidden last column.
 - [ ] Continue module-by-module responsive audit: non-final action cells, special table wrappers, mobile button labelling, and interactive device/browser testing. See [Batch 12](batches/BATCH-12-RESPONSIVE-TABLE-ACTIONS.md).
+
+
+## Batch 13–14 — Lifecycle documents and PDF overlay (partial scope)
+
+| Revision ID | Status | Scope / remaining work |
+|---|---|---|
+| LIFE-13-01 | Implemented in source, browser QA pending | 30-item draft onboarding/offboarding catalog and legal applicability labels |
+| LIFE-13-02 | Implemented in source, browser QA pending | Dedicated Employee 201-linked checklist with manual statuses, references and audit history |
+| LIFE-13-03 | Implemented in source, browser QA pending | Authorized creation of blank draft document templates, no assumed legal sufficiency |
+| LIFE-13-04 | **Pending** | Legally reviewed production form content, service-of-notice/approval workflow, statutory due dates, full final-pay and compliance integration |
+| PDF-14-01 | Implemented in source, browser QA pending | Existing PDF uploader/editor enhanced with simple token overlays, preview values and entity safeguards |
+| PDF-14-02 | **Pending** | Secure backend, formal file retention, precise multi-device rendering, signed document lifecycle, full Employee 201 document indexing |
+
+See [Batch 13](batches/BATCH-13-LIFECYCLE-DOCUMENT-RECORDS.md) and [Batch 14](batches/BATCH-14-PDF-OVERLAY-AUTOFILL.md). The 52-revision list is **not** fully complete.

@@ -1,0 +1,43 @@
+"use client";
+import {useEffect,useMemo,useState} from "react";
+import Link from "next/link";
+import {createPortal} from "react-dom";
+import {ArrowLeft,ClipboardCheck,FileText,ExternalLink,X,Save,Search,FilePlus2} from "lucide-react";
+import {addStudioItem} from "../../../lib/studio/store";
+import {openStudioWindow} from "../../../lib/studio/useStudio";
+import {HRProvider,useHR} from "../../../lib/hrState";
+import StudioGate from "../../../components/studio/StudioGate";
+import type {StudioActor} from "../../../lib/studio/types";
+import {lifecycleCatalog,type LifecycleDocument,type LifecycleStage} from "../../../lib/studio/lifecycleCatalog";
+import {readLifecycleRecords,saveLifecycleRecord,watchLifecycleRecords,type LifecycleStatus} from "../../../lib/studio/lifecycleRecords";
+const statuses:LifecycleStatus[]=["Not started","Pending","Received","Verified","Not applicable"];
+function Workspace({actor}:{actor:StudioActor}){
+ const {data}=useHR();const [employeeId,setEmployeeId]=useState("");const [stage,setStage]=useState<LifecycleStage>("Onboarding");const [search,setSearch]=useState("");const [records,setRecords]=useState(readLifecycleRecords);const [selected,setSelected]=useState<LifecycleDocument|null>(null);const [status,setStatus]=useState<LifecycleStatus>("Not started"),[reference,setReference]=useState(""),[note,setNote]=useState(""),[error,setError]=useState("");
+ useEffect(()=>watchLifecycleRecords(()=>setRecords(readLifecycleRecords())),[]);
+ useEffect(()=>{const param=new URLSearchParams(window.location.search).get("employeeId");if(param&&data.people.some(p=>p.id===param))setEmployeeId(param)},[data.people]);
+ useEffect(()=>{if(!selected)return;const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setSelected(null)};window.addEventListener("keydown",onKey);return()=>window.removeEventListener("keydown",onKey)},[selected]);
+ const employee=data.people.find(p=>p.id===employeeId);
+ const entity=employee?.branch.startsWith("MM ")?"Mastermind":"Underchargers";
+ const rows=useMemo(()=>lifecycleCatalog.filter(row=>row.stage===stage&&`${row.title} ${row.purpose}`.toLowerCase().includes(search.toLowerCase())),[stage,search]);
+ const byId=new Map(records.filter(r=>r.employeeId===employeeId).map(r=>[r.documentId,r]));
+ const count=(s:LifecycleStatus)=>lifecycleCatalog.filter(row=>row.stage===stage&&byId.get(row.id)?.status===s).length;
+ function open(doc:LifecycleDocument){const existing=byId.get(doc.id);setSelected(doc);setStatus(existing?.status||"Not started");setReference(existing?.reference||"");setNote(existing?.note||"");setError("")}
+ function createDraft(){if(!selected||!employee||actor.role!=="Super Admin")return;
+  try{
+   const escape=(value:string)=>value.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+   const body=`<h1>${escape(selected.title.toUpperCase())}</h1><p><em>DRAFT FOR COMPANY AND PHILIPPINE LABOR-LEGAL REVIEW. Not an official notice or completed statutory filing.</em></p><p><strong>Legal employer:</strong> {{company.legal_name}}</p><p><strong>Employee:</strong> {{employee.name}} ({{employee.id}})</p><p><strong>Assigned branch:</strong> {{employee.branch}}</p><p><strong>Prepared:</strong> {{document.date}}</p><h2>Details for HR review</h2>${selected.fields.map(field=>`<p><strong>${escape(field)}:</strong> ______________________________</p>`).join("")}<p>Legal applicability and terms must be reviewed for the actual employment case.</p>${selected.source?`<p>Reference to verify: ${escape(selected.source)}</p>`:""}<p>Authorized signature / service evidence (manual only): ______________________________</p>`;
+   const template=addStudioItem(actor,"docs",`${selected.title} — Draft (${employee.branch.startsWith("MM ")?"MM":"UC"})`,selected.stage==="Onboarding"?"Onboarding":"Offboarding",{html:body});
+   openStudioWindow(`/docs/${template.id}`);
+  }catch(err){setError(err instanceof Error?err.message:String(err))}
+ }
+ function save(){if(!selected||!employee)return;try{saveLifecycleRecord(actor,employee.id,stage,selected.id,status,reference,note);setRecords(readLifecycleRecords());setSelected(null)}catch(err){setError(err instanceof Error?err.message:String(err))}}
+ return <main className="studio-lifecycle">
+  <header className="studio-life-head"><div><Link href="/studio"><ArrowLeft size={16}/> Document Studio</Link><h1><ClipboardCheck size={23}/> Onboarding & Offboarding Documents</h1><p>Internal document checklist and supporting field inventory. This does not issue legal notices, government forms, or signatures.</p></div></header>
+  <div className="studio-life-toolbar"><label>Employee 201<select value={employeeId} onChange={e=>setEmployeeId(e.target.value)}><option value="">Select employee...</option>{data.people.map(p=><option key={p.id} value={p.id}>{p.id} · {p.name} · {p.branch}</option>)}</select></label><label>Document pack<select value={stage} onChange={e=>setStage(e.target.value as LifecycleStage)}><option>Onboarding</option><option>Offboarding</option></select></label><label>Find document<span className="studio-life-search"><Search size={15}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search forms or requirements"/></span></label></div>
+  {employee&&<div className="studio-life-summary"><span><b>{employee.name}</b> · {employee.id}</span><span>{entity} · {employee.branch}</span><span>{count("Verified")} verified / {lifecycleCatalog.filter(x=>x.stage===stage).length} items</span></div>}
+  {!employee?<div className="studio-life-empty">Select an employee to inspect and record the relevant document requirements.</div>:<div className="studio-life-table-wrap"><table className="studio-life-table"><thead><tr><th>Document</th><th>Requirement type</th><th>Status</th><th>Last updated</th><th>Action</th></tr></thead><tbody>{rows.map(doc=>{const record=byId.get(doc.id);return <tr key={doc.id}><td><b>{doc.title}</b><small>{doc.purpose}</small></td><td>{doc.classification}</td><td>{record?.status||"Not started"}</td><td>{record?.updatedAt?new Date(record.updatedAt).toLocaleDateString("en-PH"):"—"}</td><td><button type="button" onClick={()=>open(doc)}>View / Update</button></td></tr>})}</tbody></table>{rows.length===0&&<div className="studio-life-empty">No matching documents.</div>}</div>}
+  <p className="studio-life-disclaimer">These are review aids, not government-issued forms. Applicability, deadlines and legal sufficiency depend on the case. Browser-local data is not secure production evidence storage. Uploaded PDF originals and completed copies remain handled separately in Document Studio.</p>
+  {selected&&employee&&typeof document!=="undefined"&&createPortal(<div className="studio-life-shade" onClick={()=>setSelected(null)}><section className="studio-life-modal" role="dialog" aria-modal="true" aria-label={selected.title} onClick={e=>e.stopPropagation()}><div className="studio-life-modal-head"><div><small>{stage} · {selected.classification}</small><h2>{selected.title}</h2></div><button aria-label="Close details" onClick={()=>setSelected(null)}><X size={19}/></button></div><div className="studio-life-modal-body"><p>{selected.purpose}</p><h3>Supporting fields / information</h3><ul>{selected.fields.map(f=><li key={f}>{f}</li>)}</ul>{selected.source&&<a target="_blank" rel="noopener noreferrer" href={selected.source}><ExternalLink size={14}/> Official reference — verify current applicability</a>}{selected.note&&<p>{selected.note}</p>}<hr/><label>Status<select value={status} onChange={e=>setStatus(e.target.value as LifecycleStatus)}>{statuses.map(s=><option key={s}>{s}</option>)}</select></label><label>Document / evidence reference (no confidential IDs)<input value={reference} onChange={e=>setReference(e.target.value)} maxLength={180} placeholder="File reference / request ID"/></label><label>HR review note<textarea value={note} onChange={e=>setNote(e.target.value)} maxLength={750} rows={3} placeholder="Manual review note"/></label>{error&&<p className="studio-life-error" role="alert">{error}</p>}</div><footer><Link href="/studio"><FileText size={15}/> Open Document Studio</Link>{actor.role==="Super Admin"&&<button onClick={createDraft}><FilePlus2 size={15}/> Create Draft Template</button>}<button onClick={()=>setSelected(null)}>Cancel</button><button className="studio-life-save" onClick={save}><Save size={16}/> Save status</button></footer></section></div>,document.body)}
+ </main>
+}
+export default function LifecyclePage(){return <HRProvider><StudioGate>{s=><Workspace actor={s.actor!}/>}</StudioGate></HRProvider>}

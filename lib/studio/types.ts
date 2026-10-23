@@ -1,7 +1,7 @@
 import type {Role} from "../mock";
 /** Browser-only review data. Authorization and storage are NOT secure until server-backed. */
 export type StudioKind = "docs" | "pdf";
-export type TemplateCategory = "Employment" | "Payroll" | "Compliance" | "Onboarding" | "Disciplinary" | "General";
+export type TemplateCategory = "Employment" | "Payroll" | "Compliance" | "Onboarding" | "Offboarding" | "Disciplinary" | "General";
 export type StudioItem = {
  id:string;kind:StudioKind;title:string;category:TemplateCategory;template:boolean;
  html?:string;pageSize?:"A4"|"Letter"|"Legal";landscape?:boolean;headerText?:string;footerText?:string;marginMm?:number;

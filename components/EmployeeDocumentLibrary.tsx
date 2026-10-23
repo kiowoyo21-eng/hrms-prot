@@ -83,6 +83,7 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
    </div>
  );
  return <div className="empdoc-root">
+  <div className="empdoc-lifecycle-link"><a href={`/studio/lifecycle?employeeId=${encodeURIComponent(person.id)}`} target="_blank" rel="noopener noreferrer">Onboarding / Offboarding requirements &amp; documents ↗</a><span>Open dedicated HR document checklist for this employee</span></div>
   <div className="empdoc-folderbar" aria-label="Employee document folders">{folders.map(name=><button type="button" key={name} className={`empdoc-folder ${folder===name?"active":""}`} aria-pressed={folder===name} onClick={()=>choose(name)}><FolderOpen size={17}/><span>{name}</span><small>{allItems[name].length}</small></button>)}</div>
   {folder==="Employment Memos"&&memoRefs.length>0&&<div className="empdoc-memoattach"><label>Attach uploaded file to memo <select value={uploadMemoId} onChange={e=>setUploadMemoId(e.target.value)}><option value="">Unlinked memo file</option>{memoRefs.map(id=><option key={id} value={id}>{id}</option>)}</select></label><small>Select the memo reference before uploading its PDF or image.</small></div>}
   <div className="empdoc-toolbar"><div><h4>{folder}</h4><span className="muted">{items.length} file record{items.length===1?"":"s"}</span></div><label className="secondary empdoc-upload"><Upload size={14}/> Add File<input type="file" hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx" onChange={e=>{ingest(e.target.files?.[0]);e.target.value=""}}/></label></div>
