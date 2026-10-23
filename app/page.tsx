@@ -51,7 +51,7 @@ function HRApp(){
  const [auditRecords,setAuditRecords]=useState<AuditEvent[]>([]);
  const [requestTab,setRequestTab]=useState<"forms"|"incidents">("forms");
  const [reportsTab,setReportsTab]=useState<"reports"|"demographics">("reports");
- const [toolsTab,setToolsTab]=useState<"drive"|"spreadsheets"|"library">("drive");
+ const [toolsTab,setToolsTab]=useState<"drive"|"spreadsheets"|"library"|"forms">("drive");
  const [assetPrefill,setAssetPrefill]=useState(""),[payrollPrefill,setPayrollPrefill]=useState(""),[page,setPage]=useState<ModuleId>("dashboard"),[branch,setBranch]=useState<Branch>("All Shops"),[menu,setMenu]=useState(false),[signatureName,setSignatureName]=useState(""),[toast,setToast]=useState("");
  const {data,reset}=useHR();
  const {registry,clear:clearAlerts,publish:publishAlerts}=useModuleAlerts();
@@ -108,7 +108,7 @@ function HRApp(){
  {page==="documents"&&<DocumentOperationsHub branch={branch} role={user.role}/>}
  {page==="submissions"&&<DocumentIntake branch={branch} role={user.role}/>}
  {page==="payroll"&&<PayrollOperationsHub branch={branch} role={user.role} initialEmployeeId={payrollPrefill}/>}
- {safePage==="tools"&&<ToolsWorkspace tab={toolsTab} setTab={setToolsTab}/>}
+ {safePage==="tools"&&<ToolsWorkspace tab={toolsTab} setTab={setToolsTab} role={user.role}/>}
  
  {page==="compliance"&&<ComplianceWorkspace branch={branch} role={user.role}/>}
  {page==="leave"&&<LeaveManagementWorkspace branch={branch} role={user.role}/>}

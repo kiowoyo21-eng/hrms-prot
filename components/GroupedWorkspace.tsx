@@ -3,7 +3,8 @@ import type {ReactNode} from "react";
 import {HrmsTabs} from "./ui/HrmsPrimitives";
 import "../app/studio/studio.css";
 import "../app/spreadsheets/spreadsheet.css";
-import {ClipboardList,FileWarning,ChartNoAxesCombined,Users,HardDrive,FileSpreadsheet,Files} from "lucide-react";
+import {ClipboardList,FileWarning,ChartNoAxesCombined,Users,HardDrive,FileSpreadsheet,Files,ListChecks} from "lucide-react";
+import FormBuilderWorkspace from "./intake/FormBuilderWorkspace";
 import HRFormsRequestsWorkspace from "./HRFormsRequestsWorkspace";
 import IncidentWorkspace from "./IncidentWorkspace";
 import ReportsLanding from "./ReportsLanding";
@@ -15,7 +16,7 @@ import type {Branch,Role} from "../lib/mock";
 
 type RequestTab="forms"|"incidents";
 type ReportTab="reports"|"demographics";
-type ToolTab="drive"|"spreadsheets"|"library";
+type ToolTab="drive"|"spreadsheets"|"library"|"forms";
 function Tabs<T extends string>({label,options,value,onChange}:{label:string;options:{id:T;title:string;icon:ReactNode}[];value:T;onChange:(value:T)=>void}){
  return <HrmsTabs label={label} items={options.map(option=>({id:option.id,label:option.title,icon:option.icon}))} value={value} onChange={onChange}/>;
 }
@@ -29,8 +30,8 @@ export function UnifiedReportsWorkspace({branch,role,tab,setTab}:{branch:Branch;
   {tab==="reports"?<ReportsLanding branch={branch} role={role}/>:<EmployeeDemographicsWorkspace branch={branch} role={role}/>}
  </div>;
 }
-export function ToolsWorkspace({tab,setTab}:{tab:ToolTab;setTab:(value:ToolTab)=>void}){
- return <div className="hrms-unified-workspace hrms-tools"><Tabs label="Tools" value={tab} onChange={setTab} options={[{id:"drive",title:"Drive",icon:<HardDrive size={17}/>},{id:"spreadsheets",title:"Spreadsheet",icon:<FileSpreadsheet size={17}/>},{id:"library",title:"Documents Library",icon:<Files size={17}/>}]} />
-  {tab==="drive"?<DriveWorkspace/>:tab==="spreadsheets"?<SpreadsheetPageClient/>:<div className="studio-scope"><StudioIndex/></div>}
+export function ToolsWorkspace({tab,setTab,role}:{tab:ToolTab;setTab:(value:ToolTab)=>void;role:Role}){
+ return <div className="hrms-unified-workspace hrms-tools"><Tabs label="Tools" value={tab} onChange={setTab} options={[{id:"drive",title:"Drive",icon:<HardDrive size={17}/>},{id:"spreadsheets",title:"Spreadsheet",icon:<FileSpreadsheet size={17}/>},{id:"library",title:"Documents Library",icon:<Files size={17}/>},{id:"forms",title:"Form Builder",icon:<ListChecks size={17}/>}]} />
+  {tab==="drive"?<DriveWorkspace/>:tab==="spreadsheets"?<SpreadsheetPageClient/>:tab==="forms"?<FormBuilderWorkspace role={role}/>:<div className="studio-scope"><StudioIndex/></div>}
  </div>;
 }

@@ -208,3 +208,15 @@ See [Batch 13](batches/BATCH-13-LIFECYCLE-DOCUMENT-RECORDS.md) and [Batch 14](ba
 | DOC15-06 | Legal/privacy | Legal and sensitive-source review before production; no actual legal approval or signed sample reuse | Outstanding manual/company legal review |
 
 See [Batch 15 source form inventory](batches/BATCH-15-SOURCE-FORMS-REVIEW-IMPORT.md). This is not a full system-wide legal-form approval, live secure backend, or device/browser verification.
+
+## Batch 16 — Tools Form Builder (2026-10-23)
+
+| Revision | Status | Scope / limitations |
+|---|---|---|
+| FORM-16-01 | Implemented (frontend) | Tools → Form Builder editor for custom and existing intake supplementary questions; role-aware UI access (not production authorization) |
+| FORM-16-02 | Implemented (frontend) | Public job application + incident title, description and additional questions; original validations/routing not replaced |
+| FORM-16-03 | Implemented (frontend) | Existing HR Requests optional/required custom questions; answer snapshots and existing review records retained |
+| FORM-16-04 | Implemented (browser demo) | New employee intake templates, same-browser `/intake/[id]` preview links, local submissions, CSV and status review |
+| FORM-16-05 | **Pending** | Secure backend, cross-device publishing, real email/HR delivery, server permissions, evidence uploads, response retention and production QA |
+
+See [Batch 16](batches/BATCH-16-FORM-BUILDER-INTAKE.md) and [Form Builder guide](../modules/form-builder/README.md).

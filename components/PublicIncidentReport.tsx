@@ -2,6 +2,9 @@
 
 import {useState, type FormEvent} from "react";
 import {AlertTriangle, ArrowRight, ClipboardCheck, Send, FileText, Info, LockKeyhole, ShieldCheck} from "lucide-react";
+import {INTAKE_EVENT,readIntakeForms,readIntakeExtensions,validateIntakeFields,type IntakeField} from "../lib/intakeForms";
+import IntakeQuestions from "./intake/IntakeQuestions";
+import {useEffect} from "react";
 import {getIncidentRouting, type IncidentRespondentType} from "../lib/incidentRouting";
 
 type IncidentForm = {
@@ -39,6 +42,9 @@ function validEmail(email:string){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email
 export default function PublicIncidentReport(){
   const [form,setForm]=useState<IncidentForm>(INITIAL);
   const [errors,setErrors]=useState<string[]>([]);
+  const [intakeInfo,setIntakeInfo]=useState({title:"Report a workplace concern",description:"No login required. Complete the fields below so the appropriate HR personnel can review your concern when reporting is activated."});
+  const [extraFields,setExtraFields]=useState<IntakeField[]>([]),[extraAnswers,setExtraAnswers]=useState<Record<string,string>>({});
+  useEffect(()=>{const sync=()=>{setExtraFields(readIntakeExtensions("incident"));const f=readIntakeForms().find(x=>x.id==="incident");if(f)setIntakeInfo({title:f.title,description:f.description})};sync();window.addEventListener(INTAKE_EVENT,sync);return()=>window.removeEventListener(INTAKE_EVENT,sync)},[]);
   const update=<K extends keyof IncidentForm>(field:K,value:IncidentForm[K])=>{
     setForm(previous=>({...previous,[field]:value}));
     if(errors.length)setErrors([]);
@@ -57,6 +63,7 @@ export default function PublicIncidentReport(){
     if(!form.respondentType)next.push("Select who is being reported.");
     if(!form.category)next.push("Select an incident category.");
     if(form.description.trim().length<30)next.push("Describe what happened in at least 30 characters.");
+    next.push(...validateIntakeFields(extraFields,extraAnswers));
     setErrors(next);
     if(next.length)return;
     const recipient=getIncidentRouting(form.respondentType as IncidentRespondentType);
@@ -74,8 +81,8 @@ export default function PublicIncidentReport(){
 
       <div className="public-ir-header">
         <span className="public-ir-eyebrow"><ShieldCheck size={15}/> Workplace Incident Report</span>
-        <h1>Report a workplace concern</h1>
-        <p>No login required. Complete the fields below so the appropriate HR personnel can review your concern when reporting is activated.</p>
+        <h1>{intakeInfo.title}</h1>
+        <p>{intakeInfo.description}</p>
       </div>
 
       <div className="public-ir-unavailable" role="note">
@@ -162,6 +169,7 @@ export default function PublicIncidentReport(){
           </div>
         </section>
 
+        {extraFields.length>0&&<section className="public-ir-card"><div className="public-ir-section-title"><span className="public-ir-section-icon"><ClipboardCheck size={20}/></span><div><h2>Additional questions</h2></div></div><div className="public-ir-fields"><IntakeQuestions fields={extraFields} values={extraAnswers} onChange={(key,value)=>setExtraAnswers(s=>({...s,[key]:value}))}/></div></section>}
         {errors.length>0&&<div className="public-ir-errors" role="alert"><strong>Please complete the following:</strong><ul>{errors.map(error=><li key={error}>{error}</li>)}</ul></div>}
         <div className="public-ir-foot-actions">
           <span>Submit checks the required fields and displays an alert. No report will be delivered yet.</span>

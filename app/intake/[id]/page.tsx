@@ -1,0 +1,12 @@
+"use client";
+import {useEffect,useMemo,useState,use,type FormEvent} from "react";
+import IntakeQuestions from "../../../components/intake/IntakeQuestions";
+import {INTAKE_EVENT,readIntakeForms,readIntakeResponses,saveIntakeResponses,uid,validateIntakeFields,type IntakeForm} from "../../../lib/intakeForms";
+import "../../../app/intake-forms.css";
+export default function EmployeeIntakePage({params}:{params:Promise<{id:string}>}){const {id}=use(params);const [forms,setForms]=useState<IntakeForm[]>([]);const [ready,setReady]=useState(false);const [values,setValues]=useState<Record<string,string>>({});const [error,setError]=useState("");const [result,setResult]=useState("");
+ useEffect(()=>{const sync=()=>{setForms(readIntakeForms());setReady(true)};sync();window.addEventListener(INTAKE_EVENT,sync);return()=>window.removeEventListener(INTAKE_EVENT,sync)},[]);
+ const form=useMemo(()=>forms.find(x=>x.id===id&&x.target==="custom"&&x.status==="Published"),[forms,id]);
+ const submit=(event:FormEvent)=>{event.preventDefault();if(!form)return;const errors=validateIntakeFields(form.fields,values);if(errors.length)return setError(errors[0]);if(!window.confirm("Save a TEST response in this browser only? It will not reach HR on a different device."))return;
+ const existing=readIntakeResponses();const record={id:uid("INTAKE"),formId:form.id,formTitle:form.title,formVersion:form.version,receivedAt:new Date().toISOString(),values,fieldLabels:Object.fromEntries(form.fields.map(x=>[x.id,x.label])),status:"New" as const};if(!saveIntakeResponses([...existing,record]))return setError("Could not save demo response on this browser");setValues({});setError("");setResult(`${record.id} saved only in this browser. No notification was sent.`)};
+ return <main className="intake-public"><div className="intake-public-card"><a href="/">HR Portal</a><h1>{form?.title||"Employee intake"}</h1><p>{form?.description}</p><div className="intake-warning" role="note"><b>Browser-only preview.</b> Publishing here does not create a secure or cross-device form. Do not enter real personal, medical, or incident information.</div>
+ {!ready?<p>Loading form…</p>:!form?<p>This form is not published on this browser.</p>:<form onSubmit={submit}><IntakeQuestions fields={form.fields} values={values} onChange={(key,value)=>setValues(s=>({...s,[key]:value}))}/>{error&&<p role="alert" className="intake-error">{error}</p>}{result&&<p role="status" className="intake-success">{result}</p>}<button type="submit" className="intake-primary">Save test response</button></form>}</div></main>}
