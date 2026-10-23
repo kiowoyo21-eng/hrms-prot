@@ -235,3 +235,15 @@
 .sw-find-actions small{color:#64748b;flex:1 1 300px}
 .sw-find-actions button:disabled{opacity:.45;cursor:not-allowed}
 @media(max-width:620px){.sw-find-panel{padding:12px 9px}.sw-find-fields label{width:100%}}
+
+/* Patch 18: workbook launcher when embedded within Tools. */
+.hrms-tools .sw-home-embedded{max-width:1400px;min-height:0;margin:0 auto;padding:14px;background:transparent;color:inherit}
+.hrms-tools .sw-home-embedded header{max-width:none;margin:0 0 14px;padding:0;border:0;background:transparent;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hrms-tools .sw-home-embedded h1{font-size:18px;margin:0;color:#24364b}
+.hrms-tools .sw-home-embedded header p{font-size:12px;color:#64748b;margin:0}
+.hrms-tools .sw-home-embedded .sw-home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px;max-width:none;margin:0}
+.hrms-tools .sw-home-embedded .sw-home-card{min-height:125px;padding:16px;border-radius:10px;border:1px solid #dce3eb;background:white;box-shadow:none;display:flex;flex-direction:column;gap:7px}
+.hrms-tools .sw-home-embedded .sw-home-card span{color:#65758b;font-size:12px}
+.hrms-tools .sw-home-embedded .sw-home-card small{margin-top:auto}
+.hrms-tools .sw-home-embedded footer{font-size:11px;margin-top:12px;color:#64748b}
+@media(max-width:700px){.hrms-tools .sw-home-embedded{padding:10px 0}.hrms-tools .sw-home-embedded .sw-home-grid{grid-template-columns:1fr}}

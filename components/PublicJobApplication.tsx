@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState,type ChangeEvent,type FormEvent} from "react";
 import {AlertTriangle,ArrowRight,BriefcaseBusiness,FileCheck2,FileUp,Info,Send,UserRound} from "lucide-react";
-import {INTAKE_EVENT,readIntakeForms,readIntakeExtensions,validateIntakeFields,type IntakeField} from "../lib/intakeForms";
+import {INTAKE_EVENT,readIntakeForms,readIntakeExtensions,validateIntakeFields,cleanIntakeValues,type IntakeField} from "../lib/intakeForms";
 import IntakeQuestions from "./intake/IntakeQuestions";
 import {useLocalRecords} from "../lib/useLocalRecords";
 import {BRANCHES,DEFAULT_HIRING_FORMS,HIRING_FORMS_KEY,RECRUITMENT_KEY,candidateRequirements,initialApplicants,type ApplicantRecord} from "../lib/recruitmentCatalog";
@@ -51,7 +51,7 @@ export default function PublicJobApplication(){
    const records:ApplicantRecord[]=raw?JSON.parse(raw):initialApplicants;
    if(records.some(r=>r.role===selected.position&&r.email.toLowerCase()===form.email.trim().toLowerCase())){setErrors(["A test application with this email already exists for this position on this browser."]);return}
    const number=records.reduce((n,r)=>Math.max(n,Number(r.id.replace("APP-",""))||1000),1000)+1;
-   const record:ApplicantRecord={id:`APP-${number}`,name:form.fullName.trim(),email:form.email.trim().toLowerCase(),phone:form.phone.trim(),role:selected.position,branch:form.preferredBranch,submitted:new Date().toLocaleDateString("en-CA"),stage:"New Applicant",notes:form.introduction.trim(),history:[`${new Date().toLocaleString("en-PH")} · Test application added in this browser`],relevantYears:Number(form.experienceYears),totalYears:form.totalYears===""?null:Number(form.totalYears),education:form.education.trim(),qualifications:skills,answers:{...answers,...Object.fromEntries(extraFields.map(f=>[`intake:${f.label} (${f.id})`,extraAnswers[f.id]||""]))},requirements:candidateRequirements(selected),resumeName:resume.name};
+   const record:ApplicantRecord={id:`APP-${number}`,name:form.fullName.trim(),email:form.email.trim().toLowerCase(),phone:form.phone.trim(),role:selected.position,branch:form.preferredBranch,submitted:new Date().toLocaleDateString("en-CA"),stage:"New Applicant",notes:form.introduction.trim(),history:[`${new Date().toLocaleString("en-PH")} · Test application added in this browser`],relevantYears:Number(form.experienceYears),totalYears:form.totalYears===""?null:Number(form.totalYears),education:form.education.trim(),qualifications:skills,answers:{...answers,...Object.fromEntries(extraFields.filter(f=>Object.hasOwn(cleanIntakeValues(extraFields,extraAnswers),f.id)).map(f=>[`intake:${f.label} (${f.id})`,extraAnswers[f.id]||""]))},requirements:candidateRequirements(selected),resumeName:resume.name};
    window.localStorage.setItem(key,JSON.stringify([record,...records]));
    setSaved(`Test application ${record.id} saved in this browser. Open Recruitment & Hiring → Hiring Cycle → ${selected.position} in the same browser to review it. No actual submission or file upload occurred.`);
    setForm(BLANK);setAnswers({});setExtraAnswers({});setSkills({});setResume(null);

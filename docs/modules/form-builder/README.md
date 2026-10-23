@@ -11,7 +11,7 @@
 - **Job Application:** `application` core template. Edits its title/description and additional questions on `/apply`. Existing mandatory application details, published job positions, resume validation and local Recruitment/Hiring record persistence stay unchanged. Additional answers are saved in the existing applicant `answers` map on that same browser.
 - **Workplace Incident Report:** `incident` core template. Edits public title/description and supplementary questions on `/report`. **Preview validation only**; no incident report is saved, delivered, or acknowledged. Existing report routing guidance is retained.
 - **Existing Employee Requests:** Add an **HR Request**-targeted template for one of the existing `lib/hrForms.ts` request types (Overtime, Leave Documentation, Attendance Correction, COE request, and more). Published additional questions show on the Request and Reports form; responses, snapshot labels, and existing core status workflow persist under that request record. These are documentation requests, not operational approvals.
-- **Custom employee intake:** Create a form, add sections/questions (the current editor supports a flat question list), publish in demo, and open `/intake/<form-id>` on the **same browser**. Responses are stored under `uc-hr-intake-responses-v1` and can be viewed and exported as CSV in Form Builder. There is no operational workflow routing for custom intakes yet.
+- **Custom employee intake:** Create a form, group questions into sections, optionally reveal follow-ups based on earlier choice answers, publish in demo, and open `/intake/<form-id>` on the **same browser**. Responses are stored under `uc-hr-intake-responses-v1` and can be viewed and exported as CSV in Form Builder. There is no operational workflow routing for custom intakes yet.
 
 ## Supported question types
 
@@ -23,7 +23,7 @@ Editing happens in a responsive modal, not inline. Template list has visible Act
 
 ## Privacy and production limitations
 
-**Never ask real applicants or employees to submit sensitive data on these browser-only pages.** Publishing is *not* a shareable link on another device. No secure storage, protected real access, notifications, email, server validation, spam prevention, workflow escalation, evidence attachments or production onboarding/incident routing exists. Before a live launch, implement authenticated employee/external intake endpoints, proper backend schema/version snapshots, anti-abuse controls, secure file storage, access enforcement, retention and audit, and notifications according to UC/MM organization boundaries.
+**Never ask real applicants or employees to submit sensitive data on these browser-only pages.** Publishing alone is *not* a live submission system on another device; Patch 17 provides a portable read-only questionnaire preview link. No secure storage, protected real access, notifications, email, server validation, spam prevention, workflow escalation, evidence attachments or production onboarding/incident routing exists. Before a live launch, implement authenticated employee/external intake endpoints, proper backend schema/version snapshots, anti-abuse controls, secure file storage, access enforcement, retention and audit, and notifications according to UC/MM organization boundaries.
 
 ## Validation
 
@@ -36,3 +36,7 @@ Editing happens in a responsive modal, not inline. Template list has visible Act
 - **No responses are delivered to HR**. Portable links only validate inputs locally; no sensitive information should be entered or collected. Existing same-browser response testing remains available through `/intake/<id>` without a snapshot.
 - Core job applications and incident reports retain their current existing routes; extra questions and internal HR request routing are still browser-local. Do not represent these links as published, synchronized forms.
 - QR URL length is bounded; for lengthy questionnaires a shared server-backed datastore and short route will be required. Neither backend persistence nor secure employee intake has been implemented.
+
+## Batch 20 — Local response review
+
+The **Responses** action on custom forms opens a dedicated modal register for **local test submissions only**. Search answer content and IDs, filter All/New/Reviewed, inspect each answer in a full-detail modal view, toggle reviewed status, paginate (10 rows per page), and export only currently filtered records as CSV. Export headers include original field keys so similarly titled questions from older form versions do not merge accidentally. Spreadsheet formula-like answer values are escaped on export. This does not make public QR links capable of sending a real response to HR.

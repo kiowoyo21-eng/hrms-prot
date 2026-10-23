@@ -32,6 +32,6 @@ export function UnifiedReportsWorkspace({branch,role,tab,setTab}:{branch:Branch;
 }
 export function ToolsWorkspace({tab,setTab,role}:{tab:ToolTab;setTab:(value:ToolTab)=>void;role:Role}){
  return <div className="hrms-unified-workspace hrms-tools"><Tabs label="Tools" value={tab} onChange={setTab} options={[{id:"drive",title:"Drive",icon:<HardDrive size={17}/>},{id:"spreadsheets",title:"Spreadsheet",icon:<FileSpreadsheet size={17}/>},{id:"library",title:"Documents Library",icon:<Files size={17}/>},{id:"forms",title:"Form Builder",icon:<ListChecks size={17}/>}]} />
-  {tab==="drive"?<DriveWorkspace/>:tab==="spreadsheets"?<SpreadsheetPageClient/>:tab==="forms"?<FormBuilderWorkspace role={role}/>:<div className="studio-scope"><StudioIndex/></div>}
+  {tab==="drive"?<DriveWorkspace embedded/>:tab==="spreadsheets"?<SpreadsheetPageClient embedded/>:tab==="forms"?<FormBuilderWorkspace role={role}/>:<div className="studio-scope"><StudioIndex embedded/></div>}
  </div>;
 }

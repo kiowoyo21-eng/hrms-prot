@@ -3,3 +3,49 @@
 .intake-choice-group{display:flex;flex-wrap:wrap;gap:8px;border:0;padding:2px 0;margin:0}.intake-choice{display:flex;align-items:center;gap:7px;border:1px solid #dbe3ea;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:400}.intake-choice input{width:16px;height:16px;flex:none}.intake-sr-only{position:absolute;clip:rect(0,0,0,0);white-space:nowrap;width:1px;height:1px;overflow:hidden}@media(max-width:700px){.intake-questions{grid-template-columns:1fr}}
 /* Patch 17: sharing is always a modal; all actions visible on small screens. */
 .intake-share-modal{width:min(780px,100%)}.intake-share-grid{display:grid;grid-template-columns:250px minmax(0,1fr);gap:18px;align-items:start}.intake-share-qr{display:flex;flex-direction:column;align-items:center;gap:10px;padding:12px;border:1px solid #dbe3ea;border-radius:9px;background:#fff}.intake-share-qr canvas{max-width:100%;height:auto}.intake-share-qr small{font-size:11px;color:#64748b;text-align:center}.intake-share-info{display:flex;flex-direction:column;gap:12px;min-width:0}.intake-share-info .intake-actions{gap:8px}.intake-share-info>.intake-secondary{align-self:flex-start}.intake-share-info input{font-size:12px}.intake-share-info .intake-field{min-width:0}@media(max-width:700px){.intake-share-grid{grid-template-columns:1fr}.intake-share-info>.intake-secondary{align-self:stretch}.intake-share-info .intake-actions>*{flex:1}}
+
+/* Patch 18: action access on compact form tables without horizontal scrolling to hidden controls. */
+.intake-mobile-actions{display:none}
+.intake-actions-modal{width:min(520px,100%)}
+.intake-mobile-menu{display:grid;grid-template-columns:1fr;gap:10px}
+.intake-mobile-menu>*{display:flex;width:100%;min-height:44px;justify-content:flex-start;text-align:left}
+.hrms-tools .intake-workspace{max-width:1400px;padding:12px 0 20px}
+.hrms-tools .intake-workspace .intake-head h2{font-size:19px}
+.hrms-tools .intake-workspace .intake-table-scroll{border-radius:10px}
+.hrms-tools .intake-workspace .intake-table td:last-child{z-index:2}
+@media(max-width:1024px){
+ .intake-workspace .intake-table{min-width:660px}
+ .intake-workspace .intake-table td:last-child{min-width:106px;width:106px}
+ .intake-workspace .intake-table td:last-child>.intake-actions>:not(.intake-mobile-actions){display:none}
+ .intake-workspace .intake-table td:last-child .intake-mobile-actions{display:inline-flex;min-width:84px;min-height:40px}
+}
+@media(max-width:700px){.intake-actions-modal{min-height:100dvh;width:100%}}
+/* Patch 19 — compact, accessible section navigation and conditional question controls. */
+.intake-section-heading{grid-column:1/-1;font-size:14px;margin:8px 0 0;padding:8px 0;border-bottom:1px solid #e2e8f0}
+.intake-public .intake-section-heading{font-size:15px}
+.intake-step-progress{padding:12px 0 8px;margin-top:14px;border-bottom:1px solid #e2e8f0}
+.intake-step-progress>div{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px;color:#64748b}
+.intake-step-progress strong{color:#1e293b;font-size:14px}
+.intake-step-progress progress{display:block;width:100%;height:7px;margin:10px 0 2px;accent-color:#152f54}
+.intake-step-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.intake-step-actions button{min-height:42px}
+@media(max-width:700px){.intake-step-progress>div{align-items:flex-start;flex-direction:column;gap:4px}.intake-step-actions button{flex:1}}
+
+/* Patch 20 — local response review table and full-record detail modal. */
+.intake-responses-modal{width:min(900px,100%)}
+.intake-response-counts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:15px}
+.intake-response-counts>div,.intake-response-meta>div{border:1px solid #e1e7ee;border-radius:8px;padding:10px 12px;min-width:0}
+.intake-response-counts small,.intake-response-meta small,.intake-response-answers small{display:block;font-size:11px;color:#64748b}
+.intake-response-counts strong{display:block;font-size:20px;margin-top:2px}
+.intake-response-filters{display:grid;grid-template-columns:minmax(0,2fr) minmax(160px,1fr);gap:12px;margin-bottom:12px}
+.intake-response-table{min-width:560px}
+.intake-response-table td:last-child{min-width:90px;width:95px}
+.intake-response-table td:first-child{overflow-wrap:anywhere;max-width:280px}
+.intake-response-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:#64748b}
+.intake-response-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.intake-response-meta strong{display:block;font-size:13px;overflow-wrap:anywhere;padding-top:4px}
+.intake-response-detail h3{font-size:14px;margin:20px 0 10px}
+.intake-response-answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.intake-response-answers>div{border-bottom:1px solid #e7ecf2;padding:8px 0;min-width:0}
+.intake-response-answers p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;margin:6px 0}
+@media(max-width:700px){.intake-response-filters,.intake-response-answers{grid-template-columns:1fr}.intake-response-meta{grid-template-columns:1fr 1fr}.intake-response-counts>div{padding:9px}.intake-response-pagination .intake-actions{width:100%}.intake-response-pagination .intake-actions button{flex:1}.intake-responses-modal>footer .intake-actions{width:100%}.intake-responses-modal>footer .intake-actions button{flex:1}}

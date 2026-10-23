@@ -231,3 +231,38 @@ See [Batch 16](batches/BATCH-16-FORM-BUILDER-INTAKE.md) and [Form Builder guide]
 | FORM-17-04 | **Pending** | True Google Forms-style cross-device live publishing, secure response collection, form revocation, spam protection, access controls, notification/routing, production device QA |
 
 See [Batch 17](batches/BATCH-17-FORM-SHARE-QR-PREVIEW.md). No backend integration added.
+
+## Batch 18 — Tools UI and Drive operations (2026-10-23)
+
+| Revision | Status | Notes |
+|---|---|---|
+| TOOLS-18-01 | Implemented in patch, browser QA pending | Compact Tools frame; embedded Drive/Spreadsheet launcher/Document Studio, no duplicate embedded navigation |
+| TOOLS-18-02 | Implemented in browser demo | Super Admin Drive create folder, upload, rename, move, trash, restore, using existing IndexedDB/local metadata; HR roles read-only |
+| TOOLS-18-03 | Implemented in patch, device QA pending | Drive management dialog; form row modal actions visible on compact screens |
+| TOOLS-18-04 | Existing behavior preserved | Document Studio template approvals, PDF editor, Spreadsheet workbook approvals/import-export, Form Builder preview QR |
+| TOOLS-18-05 | Outstanding — needs secure backend | Live multi-device form responses, stable revocable form links, real cloud file store, server-enforced permissions, submission/routing/notifications |
+| TOOLS-18-06 | Outstanding | Full Playwright/manual browser/tablet/mobile QA and production Next.js build |
+
+See [Batch 18 implementation](batches/BATCH-18-TOOLS-UI-AND-DRIVE.md).
+
+## Batch 19 — Next Tools Functionality (2026-10-23)
+
+| ID | Scope | Batch | Status | Affected paths |
+|---|---|---|---|---|
+| FORM-19A | Section/group labels and step-by-step custom form preview | 19 | source implemented, browser QA pending | `lib/intakeForms.ts`, `components/intake/IntakeQuestions.tsx`, `components/intake/FormBuilderWorkspace.tsx`, `app/intake/[id]/page.tsx`, `app/intake-forms.css` |
+| FORM-19B | Conditional questions referencing earlier choice answers; required validation only for visible questions | 19 | source implemented, browser QA pending | `lib/intakeForms.ts`, `components/intake/FormBuilderWorkspace.tsx`, `components/intake/IntakeQuestions.tsx` |
+| FORM-19C | Exclude hidden extension answers from newly saved local HR request/job application records and custom test responses | 19 | source implemented, browser QA pending | `lib/intakeForms.ts`, `components/PublicJobApplication.tsx`, `components/HRFormsRequestsWorkspace.tsx`, `app/intake/[id]/page.tsx` |
+| FORM-19D | Backward-compatible portable form preview/QR schema with sections + conditional rules | 19 | source implemented, browser QA pending | `lib/shareIntake.ts`, `scripts/check-tools-patch19.cjs` |
+| FORM-19E | True public submissions and centralized encrypted response storage | future backend | not implemented | Requires server-side records, identity/privacy/routing safeguards, and real deployment QA |
+
+## Batch 20 — Form Builder local response register (2026-10-23)
+
+| ID | Scope | Status |
+|---|---|---|
+| FORM-20A | Search/filter/paginate local test responses by status and recorded answer; show New/Reviewed totals | Source implemented, browser QA pending |
+| FORM-20B | Clicking a response opens full answer detail within dedicated modal view, not inline; review-status action preserved | Source implemented, browser QA pending |
+| FORM-20C | Export only filtered local responses with preserved field/version identity and formula-safe CSV values | Source implemented, browser QA pending |
+| FORM-20D | UI restrictions on accessing demo responses remain HR role scoped | Source implemented, production backend security pending |
+| FORM-20E | Cross-device submissions, centralized secure response inbox, attachment storage, and live routing | Not implemented; requires backend |
+
+See [Batch 20](batches/BATCH-20-LOCAL-RESPONSE-REVIEW.md).

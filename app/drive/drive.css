@@ -2,3 +2,34 @@
 .drive-context{position:absolute;top:calc(100% - 4px);right:0;z-index:12;width:185px;background:white;box-shadow:0 8px 28px #12274236;border:1px solid #d6dfe9;border-radius:8px;padding:5px}.drive-context button{display:block;width:100%;background:white;border:0;text-align:left;padding:11px;border-radius:5px;cursor:pointer;color:#33445a}.drive-context button:hover{background:#e9f2ff}.drive-dialog-shade{position:fixed;inset:0;z-index:110;background:#1e293b75;display:flex;align-items:center;justify-content:center;padding:16px}.drive-dialog{width:min(440px,100%);background:white;border-radius:16px;padding:28px;box-shadow:0 14px 60px #12274250}.drive-dialog h2{margin:0 0 6px;font-size:20px}.drive-dialog p{color:#66778c;font-size:13px}.drive-dialog label{display:grid;gap:8px;padding:14px 0}.drive-dialog input,.drive-dialog select{border:1px solid #bac7d8;border-radius:8px;padding:12px;background:white;color:#23364b}.drive-dialog>div{display:flex;justify-content:flex-end;gap:8px}.drive-dialog button{padding:10px 18px;border-radius:8px;border:1px solid #b9c7d8;background:white;cursor:pointer}.drive-dialog button.drive-confirm{background:#2563eb;border-color:#2563eb;color:white}
 
 .drive-readonly{display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid #c6d8ea;background:#edf5fb;border-radius:10px;margin-bottom:10px;font-size:12px;line-height:1.5}.drive-readonly strong{color:#124f78}.drive-readonly span{color:#47627d}
+
+/* Patch 18: Drive uses the same compact HRMS frame inside Tools. */
+.drive-shell.drive-embedded{background:transparent;min-height:0;font:inherit;color:inherit;max-width:100%;}
+.drive-embedded .drive-body{grid-template-columns:155px minmax(0,1fr);min-height:0;gap:12px}
+.drive-embedded .drive-side{padding:12px 0;border:1px solid #dbe2eb;background:#fff;border-radius:10px;align-self:start}
+.drive-embedded .drive-side button{border-radius:7px;padding:10px 12px;margin:0 6px;font-size:13px;min-height:40px}
+.drive-embedded .drive-main{min-width:0;padding:12px 14px 18px;border:1px solid #dbe2eb;border-radius:10px}
+.drive-embedded .drive-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px}
+.drive-embedded .drive-search{min-height:40px;max-width:345px;min-width:180px;padding:0 10px;background:#fff;border:1px solid #cbd5e1;border-radius:8px}
+.drive-embedded .drive-search input{padding:9px 0;min-width:0;font:inherit;font-size:13px}
+.drive-embedded .drive-title{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 13px}
+.drive-embedded .drive-title h2{font-size:18px;margin:0}
+.drive-embedded .drive-title-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px}
+.drive-embedded .drive-title-actions>button{min-height:36px}
+.drive-embedded .drive-list{gap:0;border:1px solid #e1e7ef;border-radius:9px;overflow:hidden}
+.drive-embedded .drive-list .drive-item{border:0;border-bottom:1px solid #e5eaf1;border-radius:0}
+.drive-embedded .drive-list .drive-item:last-child{border-bottom:0}
+.drive-embedded .drive-grid{grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:10px}
+.drive-embedded .drive-grid .drive-item{min-height:78px}
+.drive-embedded .drive-file{min-height:44px;padding:11px;color:#24364b}
+.drive-embedded .drive-file>svg:first-child{flex:none;color:#546b89}
+.drive-embedded .drive-more{min-height:40px;min-width:40px;display:inline-flex;justify-content:center;align-items:center;flex:none;border-radius:7px}
+.drive-embedded .drive-more:focus-visible,.drive-embedded .drive-file:focus-visible{outline:2px solid #2563eb;outline-offset:-3px}
+.drive-embedded .drive-main footer{margin-top:16px;line-height:1.4}
+.drive-embedded .drive-empty{margin:0;min-height:100px;padding:30px}
+.drive-dialog-field{display:grid;gap:7px;font-size:13px;font-weight:650}
+.drive-dialog-field input,.drive-dialog-field select{font:inherit;min-height:40px;border:1px solid #bbc9db;border-radius:8px;padding:8px 10px;width:100%;color:#24364b;background:#fff}
+.drive-dialog-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.drive-muted{font-size:12px;color:#627188;line-height:1.5}
+@media(max-width:900px){.drive-embedded .drive-body{grid-template-columns:minmax(0,1fr)}.drive-embedded .drive-side{display:flex;flex-direction:row;gap:4px;padding:5px;overflow-x:auto}.drive-embedded .drive-side button{white-space:nowrap;margin:0;flex:none}.drive-embedded .drive-toolbar{align-items:stretch}.drive-embedded .drive-search{max-width:none;flex:1}}
+@media(max-width:600px){.drive-embedded .drive-main{padding:10px}.drive-embedded .drive-title-actions{width:100%;justify-content:flex-start}.drive-embedded .drive-title-actions>.hrms-button{flex:1}.drive-embedded .drive-search{width:100%;min-width:0}.drive-embedded .drive-file{padding:9px}.drive-embedded .drive-file strong{font-size:12px}}

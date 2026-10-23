@@ -1,7 +1,8 @@
-/** Browser-only intake template registry. Never treat published local forms as live server-hosted forms. */
+/** Browser-only intake template registry. Not a secure cross-device submission service. */
 export type IntakeFieldType = "short"|"paragraph"|"email"|"date"|"number"|"select"|"radio"|"checkbox";
 export type IntakeTarget = "application"|"incident"|"request"|"custom";
-export type IntakeField = {id:string;label:string;type:IntakeFieldType;required:boolean;options:string[];help?:string};
+export type IntakeCondition = {fieldId:string;equals:string};
+export type IntakeField = {id:string;label:string;type:IntakeFieldType;required:boolean;options:string[];help?:string;section?:string;showIf?:IntakeCondition};
 export type IntakeForm = {id:string;title:string;description:string;target:IntakeTarget;requestKind?:string;audience:"public"|"employee";status:"Draft"|"Published";version:number;createdAt:string;updatedAt:string;fields:IntakeField[];system?:boolean};
 export type IntakeResponse = {id:string;formId:string;formTitle:string;formVersion:number;receivedAt:string;values:Record<string,string>;fieldLabels:Record<string,string>;status:"New"|"Reviewed"};
 export const INTAKE_FORMS_KEY="uc-hr-intake-templates-v1";
@@ -14,14 +15,45 @@ export const builtinIntakes:IntakeForm[]=[
 ];
 const validFieldTypes:IntakeFieldType[]=["short","paragraph","email","date","number","select","radio","checkbox"];
 const str=(s:unknown,n:number)=>typeof s==="string"?s.slice(0,n):"";
-function asField(x:unknown):IntakeField|null {if(!x||typeof x!=="object")return null;const f=x as Record<string,unknown>;if(!str(f.id,100)||!str(f.label,160)||!validFieldTypes.includes(f.type as IntakeFieldType))return null;return {id:str(f.id,100),label:str(f.label,160),type:f.type as IntakeFieldType,required:!!f.required,help:str(f.help,300),options:Array.isArray(f.options)?f.options.filter((x):x is string=>typeof x==="string").map(x=>x.slice(0,100)).filter(Boolean).slice(0,25):[]}}
+function asField(x:unknown):IntakeField|null {
+ if(!x||typeof x!=="object")return null;
+ const f=x as Record<string,unknown>;
+ if(!str(f.id,100)||!str(f.label,160)||!validFieldTypes.includes(f.type as IntakeFieldType))return null;
+ const condition=f.showIf&&typeof f.showIf==="object"?f.showIf as Record<string,unknown>:null;
+ return {id:str(f.id,100),label:str(f.label,160),type:f.type as IntakeFieldType,required:!!f.required,help:str(f.help,300),section:str(f.section,80),showIf:condition?{fieldId:str(condition.fieldId,100),equals:str(condition.equals,100)}:undefined,options:Array.isArray(f.options)?f.options.filter((x):x is string=>typeof x==="string").map(x=>x.slice(0,100)).filter(Boolean).slice(0,25):[]};
+}
 function asForm(x:unknown):IntakeForm|null {if(!x||typeof x!=="object")return null;const f=x as Record<string,unknown>;if(!str(f.id,100)||!str(f.title,140)||!Array.isArray(f.fields)||f.fields.length>35||!["application","incident","request","custom"].includes(String(f.target)))return null;
  return {id:str(f.id,100),title:str(f.title,140),description:str(f.description,600),target:f.target as IntakeTarget,requestKind:str(f.requestKind,150)||undefined,audience:f.audience==="public"?"public":"employee",status:f.status==="Published"?"Published":"Draft",version:Math.max(1,Math.floor(Number(f.version)||1)),createdAt:str(f.createdAt,40)||start,updatedAt:str(f.updatedAt,40)||start,fields:f.fields.map(asField).filter((q):q is IntakeField=>!!q),system:!!f.system};}
 export function readIntakeForms():IntakeForm[]{let custom:IntakeForm[]=[];if(typeof window!=="undefined")try{const parsed=JSON.parse(window.localStorage.getItem(INTAKE_FORMS_KEY)||"[]");if(Array.isArray(parsed))custom=parsed.map(asForm).filter((x):x is IntakeForm=>!!x).slice(0,100)}catch{};
  return [...builtinIntakes.map(base=>{const saved=custom.find(x=>x.id===base.id&&x.target===base.target);return saved?{...base,fields:saved.fields,description:saved.description,title:saved.title,version:saved.version,updatedAt:saved.updatedAt}:base}),...custom.filter(x=>!builtinIntakes.some(b=>b.id===x.id))];}
 export function readIntakeExtensions(target:"application"|"incident"|"request",requestKind?:string):IntakeField[]{const x=readIntakeForms().find(f=>f.target===target&&(target!=="request"||f.requestKind===requestKind)&&f.status==="Published");return x?.fields||[];}
-export function validateIntakeFields(fields:IntakeField[],values:Record<string,string>):string[]{const errors:string[]=[];for(const f of fields){const v=String(values[f.id]||"").trim();if(f.required&&!v)errors.push(`${f.label} is required`);if(v.length>2000)errors.push(`${f.label} exceeds 2000 characters`);if(v&&f.type==="email"&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))errors.push(`${f.label} must be an email`);if(v&&f.type==="number"&&!Number.isFinite(Number(v)))errors.push(`${f.label} must be numeric`);if(v&&["select","radio"].includes(f.type)&&!f.options.includes(v))errors.push(`${f.label} must match an available choice`);if(v&&f.type==="checkbox"&&v.split(" || ").some(option=>!f.options.includes(option)))errors.push(`${f.label} has an invalid choice`)}return errors;}
-export function validateIntakeForm(form:IntakeForm):string[]{const errors:string[]=[];if(!form.title.trim())errors.push("Form title is required");if(form.target==="custom"&&form.status==="Published"&&!form.fields.length)errors.push("Add at least one question before publishing");if(form.fields.length>35)errors.push("Maximum 35 questions per form");const ids=new Set<string>();for(const f of form.fields){if(!f.label.trim())errors.push("Each question needs a label");if(ids.has(f.id))errors.push("Duplicate question key");ids.add(f.id);if(["select","radio","checkbox"].includes(f.type)&&f.options.filter(Boolean).length<2)errors.push(`${f.label}: enter at least two choices`)}return errors;}
+/** Conditions can reference only preceding choice questions. Hidden ancestors cannot unlock child questions. */
+export function activeIntakeFields(fields:IntakeField[],values:Record<string,string>):IntakeField[]{
+ const active=new Set<string>();const visible:IntakeField[]=[];
+ for(const field of fields){const c=field.showIf;
+  if(c&&(!active.has(c.fieldId)||String(values[c.fieldId]||"")!==c.equals))continue;
+  visible.push(field);active.add(field.id);
+ }
+ return visible;
+}
+export function groupIntakeSections(fields:IntakeField[]):{title:string;fields:IntakeField[]}[]{
+ const groups:{title:string;fields:IntakeField[]}[]=[];
+ for(const field of fields){const title=field.section?.trim()||"Questions";
+  if(groups.length&&groups[groups.length-1].title===title)groups[groups.length-1].fields.push(field);
+  else groups.push({title,fields:[field]});
+ }
+ return groups;
+}
+/** Never submit responses to questions hidden by conditional display rules. */
+export function cleanIntakeValues(fields:IntakeField[],values:Record<string,string>):Record<string,string>{return Object.fromEntries(activeIntakeFields(fields,values).map(f=>[f.id,String(values[f.id]||"")]).filter(([,v])=>!!v));}
+export function validateIntakeFields(fields:IntakeField[],values:Record<string,string>):string[]{const errors:string[]=[];for(const f of activeIntakeFields(fields,values)){const v=String(values[f.id]||"").trim();if(f.required&&!v)errors.push(`${f.label} is required`);if(v.length>2000)errors.push(`${f.label} exceeds 2000 characters`);if(v&&f.type==="email"&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v))errors.push(`${f.label} must be an email`);if(v&&f.type==="number"&&!Number.isFinite(Number(v)))errors.push(`${f.label} must be numeric`);if(v&&["select","radio"].includes(f.type)&&!f.options.includes(v))errors.push(`${f.label} must match an available choice`);if(v&&f.type==="checkbox"&&v.split(" || ").some(option=>!f.options.includes(option)))errors.push(`${f.label} has an invalid choice`)}return errors;}
+export function validateIntakeForm(form:IntakeForm):string[]{const errors:string[]=[];if(!form.title.trim())errors.push("Form title is required");if(form.target==="custom"&&form.status==="Published"&&!form.fields.length)errors.push("Add at least one question before publishing");if(form.fields.length>35)errors.push("Maximum 35 questions per form");const seen=new Map<string,IntakeField>();for(const f of form.fields){if(!f.label.trim())errors.push("Each question needs a label");if(seen.has(f.id))errors.push("Duplicate question key");if((f.section||"").length>80)errors.push(`${f.label}: section title is too long`);
+ if(["select","radio","checkbox"].includes(f.type)&&f.options.filter(Boolean).length<2)errors.push(`${f.label}: enter at least two choices`);
+ if(f.showIf){const controller=seen.get(f.showIf.fieldId);
+  if(!controller||!["select","radio"].includes(controller.type)||!controller.options.includes(f.showIf.equals))errors.push(`${f.label}: choose a valid earlier dropdown/multiple-choice answer for its display rule`);
+ }
+ seen.set(f.id,f);
+ }return errors;}
 export function saveIntakeForms(forms:IntakeForm[]):boolean {if(typeof window==="undefined")return false;try{if(forms.length>100||forms.some(x=>validateIntakeForm(x).length>0))return false;window.localStorage.setItem(INTAKE_FORMS_KEY,JSON.stringify(forms));window.dispatchEvent(new Event(INTAKE_EVENT));return true}catch{return false}}
 export function readIntakeResponses():IntakeResponse[]{if(typeof window==="undefined")return [];try{const a=JSON.parse(window.localStorage.getItem(INTAKE_RESPONSES_KEY)||"[]");return Array.isArray(a)?a.filter(x=>x&&typeof x.id==="string"&&typeof x.formId==="string"&&x.values&&typeof x.values==="object").slice(-500):[]}catch{return []}}
 export function saveIntakeResponses(records:IntakeResponse[]):boolean{if(typeof window==="undefined")return false;try{window.localStorage.setItem(INTAKE_RESPONSES_KEY,JSON.stringify(records.slice(-500)));window.dispatchEvent(new Event(INTAKE_EVENT));return true}catch{return false}}

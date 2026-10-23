@@ -1,5 +1,5 @@
 "use client";
-import {INTAKE_EVENT,readIntakeExtensions,validateIntakeFields,type IntakeField} from "../lib/intakeForms";
+import {INTAKE_EVENT,readIntakeExtensions,validateIntakeFields,cleanIntakeValues,type IntakeField} from "../lib/intakeForms";
 import IntakeQuestions from "./intake/IntakeQuestions";
 import {useEffect,useMemo,useState} from "react";
 import type {Branch,Role} from "../lib/mock";
@@ -43,7 +43,8 @@ export default function HRFormsRequestsWorkspace({branch,role,username}:{branch:
   if(submit&&validation.length){setError(validation[0]);return}
   const old=editingId?items.find(r=>r.id===editingId):undefined;
   if(editingId&&(!old||old.requestor!==username||!["Draft","Returned for Revision"].includes(old.status)||old.branch!==chosenBranch||old.employeeId!==employeeId)){setError("This request can no longer be edited");return}
-  const at=nowISO();const record:HRFormRecord=old?{...old,fields:values,kind:category,evidenceRefs:evidence,updatedAt:at,additionalLabels:{...(old.additionalLabels||{}),...Object.fromEntries(extensions.map(f=>[f.id,f.label]))}}:{id:newId(),kind:category,branch:chosenBranch,employeeId,requestor:username,status:"Draft",fields:values,evidenceRefs:evidence,additionalLabels:Object.fromEntries(extensions.map(f=>[f.id,f.label])),remarks:"",createdAt:at,updatedAt:at,history:[{at,actor:username,action:"Created Draft",status:"Draft"}]};
+  const visibleAnswers=cleanIntakeValues(extensions,values);const visibleFields={...values,...visibleAnswers};for(const field of extensions){if(!Object.prototype.hasOwnProperty.call(visibleAnswers,field.id))delete visibleFields[field.id];}
+  const at=nowISO();const record:HRFormRecord=old?{...old,fields:visibleFields,kind:category,evidenceRefs:evidence,updatedAt:at,additionalLabels:{...(old.additionalLabels||{}),...Object.fromEntries(extensions.map(f=>[f.id,f.label]))}}:{id:newId(),kind:category,branch:chosenBranch,employeeId,requestor:username,status:"Draft",fields:visibleFields,evidenceRefs:evidence,additionalLabels:Object.fromEntries(extensions.map(f=>[f.id,f.label])),remarks:"",createdAt:at,updatedAt:at,history:[{at,actor:username,action:"Created Draft",status:"Draft"}]};
   let next=record;
   try{if(submit)next=transitionForm(record,"Submit",username,role,"",at)}catch(e){setError(e instanceof Error?e.message:"Cannot submit");return}
   if(commit(old?items.map(r=>r.id===old.id?next:r):[...items,next],submit?"Submitted documentation request":old?"Updated draft":"Created draft",next,old?.status)){
