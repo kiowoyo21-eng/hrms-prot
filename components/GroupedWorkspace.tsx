@@ -11,7 +11,7 @@ import ReportsLanding from "./ReportsLanding";
 import EmployeeDemographicsWorkspace from "./EmployeeDemographicsWorkspace";
 import DriveWorkspace from "./workspace/DriveWorkspace";
 import SpreadsheetPageClient from "./SpreadsheetPageClient";
-import StudioIndex from "../app/studio/page";
+import StudioIndex from "./studio/StudioIndex";
 import type {Branch,Role} from "../lib/mock";
 
 type RequestTab="forms"|"incidents";

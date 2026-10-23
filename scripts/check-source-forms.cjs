@@ -3,7 +3,7 @@ const path = require('path');
 const ts = require('typescript');
 const root = path.join(__dirname,'..');
 const check=(b,m)=>{if(!b)throw Error(m)};
-const paths=['lib/studio/sourceFormsCatalog.ts','lib/studio/types.ts','app/studio/source-forms/page.tsx','app/studio/lifecycle/page.tsx','app/studio/page.tsx'];
+const paths=['lib/studio/sourceFormsCatalog.ts','lib/studio/types.ts','app/studio/source-forms/page.tsx','app/studio/lifecycle/page.tsx','components/studio/StudioIndex.tsx'];
 for(const file of paths){
  const input=fs.readFileSync(path.join(root,file),'utf8');
  const p=ts.transpileModule(input,{fileName:file,reportDiagnostics:true,compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2021}});
@@ -28,6 +28,6 @@ check(view.includes('PDFDocument.load')&&view.includes('putPdf(pdfId,bytes)')&&v
 check(view.includes('actor.role!=="Super Admin"')&&view.includes('20_000_000'),'Permissions/upload size guard missing');
 check(view.includes('router.push(`/studio/pdf/${item.id}`)'), 'Dedicated PDF editor navigation missing');
 check(view.includes('createPortal')&&view.includes('aria-modal="true"'),'Source detail action not modal');
-check(fs.readFileSync(path.join(root,'app/studio/page.tsx'),'utf8').includes('/studio/source-forms'),'Studio navigation missing');
+check(fs.readFileSync(path.join(root,'components/studio/StudioIndex.tsx'),'utf8').includes('/studio/source-forms'),'Studio navigation missing');
 check(fs.readFileSync(path.join(root,'app/studio/lifecycle/page.tsx'),'utf8').includes('linkedSourceForms'),'Lifecycle cross-reference missing');
 console.log(`PASS ${list.length} source groups, imports, modal, editor, navigation, exclusions`);

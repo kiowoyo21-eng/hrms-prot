@@ -26,7 +26,7 @@ const files=[
  ['../components/workspace/DriveWorkspace.tsx','addDriveFolder','addDriveUpload','renameDriveFolder','setDriveTrash','<HrmsDialog'],
  ['../components/intake/FormBuilderWorkspace.tsx','intake-mobile-actions','intake-actions-modal','showShare','showResponses'],
  ['../components/SpreadsheetPageClient.tsx','sw-home-embedded'],
- ['../app/studio/page.tsx','studio-hub-embedded']
+ ['../components/studio/StudioIndex.tsx','studio-hub-embedded']
 ];
 for(const [f,...checks] of files){const contents=fs.readFileSync(path.resolve(__dirname,f),'utf8');for(const c of checks)assert(contents.includes(c),`${f}: ${c}`)}
 console.log('PASS Tools 18: admin-only Drive folder/move/rename/trash/restore, cycle/duplicate safeguards, embedded layouts, modal action access');
