@@ -5,7 +5,7 @@ export type TemplateCategory = "Employment" | "Payroll" | "Compliance" | "Onboar
 export type StudioItem = {
  id:string;kind:StudioKind;title:string;category:TemplateCategory;template:boolean;
  html?:string;pageSize?:"A4"|"Letter"|"Legal";landscape?:boolean;headerText?:string;footerText?:string;marginMm?:number;
- fields?:PdfField[];formFields?:StudioFormField[];originalName?:string;owner:string;createdAt:string;updatedAt:string;version:number;
+ fields?:PdfField[];formFields?:StudioFormField[];originalName?:string;sourceCatalogId?:string;owner:string;createdAt:string;updatedAt:string;version:number;
  parentId?:string;status:"Draft"|"Approved Template"|"Archived";
 };
 export type StudioFormField={id:string;key:string;label:string;mapping:string;inputType:"text"|"number"|"date"|"select";required:boolean;options:string[];defaultValue:string};

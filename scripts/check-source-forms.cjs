@@ -1,0 +1,33 @@
+const fs = require('fs');
+const path = require('path');
+const ts = require('typescript');
+const root = path.join(__dirname,'..');
+const check=(b,m)=>{if(!b)throw Error(m)};
+const paths=['lib/studio/sourceFormsCatalog.ts','lib/studio/types.ts','app/studio/source-forms/page.tsx','app/studio/lifecycle/page.tsx','app/studio/page.tsx'];
+for(const file of paths){
+ const input=fs.readFileSync(path.join(root,file),'utf8');
+ const p=ts.transpileModule(input,{fileName:file,reportDiagnostics:true,compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2021}});
+ check(!(p.diagnostics||[]).some(x=>x.category===ts.DiagnosticCategory.Error), `Invalid TypeScript: ${file}`);
+ const ast=ts.createSourceFile(file,input,ts.ScriptTarget.Latest,true,file.endsWith('tsx')?ts.ScriptKind.TSX:ts.ScriptKind.TS);
+ check(ast.parseDiagnostics.length===0,`Syntax errors: ${file}`);
+}
+const source=fs.readFileSync(path.join(root,'lib/studio/sourceFormsCatalog.ts'),'utf8');
+const emitted=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2021}}).outputText;
+const exp={};require('vm').runInNewContext(emitted,{exports:exp,module:{exports:exp}});
+const list=exp.sourceFormsCatalog;
+check(list.length===13,`Expected 13 distinct forms; got ${list.length}`);
+check(new Set(list.map(x=>x.id)).size===list.length,'Duplicate catalog identifiers');
+check(list.every(x=>x.originalFiles.length&&x.requiredFields.length&&x.note),'Incomplete source form entries');
+check(list.every(x=>x.originalFiles.every(file=>/\.(pdf|docx|wps)$/i.test(file))),'Images or other non-form assets included');
+check(!list.some(x=>/logo|testimonial|PSA 2026/i.test(x.title)), 'Out-of-scope imagery/survey included');
+check(list.some(x=>x.id==='probation-standards'&&x.note.includes('final pay')),'Probation final-pay legal risk missing');
+check(list.some(x=>x.id==='nte-nov'&&x.note.includes('not automatically')),'Notice due-process distinction missing');
+check(list.some(x=>x.id==='asset-accountability'&&x.originalFiles.length>=4),'Duplicated accountability variants not identified');
+const view=fs.readFileSync(path.join(root,'app/studio/source-forms/page.tsx'),'utf8');
+check(view.includes('PDFDocument.load')&&view.includes('putPdf(pdfId,bytes)')&&view.includes('sourceCatalogId:selected.id'),'No validated source-upload linkage');
+check(view.includes('actor.role!=="Super Admin"')&&view.includes('20_000_000'),'Permissions/upload size guard missing');
+check(view.includes('router.push(`/studio/pdf/${item.id}`)'), 'Dedicated PDF editor navigation missing');
+check(view.includes('createPortal')&&view.includes('aria-modal="true"'),'Source detail action not modal');
+check(fs.readFileSync(path.join(root,'app/studio/page.tsx'),'utf8').includes('/studio/source-forms'),'Studio navigation missing');
+check(fs.readFileSync(path.join(root,'app/studio/lifecycle/page.tsx'),'utf8').includes('linkedSourceForms'),'Lifecycle cross-reference missing');
+console.log(`PASS ${list.length} source groups, imports, modal, editor, navigation, exclusions`);

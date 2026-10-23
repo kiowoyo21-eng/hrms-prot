@@ -195,3 +195,16 @@ See [Batch 11](batches/BATCH-11-PSA-ENTITY-DEMO-PROFILES.md). The HRMS is fronte
 | PDF-14-02 | **Pending** | Secure backend, formal file retention, precise multi-device rendering, signed document lifecycle, full Employee 201 document indexing |
 
 See [Batch 13](batches/BATCH-13-LIFECYCLE-DOCUMENT-RECORDS.md) and [Batch 14](batches/BATCH-14-PDF-OVERLAY-AUTOFILL.md). The 52-revision list is **not** fully complete.
+
+## Batch 15 — Source forms in uploaded archive (2026-10-23)
+
+| ID | Module | Work | Status |
+|---|---|---|---|
+| DOC15-01 | Document Studio | 13 normalized source-form categories, original source names, due-process/privacy/legal caveats | Implemented metadata-only catalog; original forms **not** bundled |
+| DOC15-02 | Document Studio | Dedicated responsive Source Forms page; click opens modal rather than inline | Implemented in source; browser QA pending |
+| DOC15-03 | Document Studio | Permission-restricted validated PDF draft import; preserve source bytes in existing IndexedDB PDF storage; open dedicated overlay editor | Implemented in source; browser QA pending |
+| DOC15-04 | Onboarding/Offboarding | Cross-reference uploaded form inventory from related lifecycle checklist requirements | Implemented in source; browser QA pending |
+| DOC15-05 | All forms | Exclude logo/image files, employee-specific filled forms, unrelated PDFs, and PSA questionnaires | Implemented as archive metadata filter; no source PDFs shipped |
+| DOC15-06 | Legal/privacy | Legal and sensitive-source review before production; no actual legal approval or signed sample reuse | Outstanding manual/company legal review |
+
+See [Batch 15 source form inventory](batches/BATCH-15-SOURCE-FORMS-REVIEW-IMPORT.md). This is not a full system-wide legal-form approval, live secure backend, or device/browser verification.
