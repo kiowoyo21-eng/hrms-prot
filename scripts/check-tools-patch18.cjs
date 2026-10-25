@@ -24,7 +24,7 @@ assert.ok(calls.includes('uc-hrms-drive-change'));
 const files=[
  ['../components/GroupedWorkspace.tsx','<DriveWorkspace embedded/>','<SpreadsheetPageClient embedded/>','<StudioIndex embedded/>'],
  ['../components/workspace/DriveWorkspace.tsx','addDriveFolder','addDriveUpload','renameDriveFolder','setDriveTrash','<HrmsDialog'],
- ['../components/intake/FormBuilderWorkspace.tsx','intake-mobile-actions','intake-actions-modal','showShare','showResponses'],
+ ['../components/intake/FormBuilderWorkspace.tsx','hrms-file-row','intake-actions-modal','showShare','showResponses'],
  ['../components/SpreadsheetPageClient.tsx','sw-home-embedded'],
  ['../components/studio/StudioIndex.tsx','studio-hub-embedded']
 ];

@@ -3,6 +3,7 @@ import type {ReactNode} from "react";
 import {HrmsTabs} from "./ui/HrmsPrimitives";
 import "../app/studio/studio.css";
 import "../app/spreadsheets/spreadsheet.css";
+import "../app/tools-file-view.css";
 import {ClipboardList,FileWarning,ChartNoAxesCombined,Users,HardDrive,FileSpreadsheet,Files,ListChecks} from "lucide-react";
 import FormBuilderWorkspace from "./intake/FormBuilderWorkspace";
 import HRFormsRequestsWorkspace from "./HRFormsRequestsWorkspace";

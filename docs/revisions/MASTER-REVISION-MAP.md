@@ -266,3 +266,13 @@ See [Batch 18 implementation](batches/BATCH-18-TOOLS-UI-AND-DRIVE.md).
 | FORM-20E | Cross-device submissions, centralized secure response inbox, attachment storage, and live routing | Not implemented; requires backend |
 
 See [Batch 20](batches/BATCH-20-LOCAL-RESPONSE-REVIEW.md).
+
+## Patch 22 — Unified Tools File Views (2026-10-25)
+
+| ID | Status | Scope |
+|---|---|---|
+| TOOLS-22-01 | Implemented in patch; browser QA pending | Spreadsheet launcher uses file rows instead of large catalog cards; listed system workbooks and saved custom worksheets, with role-aware New Sheet and XLSX upload actions |
+| TOOLS-22-02 | Implemented in patch; browser QA pending | Document Studio source/generated PDFs and documents use file-list rows, with compact New Document / Upload DOCX / Upload PDF toolbar and create modal |
+| TOOLS-22-03 | Implemented in patch; browser QA pending | Form Builder and Source Forms use file-style rows, with record actions in pop-ups, not inline expansion |
+| TOOLS-22-04 | Implemented in patch; browser QA pending | Drive defaults to List, retains optional Grid and folder/file functions; New menu visible with explanatory permission messaging |
+| TOOLS-22-05 | Out of scope | Secure persistent shared storage, live cross-device form submissions, HR edit permissions beyond existing prototype roles |
