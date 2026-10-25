@@ -276,3 +276,14 @@ See [Batch 20](batches/BATCH-20-LOCAL-RESPONSE-REVIEW.md).
 | TOOLS-22-03 | Implemented in patch; browser QA pending | Form Builder and Source Forms use file-style rows, with record actions in pop-ups, not inline expansion |
 | TOOLS-22-04 | Implemented in patch; browser QA pending | Drive defaults to List, retains optional Grid and folder/file functions; New menu visible with explanatory permission messaging |
 | TOOLS-22-05 | Out of scope | Secure persistent shared storage, live cross-device form submissions, HR edit permissions beyond existing prototype roles |
+
+## Patch 23 — Guided bulk import templates (2026-10-25)
+
+| ID | Module | Status | Scope |
+|---|---|---|---|
+| BULK-23A | Payroll Government Deductions | Implemented in source; browser QA pending | Downloadable per-agency blank XLSX/CSV bracket templates, detailed usage guide, matched CSV/XLSX parser, validation and draft staging without auto-activation |
+| BULK-23B | Payroll Attendance Upload | Implemented in source; browser QA pending | Blank attendance XLSX/CSV template, detailed guide, modally displayed import preview, error CSV, existing role/branch/cutoff validation |
+| BULK-23C | Shared imports | Source standard documented; not implemented everywhere | Reusable rules for future bulk datasets: exact template columns, preview, row-specific errors, non-destructive save, role/date validation and clear guide |
+| BULK-23D | Production data import | Requires secured backend | Server-side validation, durable audit, backups, access controls, migrations and statutory payroll rule verification |
+
+See [Bulk import standard](../guides/BULK-DATA-IMPORT-STANDARD.md).

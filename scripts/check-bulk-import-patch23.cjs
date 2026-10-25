@@ -1,0 +1,27 @@
+const fs=require('fs'),path=require('path'),assert=require('assert'),ts=require('typescript');
+const root=path.join(__dirname,'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
+function moduleCheck(file){const content=read(file);const syntax=ts.createSourceFile(file,content,ts.ScriptTarget.Latest,true,file.endsWith('.tsx')?ts.ScriptKind.TSX:ts.ScriptKind.TS);assert.equal(syntax.parseDiagnostics.length,0,`${file}: ${syntax.parseDiagnostics.map(x=>x.messageText)}`)}
+for(const f of ['lib/hrmsBulkImport.ts','components/BulkUploadGuide.tsx','components/PayrollOperationsHub.tsx'])moduleCheck(f);
+const js=ts.transpileModule(read('lib/hrmsBulkImport.ts'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const loader=(code)=>{const m={exports:{}};new Function('require','module','exports',code)((spec)=>{if(spec==='./attendanceUpload'){const aa=ts.transpileModule(read('lib/attendanceUpload.ts'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;const mm={exports:{}};new Function('require','module','exports',aa)(()=>({}),mm,mm.exports);return mm.exports};throw Error('Unexpected import '+spec)},m,m.exports);return m.exports};
+const m=loader(js);
+assert.deepEqual(m.bulkHeaders('BIR'),['min','max','rate','fixed','effective']);
+assert.deepEqual(m.bulkHeaders('SSS'),['min','max','employee','employer','effective']);
+assert.deepEqual(m.bulkHeaders('Attendance'),['Employee ID','Date','Time In','Time Out','Status','Approved OT Hours','OT Approved','Notes']);
+let preview=m.validateDeductionRows([m.bulkHeaders('BIR'),['0','100','0','0','2027-01-01'],['100.01','999999999','15','0','2027-01-01']],'BIR');
+assert.equal(preview.errors.length,0,JSON.stringify(preview.errors));assert.equal(preview.rows.length,2);assert.equal(preview.effective,'2027-01-01');
+assert(preview.warnings.some(x=>x.includes('WEEKLY')));
+assert(m.validateDeductionRows([m.bulkHeaders('BIR'),['0','100','10','1','2027-01-01'],['100','200','20','2','2027-01-01']],'BIR').errors.some(x=>x.includes('Overlapping')));
+assert(m.validateDeductionRows([m.bulkHeaders('BIR'),['0','100','15%','1','2027-01-01']],'BIR').errors.some(x=>x.includes('plain nonnegative')));
+assert(m.validateDeductionRows([m.bulkHeaders('BIR'),['0','100','10','1','2027-01-01'],['100.01','200','20','2','2028-01-01']],'BIR').errors.some(x=>x.includes('Multiple effective')));
+assert(m.validateDeductionRows([m.bulkHeaders('BIR'),['0','100','','1','2027-01-01']],'BIR').errors.length);
+assert(m.validateDeductionRows([m.bulkHeaders('BIR'),['0','100','15','', '2027-01-01']],'BIR').errors.length);
+assert(m.validateDeductionRows([m.bulkHeaders('BIR'),['0','100','15','2','2027-02-30']],'BIR').errors.length);
+assert.equal(m.validateDeductionRows([m.bulkHeaders('SSS'),['0','100','10','20','2027-01-01']],'SSS').errors.length,0);
+assert(m.validateDeductionRows([m.bulkHeaders('SSS'),['0','100','','20','2027-01-01']],'SSS').errors.length);
+assert(m.validateDeductionRows([['min','max','rate','fixed','wrong'],['0','100','15','0','2027-01-01']],'BIR').errors.some(x=>x.includes('Missing column')));
+assert(m.validateDeductionRows([m.bulkHeaders('SSS'),...Array.from({length:501},(_,i)=>[String(i*100),String(i*100+99),'1','1','2027-01-01'])],'SSS').errors.some(x=>x.includes('Maximum 500')));
+const csv=m.bulkCsv([['One','Two'],['Hello, World','quoted "text"']]);assert(csv.includes('"Hello, World"')&&csv.includes('"quoted ""text"""'));
+const source=read('components/PayrollOperationsHub.tsx');for(const required of ['downloadXlsx(agency)','downloadCsv(agency)','readBulkRows(file)','stageDeductionPreview','bracketPreview','Download','<BulkUploadGuide','Import CSV / XLSX','downloadXlsx("Attendance")','downloadCsv("Attendance")'])assert(source.includes(required),required);
+assert(read('components/BulkUploadGuide.tsx').includes('Exact input columns'));
+console.log('PASS bulk template schema, numeric/date/overlap validation, header rejection, 500-row limit, staging, CSV quoting, UI guides and existing attendance integration');

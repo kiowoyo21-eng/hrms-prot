@@ -1099,3 +1099,24 @@ button{min-width:0}
 
 /* Employee 201 to lifecycle document records: separate page, no inline expansion. */
 .empdoc-lifecycle-link{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:9px 12px;border:1px solid #dce5ee;border-radius:9px;background:#fafbfe;font-size:12px;margin-bottom:10px}.empdoc-lifecycle-link a{font-weight:700;color:#265e99;text-decoration:none}.empdoc-lifecycle-link span{color:#718096;font-size:11px}
+
+/* Patch 23: guided HRMS bulk imports. Modals stack above the existing government dialog. */
+.hrms-dialog-backdrop:has(.hrms-bulk-import-preview),.hrms-dialog-backdrop:has(.hrms-bulk-guide){z-index:11000}
+.hrms-bulk-guide-content{display:grid;gap:12px;font-size:13px;line-height:1.6}
+.hrms-bulk-guide-content h3{font-size:14px;margin:10px 0 0}
+.hrms-bulk-guide-content ol,.hrms-bulk-guide-content ul{margin:0;padding-left:22px;display:grid;gap:8px}
+.hrms-bulk-guide-table,.hrms-bulk-preview-table{max-width:100%;overflow-x:auto;overscroll-behavior:contain;border:1px solid var(--line);border-radius:8px}
+.hrms-bulk-guide-table table,.hrms-bulk-preview-table table{width:100%;min-width:610px;border-collapse:collapse;font-size:12px}
+.hrms-bulk-guide-table th,.hrms-bulk-guide-table td,.hrms-bulk-preview-table th,.hrms-bulk-preview-table td{padding:8px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.hrms-bulk-guide-table thead,.hrms-bulk-preview-table thead{background:var(--surface-2)}
+.hrms-bulk-guide-table code{white-space:nowrap}.hrms-bulk-legal,.hrms-bulk-import-warnings{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--surface-2)}
+.hrms-bulk-import-body{display:grid;gap:12px;font-size:13px}.hrms-bulk-import-errors{padding:12px;border-radius:8px;border:1px solid #dc9191;background:#fff3f3;color:#822;font-size:13px}
+.hrms-bulk-import-errors ol,.hrms-bulk-import-warnings ul{padding-left:20px;margin:8px 0;display:grid;gap:6px}
+@media(max-width:640px){.hrms-bulk-guide-content{font-size:12px}.hrms-bulk-guide-table table,.hrms-bulk-preview-table table{min-width:570px}}
+.hrms-dialog-backdrop:has(.hrms-attendance-import-preview){z-index:11000}
+
+.pc-bulk-template-controls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:11px;color:var(--ink-500);flex-shrink:0}
+.pc-bulk-template-controls>strong{color:var(--ink-800)}
+.pc-bulk-template-controls button{display:inline-flex;align-items:center;gap:4px;padding:6px 9px;font-size:11px;min-height:31px}
+.pc-bulk-template-controls small{font-size:10px}
+@media(max-width:640px){.pc-bulk-template-controls small{flex-basis:100%}}
