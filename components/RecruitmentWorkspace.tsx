@@ -1,4 +1,6 @@
 "use client";
+import ModuleBulkImportDialog from "./ModuleBulkImportDialog";
+
 import {createPortal} from "react-dom";
 import WorkflowSigning from "./WorkflowSigning";
 import RecruitmentInterviewCalendar, {type RecruitmentCalendarEvent} from "./RecruitmentInterviewCalendar";
@@ -41,6 +43,7 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
  const [builder,setBuilder]=useState<string|null>(null);
  const [jobDraft,setJobDraft]=useState({position:"",minimumYears:"0",education:"",qualifications:"",questions:"",onboardingDocuments:DEFAULT_ONBOARDING_DOCUMENTS.join("\n"),status:"Draft" as HiringForm["status"]});
  const [manualAdd,setManualAdd]=useState(false);
+ const [bulkOpen,setBulkOpen]=useState(false);
  const [manual,setManual]=useState({name:"",email:"",phone:"",branch:"UC Mandaluyong",relevantYears:"",totalYears:"",education:"",skills:{} as Record<string,"Yes"|"No"|"Not provided">});
  const [screeningNote,setScreeningNote]=useState("");
  const [declineId,setDeclineId]=useState<string|null>(null);
@@ -201,7 +204,9 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
  return <div className="phase2-area hire-root">
  <div className="phase2-head mu-section-head"><div><small className="mu-compact-sub">{visible.length} applicants · {newApplicants.length} awaiting screening · {todayInterviews.length} interviews today</small></div><ModuleAlertButton module="lifecycle" branch={branch} onOpen={a=>openAlert(a.action)}/></div>
  {notice&&<div className="phase2-notice" role="status"><AlertTriangle size={15}/><span>{notice}</span><button type="button" onClick={()=>setNotice("")}>Dismiss</button></div>}
- {space!=="home"&&<nav className="hire-breadcrumb"><button type="button" onClick={()=>{setSpace("home");setPositionId(null);setSelectedId(null);setBuilder(null);setCycleTab("applications")}}><ArrowLeft size={14}/> Recruitment</button><ChevronRight size={14}/><span>{space==="forms"?"Hiring Forms":space==="cycle"?"Hiring Cycle":"Onboarding Process"}</span>{space==="forms"&&job&&<><ChevronRight size={14}/><button onClick={()=>{setSelectedId(null);setBuilder(null);setManualAdd(false)}}>{job.position}</button></>}</nav>}
+{role!=="BM"&&<div className="rev-actions"><button type="button" className="secondary" onClick={()=>setBulkOpen(true)}>Bulk Add Applicants (Excel/CSV)</button></div>}
+ <ModuleBulkImportDialog kind="recruitment" open={bulkOpen} onClose={()=>setBulkOpen(false)} context={{people:hrData.people,applicants:records,scope:branch}} onCommit={rows=>{setRecords(old=>{let high=old.reduce((m,a)=>{const match=/^APP-(\d+)$/.exec(a.id);return match?Math.max(m,Number(match[1])):m},1000);const added=rows.map(r=>({id:`APP-${++high}`,name:r.full_name,email:r.email,phone:r.phone,role:r.position,branch:r.branch,submitted:r.application_date,stage:"New Applicant" as const,notes:"Imported reference; screening, interview, offer and hire decision require review",relevantYears:r.relevant_years?Number(r.relevant_years):null,education:r.education,requirements:candidateRequirements(forms.find(f=>f.position===r.position)),history:[`${today()} · Applicant register import for review. Original applied date ${r.application_date}`]}));return [...old,...added]});setNotice(`${rows.length} new applicants added for screening. No past approvals or interviews inferred.`)}}/>
+  {space!=="home"&&<nav className="hire-breadcrumb"><button type="button" onClick={()=>{setSpace("home");setPositionId(null);setSelectedId(null);setBuilder(null);setCycleTab("applications")}}><ArrowLeft size={14}/> Recruitment</button><ChevronRight size={14}/><span>{space==="forms"?"Hiring Forms":space==="cycle"?"Hiring Cycle":"Onboarding Process"}</span>{space==="forms"&&job&&<><ChevronRight size={14}/><button onClick={()=>{setSelectedId(null);setBuilder(null);setManualAdd(false)}}>{job.position}</button></>}</nav>}
  {space==="home"&&<><div className="hire-home-kpis"><button onClick={()=>{setSpace("cycle");setPositionId(null);setCycleTab("applications")}}><b>{newApplicants.length}</b><span>New Applications</span></button><button onClick={()=>setSpace("cycle")}><b>{todayInterviews.length}</b><span>Interviews Today</span></button><button onClick={()=>setSpace("cycle")}><b>{unscheduled.length}</b><span>Unscheduled</span></button><button onClick={()=>setSpace("onboarding")}><b>{pendingOnboard.length}</b><span>Pending Onboarding</span></button></div><div className="hire-home-layout"><div className="hire-workspace-grid">{[
   {id:"forms" as Space,title:"Hiring Forms",hint:"Create, publish and share job application links",value:forms.filter(f=>f.status==="Published").length,indicator:"published",symbol:<FileText size={30}/>},
   {id:"cycle" as Space,title:"Hiring Cycle",hint:"Position-based intake, screening, interviews and decisions",value:visible.length,indicator:"applications",symbol:<CalendarDays size={30}/>},

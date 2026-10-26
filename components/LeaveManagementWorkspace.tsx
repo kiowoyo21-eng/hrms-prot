@@ -1,4 +1,6 @@
 "use client";
+import ModuleBulkImportDialog from "./ModuleBulkImportDialog";
+
 import {createPortal} from "react-dom";
 
 import {useEffect,useMemo,useState} from "react";
@@ -46,6 +48,7 @@ export default function LeaveManagementWorkspace({branch,role}:{branch:Branch;ro
  const {data,update}=useHR();
  const [leaves,setLeaves]=useLocalRecords<LeaveRequest[]>("leave",initialLeaves);
  const [credits,setCredits]=useLocalRecords<CreditRequest[]>("leave-credit-requests",initialCredits);
+ const [bulkOpen,setBulkOpen]=useState(false);
  // One-time, additive sample-data migration for browsers that already saved the earlier 3 examples.
  // Preserve decisions and user-entered records; never reinsert deleted samples on later refreshes.
  useEffect(()=>{
@@ -133,7 +136,9 @@ export default function LeaveManagementWorkspace({branch,role}:{branch:Branch;ro
  const exportRows=()=>{if(area==="credits")downloadCSV("leave-credit-records.csv",["Reference","Employee","Branch","Type","Days","Effective Date","Status","Reason","Decision"],filteredCredits.map(c=>[c.id,employeeById(c.employeeId)?.name||"",employeeById(c.employeeId)?.branch||"",c.type,c.days,c.effectiveDate,c.status,c.remarks,c.decisionRemarks||""]));else downloadCSV("leave-records.csv",["Record","Employee","Branch","Leave Type","From","To","Days","Status","Reason"],filtered.map(x=>[x.id,x.employee,x.branch,x.type,x.from,x.to,x.days,x.status,x.notes]));};
  const cards=[{id:"pending" as Section,title:"Pending Leave Requests",desc:"Review applications and approve or decline",count:pendingLeaves.length,metric:"Pending review",icon:ClipboardList,tone:"amber"},{id:"credits" as Section,title:"Incentive Leave Approval",desc:"SIL/VIL credit proposals and allocation history",count:pendingCredits.length,metric:"For approval",icon:CalendarCheck,tone:"mint"},{id:"history" as Section,title:"Leave History",desc:"Approved, declined and completed records",count:closedLeaves.length,metric:"Past decisions",icon:History,tone:"blue"}];
  return <div className="leave-hub">
-  {area==="home"?<>
+{canEdit&&<div className="rev-actions"><button type="button" className="secondary" onClick={()=>setBulkOpen(true)}>Bulk Import Leave Opening Balances</button></div>}
+ <ModuleBulkImportDialog kind="leave" open={bulkOpen} onClose={()=>setBulkOpen(false)} context={{people:data.people,scope:branch}} onCommit={rows=>{const changes=new Map(rows.map(r=>[r.employee_id,r]));update(old=>({...old,people:old.people.map(person=>{const row=changes.get(person.id);return row?{...person,sil:Number(row.sil_days),vil:Number(row.vil_days),timeline:[...person.timeline,`${row.effective_date} · Verified opening leave allocations: SIL ${row.sil_days}, VIL ${row.vil_days}; source ${row.source_reference}; previous SIL ${person.sil}, VIL ${person.vil}`]}:person})}));setNotice(`${rows.length} current leave allocations updated with source references.`)}}/>
+   {area==="home"?<>
    <div className="leave-hub-head"><div><p><strong>{pendingLeaves.length}</strong> pending leave requests · <strong>{pendingCredits.length}</strong> pending credit approvals</p></div><ModuleAlertButton module="leave" branch={branch} onOpen={a=>chooseNotification(a.action)}/></div>
    <div className="uc-leave-card-grid">{cards.map(c=>{const Icon=c.icon;return <button key={c.id} type="button" className="uc-leave-card" onClick={()=>go(c.id)}><span className={`uc-leave-card-visual ${c.tone}`}><Icon size={29}/></span><span className="uc-leave-card-content"><strong>{c.title}</strong><span className="uc-leave-card-desc">{c.desc}</span><span className="uc-leave-card-bottom"><span className="uc-leave-card-count"><b>{c.count}</b> {c.metric}</span><ChevronRight size={17}/></span></span></button>})}</div>
   </>:<>

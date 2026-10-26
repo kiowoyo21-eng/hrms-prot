@@ -33,3 +33,20 @@
 .app-shell .primary{background:var(--accent);color:var(--ink-900)}
 .app-shell .secondary{background:var(--surface);border:1px solid var(--line-strong);color:var(--ink-700)}
 .app-shell :is(.primary,.secondary):not(:disabled):hover{filter:brightness(.98)}
+
+/* Responsive navigation hotfix: align the menu trigger with the 900px drawer
+   breakpoint, and keep the drawer above its dismiss scrim. */
+@media (max-width: 900px) {
+  .app-shell .menu-toggle,
+  .app-shell .close-side {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+    flex-shrink: 0;
+  }
+  .app-shell .side-brand .close-side { margin-left: auto; }
+  .app-shell .sidebar { z-index: 60; }
+  .app-shell .scrim { display: block; z-index: 40; }
+}

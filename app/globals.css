@@ -1120,3 +1120,36 @@ button{min-width:0}
 .pc-bulk-template-controls button{display:inline-flex;align-items:center;gap:4px;padding:6px 9px;font-size:11px;min-height:31px}
 .pc-bulk-template-controls small{font-size:10px}
 @media(max-width:640px){.pc-bulk-template-controls small{flex-basis:100%}}
+
+/* Employee 201: guided bulk add dialog; actions stay in the portal footer. */
+.emp201-bulk-dialog{display:grid;gap:14px;min-width:0}
+.emp201-bulk-tabs{display:flex;gap:8px;border-bottom:1px solid var(--line,#d9e0e7);padding-bottom:8px}
+.emp201-bulk-tabs button{background:transparent;border:0;border-radius:7px;padding:10px 14px;min-height:40px;cursor:pointer;font:inherit}
+.emp201-bulk-tabs button.is-active{background:var(--surface-2,#eef2f7);font-weight:700}
+.emp201-bulk-downloads{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.emp201-bulk-downloads button,.emp201-bulk-dialog button.secondary{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:38px}
+.emp201-bulk-file{display:grid;gap:8px;padding:12px;border:1px solid var(--line,#d9e0e7);border-radius:9px;font-weight:600}
+.emp201-bulk-file input{font:inherit;max-width:100%;font-weight:400}
+.emp201-bulk-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.emp201-bulk-summary span{display:grid;gap:4px;border:1px solid var(--line,#d9e0e7);border-radius:9px;padding:10px;min-width:0}
+.emp201-bulk-summary b{font-size:18px;font-variant-numeric:tabular-nums}
+.emp201-bulk-summary small{color:var(--ink-500,#64748b);font-size:11px}
+.emp201-bulk-review-state{display:flex;align-items:center;gap:8px;font-weight:650}
+.emp201-bulk-errors,.emp201-bulk-warnings{padding:12px;border:1px solid var(--line,#d9e0e7);border-radius:8px}
+.emp201-bulk-errors ol,.emp201-bulk-warnings ul{margin:6px 0 0;padding-left:20px}
+.emp201-bulk-errors li,.emp201-bulk-warnings li{margin:4px 0;overflow-wrap:anywhere}
+.emp201-bulk-table{max-width:100%;overflow:auto;border:1px solid var(--line,#d9e0e7);border-radius:8px;max-height:360px}
+.emp201-bulk-table table{border-collapse:collapse;width:100%;min-width:680px;font-size:12px}
+.emp201-bulk-table th,.emp201-bulk-table td{border-bottom:1px solid var(--line,#d9e0e7);padding:9px 11px;vertical-align:top;text-align:left;white-space:normal}
+.emp201-bulk-table thead th{position:sticky;top:0;z-index:1;background:var(--surface-2,#f5f7fa)}
+.emp201-bulk-guide{display:grid;gap:8px;line-height:1.5}
+.emp201-bulk-guide h4{margin:8px 0 2px}
+.emp201-bulk-guide ol{padding-left:24px;margin:0}
+.emp201-bulk-guide ol li{margin:6px 0}
+@media(max-width:750px){.emp201-bulk-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.emp201-bulk-downloads>button{flex:1 1 210px}.emp201-bulk-tabs button{flex:1;padding:9px 4px}}
+
+/* Document cabinets use a compact file-tab switcher, never an inline card catalog. */
+.docops-file-tabs{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.docops-file-tabs button{display:inline-flex;gap:7px;align-items:center;min-height:40px}
+.docops-file-tabs button.active{border-color:var(--accent,#385acc);font-weight:700}
+@media(max-width:640px){.docops-file-tabs{display:grid;grid-template-columns:1fr;}.docops-file-tabs button{width:100%;justify-content:flex-start}}

@@ -2,7 +2,7 @@
 
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {createPortal} from "react-dom";
-import {ArrowLeft,ArrowRight,Plus,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,X,Info,Eye,Pencil,Laptop,Wallet,FileSpreadsheet} from "lucide-react";
+import {ArrowLeft,ArrowRight,Plus,Upload,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,X,Info,Eye,Pencil,Laptop,Wallet,FileSpreadsheet} from "lucide-react";
 import type {Branch,Role} from "../lib/mock";
 import {employmentArrangements,jobLevels,getArrangement,getLevel,ageOnDate} from "../lib/employeeDemographics";
 import {dashboardTodayPH} from "../lib/dashboardAnalytics";
@@ -12,6 +12,8 @@ import {readAuditEvents,watchAuditEvents,type AuditEvent} from "../lib/auditTrai
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
 import HelpButton from "./HelpButton";
+import Employee201BulkImportDialog from "./Employee201BulkImportDialog";
+import {HrmsDialog} from "./ui/HrmsPrimitives";
 import EmployeeFullRecord,{toEmployeeFullDraft,statutoryMask,type EmployeeFullDraft,type EmployeeInfoSection} from "./workspace/EmployeeFullRecord";
 import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
 import {basicRateOnDate,type PayRateChange} from "../lib/payrollConfig";
@@ -99,6 +101,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  useEffect(()=>{if(!detailKind)return;const close=(e:KeyboardEvent)=>{if(e.key==="Escape")setDetailKind(null)};window.addEventListener("keydown",close);return ()=>window.removeEventListener("keydown",close)},[detailKind]);
  const [add,setAdd]=useState(false);
  const [form,setForm]=useState({...emptyForm});
+ const [bulkOpen,setBulkOpen]=useState(false);
  const [editing,setEditing]=useState(false);
  const [personal,setPersonal]=useState<PersonalDraft|null>(null);
  const [action,setAction]=useState<Action|null>(null);
@@ -342,14 +345,16 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   {!person&&<div className={`${premium.moduleHeader} rev-title`}>
    <div><span className={premium.eyebrow}>PEOPLE / MASTER RECORDS</span><h3>Employee 201 Files</h3><p>Personnel records, documentation and workforce history in one place.</p></div>
    <div className="rev-actions"><a className="secondary" href={`/spreadsheets/employees?branch=${encodeURIComponent(branch)}`} target="_blank" rel="noopener noreferrer" title="Open the Employee 201 workbook in a new browser tab"><FileSpreadsheet size={16}/> Open in Spreadsheet</a><HelpButton topic="employee" label="Employee 201 Guide"/>
+    {!person&&!add&&<button type="button" className="secondary" onClick={()=>setBulkOpen(true)}><Upload size={16}/> Bulk Add Employees</button>}
     {!person&&!add&&<button className="primary" onClick={()=>{setAdd(true);setMessage("")}}><Plus size={16}/> Add Employee</button>}
    </div>
   </div>}
+  <Employee201BulkImportDialog open={bulkOpen} onClose={()=>setBulkOpen(false)} people={data.people} scope={branch} onImport={rows=>{update(s=>({...s,people:[...rows,...s.people]}));resetFilters();setMessage(`${rows.length} employee record(s) added from the validated template. Review Employee 201 and document requirements.`)}}/>
   {message&&<div className="rev-note" role="status">{message}</div>}
 
-  {add&&<section className="panel">
-   <div className="rev-title"><div><h3>Initial Employee Registration</h3><p>Enter onboarding details before creating the employee record. The Hire Date locks after registration.</p></div><button className="secondary" onClick={()=>{setAdd(false);setMessage("")}}>Cancel</button></div>
-   <form onSubmit={create} className="employee201-registration">
+  <HrmsDialog open={add} onClose={()=>{setAdd(false);setMessage("")}} size="xl" title="Initial Employee Registration" subtitle="Single-employee registration; initial hire date locks after saving." footer={<><button type="button" className="secondary" onClick={()=>setAdd(false)}>Cancel</button><button type="submit" form="employee-201-single-registration" className="primary">Create Employee Record</button></>}>
+   {message&&<p className="error" role="alert">{message}</p>}
+   <form id="employee-201-single-registration" onSubmit={create} className="employee201-registration">
     <div className="employee201-formsection"><h4>Personal & Contact Information</h4><div className="rev-form">
      <label>Full name *<input required value={form.name} onChange={e=>setForm(s=>({...s,name:e.target.value}))}/></label>
      <label>Gender<select value={form.gender} onChange={e=>setForm(s=>({...s,gender:e.target.value}))}>{["Male","Female","Prefer not to say"].map(x=><option key={x}>{x}</option>)}</select></label>
@@ -383,11 +388,10 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      {([ ["middleName","Middle name"],["suffix","Suffix"],["nationality","Nationality"],["placeOfBirth","Place of birth"],["sssNumber","SSS Number"],["philhealthNumber","PhilHealth Number"],["pagibigNumber","Pag-IBIG MID"],["tinNumber","TIN"] ] as ["middleName"|"suffix"|"nationality"|"placeOfBirth"|"sssNumber"|"philhealthNumber"|"pagibigNumber"|"tinNumber",string][]).map(([key,label])=><label key={key}>{label}<input value={form[key]} maxLength={100} onChange={e=>setForm(s=>({...s,[key]:e.target.value}))}/></label>)}
     </div></div>
     <p className="muted">Personnel records are stored in this browser for frontend review only. Do not enter real private employee data until a secure backend is available.</p>
-    <div className="rev-actions"><button type="submit" className="primary">Create Employee Record</button><button type="button" className="secondary" onClick={()=>setAdd(false)}>Cancel</button></div>
    </form>
-  </section>}
+  </HrmsDialog>
 
-  {!add&&!person&&<>
+  {!person&&<>
    <div className={`employee201-summary ${premium.summaryStrip}`}>
     <div><small>Employees in view</small><strong>{people.length}</strong></div>
     <div><small>Regular employees</small><strong>{people.filter(p=>p.status==="Regular").length}</strong></div>
@@ -572,7 +576,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
        </>}
        {detailKind==="reviews"&&<><h4>Performance Assessments</h4>{evaluations.length?evaluations.map((t,i)=><div className="emp201-dialog-entry" key={i}><ClipboardList size={16}/><span>{t}</span></div>):<p className="muted">No assessments recorded yet. Use Employee Actions → Record Assessment to add one.</p>}</>}
        {detailKind==="history"&&<><h4>Employment Timeline</h4>{person.timeline.map((t,i)=><div className="emp201-dialog-entry" key={i}><BriefcaseBusiness size={16}/><span>{t}</span></div>)}<div className="emp201-dialog-subhead"><h4>Assignment Memos</h4><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("role")}}>Open Assignment History <ArrowRight size={14}/></button></div></>}
-       {detailKind==="assets"&&<><div className="emp201-dialog-facts"><div><small>Employment Status</small><b>{person.status}</b></div><div><small>Outstanding Devices</small><b>{assignedAssets.length}</b></div></div><h4>Assigned Asset Records</h4>{assignedAssets.length?assignedAssets.map(a=><div className="emp201-dialog-entry" key={a.id}><Laptop size={16}/><span><b>{a.name}</b><small>{a.id} · {a.status}</small></span></div>):<p className="muted">No outstanding assigned devices.</p>}{assignedAssets.length>0&&<p className="muted">Outstanding devices require retrieval and inspection before final clearance.</p>}{onAssignDevice&&person.status!=="Clearance Pending"&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openAssetsForPerson()}}>Assign Device <ArrowRight size={14}/></button>}</>}
+       {detailKind==="assets"&&<><div className="emp201-dialog-facts"><div><small>Employment Status</small><b>{person.status}</b></div><div><small>Outstanding Devices</small><b>{assignedAssets.length}</b></div></div><h4>Assigned Asset Records</h4>{assignedAssets.length?assignedAssets.map(a=><div className="emp201-dialog-entry" key={a.id}><Laptop size={16}/><span><b>{a.name}</b><small>{a.id} · {a.status}</small></span></div>):<p className="muted">No outstanding assigned devices.</p>}{assignedAssets.length>0&&<p className="muted">Outstanding devices require retrieval and inspection before final clearance.</p>}{onAssignDevice&&!(["Clearance Pending","Separated"].includes(person.status))&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openAssetsForPerson()}}>Assign Device <ArrowRight size={14}/></button>}</>}
       </div>
      </section>
     </div>,document.body)}
@@ -607,14 +611,14 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      <div className="emp201-actions-area" id="emp201-actions">
       <div className="emp201-actions-header"><div><h4>Employee Actions</h4></div><HelpButton topic="workflow" label="About employee actions"/></div>
       <div className="emp201-action-grid">
-       <button type="button" className="emp201-action-button" onClick={()=>startAction("Evaluate")} disabled={person.status==="Clearance Pending"}><ClipboardList size={18}/><span><b>Record Assessment</b><small>Performance evaluation</small></span><ArrowRight size={15}/></button>
+       <button type="button" className="emp201-action-button" onClick={()=>startAction("Evaluate")} disabled={["Clearance Pending","Separated"].includes(person.status)}><ClipboardList size={18}/><span><b>Record Assessment</b><small>Performance evaluation</small></span><ArrowRight size={15}/></button>
        {person.status==="Probationary"&&<button type="button" className="emp201-action-button" onClick={()=>startAction("Regularize")}><ShieldCheck size={18}/><span><b>Regularize</b><small>Employment status</small></span><ArrowRight size={15}/></button>}
-       <button type="button" className="emp201-action-button" onClick={()=>startAction("Promote")} disabled={person.status==="Clearance Pending"}><BriefcaseBusiness size={18}/><span><b>Promote</b><small>Position & compensation</small></span><ArrowRight size={15}/></button>
-       <button type="button" className="emp201-action-button" onClick={()=>startAction("Transfer")} disabled={person.status==="Clearance Pending"}><ArrowRight size={18}/><span><b>Transfer</b><small>Branch reassignment</small></span><ArrowRight size={15}/></button>
-       {onOpenPayroll&&<button type="button" className="emp201-action-button" onClick={openPayRates} disabled={person.status==="Clearance Pending"}><Wallet size={18}/><span><b>Adjust Pay Rate</b><small>Payroll rate review</small></span><ArrowRight size={15}/></button>}
-       {onAssignDevice&&<button type="button" className="emp201-action-button" onClick={openAssetsForPerson} disabled={person.status==="Clearance Pending"}><Laptop size={18}/><span><b>Assign Device</b><small>Accountability & turnover</small></span><ArrowRight size={15}/></button>}
+       <button type="button" className="emp201-action-button" onClick={()=>startAction("Promote")} disabled={["Clearance Pending","Separated"].includes(person.status)}><BriefcaseBusiness size={18}/><span><b>Promote</b><small>Position & compensation</small></span><ArrowRight size={15}/></button>
+       <button type="button" className="emp201-action-button" onClick={()=>startAction("Transfer")} disabled={["Clearance Pending","Separated"].includes(person.status)}><ArrowRight size={18}/><span><b>Transfer</b><small>Branch reassignment</small></span><ArrowRight size={15}/></button>
+       {onOpenPayroll&&<button type="button" className="emp201-action-button" onClick={openPayRates} disabled={["Clearance Pending","Separated"].includes(person.status)}><Wallet size={18}/><span><b>Adjust Pay Rate</b><small>Payroll rate review</small></span><ArrowRight size={15}/></button>}
+       {onAssignDevice&&<button type="button" className="emp201-action-button" onClick={openAssetsForPerson} disabled={["Clearance Pending","Separated"].includes(person.status)}><Laptop size={18}/><span><b>Assign Device</b><small>Accountability & turnover</small></span><ArrowRight size={15}/></button>}
       </div>
-      <div className="emp201-offboarding"><div><h5>End Employment</h5><span>Resignation, termination, or contract completion</span></div><button type="button" className="emp201-offboard-button" disabled={person.status==="Clearance Pending"} onClick={()=>startAction("Offboard")}>Process Offboarding <ArrowRight size={15}/></button></div>
+      <div className="emp201-offboarding"><div><h5>End Employment</h5><span>Resignation, termination, or contract completion</span></div><button type="button" className="emp201-offboard-button" disabled={["Clearance Pending","Separated"].includes(person.status)} onClick={()=>startAction("Offboard")}>Process Offboarding <ArrowRight size={15}/></button></div>
      </div>
 
    </section>}

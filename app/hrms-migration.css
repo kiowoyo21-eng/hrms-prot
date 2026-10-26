@@ -43,7 +43,7 @@
 .hrms-dialog-body > .help-content{padding:0;overflow:visible}
 
 /* Employee 201 — required documents in Personal Information, no extra nested tiles. */
-.emp201-required-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0}.emp201-required-summary span{display:inline-flex;gap:6px;align-items:center;padding:5px 9px;background:var(--surface-1,#f8fafc);border:1px solid var(--line,#e2e8f0);border-radius:8px;font-size:12px;color:var(--ink-700,#334155)}.emp201-required-summary b{font-variant-numeric:tabular-nums;color:var(--ink-900,#1a2533)}.emp201-required-list{display:grid;gap:0;border-block:1px solid var(--line,#e2e8f0)}.emp201-required-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line-soft,#eef1f5)}.emp201-required-row:last-child{border:0}.emp201-required-row>div{display:grid;gap:4px;min-width:0}.emp201-required-row strong{font-size:13px;line-height:20px;font-weight:600}.emp201-required-row small{font-size:12px;line-height:18px;color:var(--ink-500,#64748b);overflow-wrap:anywhere}.emp201-required-status{flex:none;padding:4px 8px;border-radius:6px;font-size:12px;color:var(--ink-700,#334155);background:var(--surface-2,#f1f5f9)}.emp201-required-status.status-verified{color:#1f7a4d;background:#e8f5ee}.emp201-required-status.status-submitted{color:#1e5aa8;background:#e8f0fb}.emp201-required-status.status-missing{color:#b42318;background:#fdeceb}@media(max-width:640px){.emp201-required-row{flex-direction:column;gap:6px}}
+.emp201-required-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0}.emp201-required-summary span{display:inline-flex;gap:6px;align-items:center;padding:5px 9px;background:var(--surface-1);border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--ink-700)}.emp201-required-summary b{font-variant-numeric:tabular-nums;color:var(--ink-900)}.emp201-required-list{display:grid;gap:0;border-block:1px solid var(--line)}.emp201-required-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line-soft)}.emp201-required-row:last-child{border:0}.emp201-required-row>div{display:grid;gap:4px;min-width:0}.emp201-required-row strong{font-size:13px;line-height:20px;font-weight:600}.emp201-required-row small{font-size:12px;line-height:18px;color:var(--ink-500);overflow-wrap:anywhere}.emp201-required-status{flex:none;padding:4px 8px;border-radius:6px;font-size:12px;color:var(--ink-700);background:var(--surface-2)}.emp201-required-status.status-verified{color:var(--success-ink);background:var(--success-soft)}.emp201-required-status.status-submitted{color:var(--info-ink);background:var(--info-soft)}.emp201-required-status.status-missing{color:var(--danger-ink);background:var(--danger-soft)}@media(max-width:640px){.emp201-required-row{flex-direction:column;gap:6px}}
 
 
 /* Patch 12: responsive table actions must remain visible on phones and tablets. */
@@ -59,17 +59,17 @@
  }
  .app-shell :is(.table-wrap,.leave-table-wrap,.gr-data-table,.hrms-table-scroll)
  table:has(tbody tr > td:last-child :is(button,a)) :is(th:last-child,td:last-child) {
-   position: sticky; right: 0; background: var(--surface,#fff);
+   position: sticky; right: 0; background: var(--surface);
    box-shadow: -2px 0 5px rgba(20,38,60,.09); z-index: 2;
    width: auto; min-width: 98px; max-width: 215px;
  }
  .app-shell :is(.table-wrap,.leave-table-wrap,.gr-data-table,.hrms-table-scroll)
  table:has(tbody tr > td:last-child :is(button,a)) thead th:last-child {
-   z-index: 4; background: var(--surface-1,#f8fafc);
+   z-index: 4; background: var(--surface-1);
  }
  .app-shell :is(.table-wrap,.leave-table-wrap,.gr-data-table,.hrms-table-scroll)
  table:has(tbody tr > td:last-child :is(button,a)) tbody tr:hover > td:last-child {
-   background: var(--surface-1,#f8fafc);
+   background: var(--surface-1);
  }
  .app-shell :is(.table-wrap,.leave-table-wrap,.gr-data-table,.hrms-table-scroll)
  table:has(tbody tr > td:last-child :is(button,a)) td:last-child :is(.rev-actions,.doc-actions,.hire-actions,.pay-actions) {
@@ -86,7 +86,7 @@
 /* Device record modal: make the available status-dependent actions obvious,
    including on screens where the inventory table's last cell is compressed. */
 .hrms-asset-detail-actions {display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
- border-top: 1px solid var(--line,#e2e8f0); padding-top: 12px; margin-top: 12px}
+ border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px}
 .hrms-asset-detail-actions button {min-height: 40px}
 @media (max-width: 640px) {
  .hrms-asset-detail-actions {align-items: stretch; flex-direction: column}

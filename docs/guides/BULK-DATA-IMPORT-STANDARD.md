@@ -83,3 +83,11 @@ One row per employee/day. Don't skip absent/rest days just because time punches 
 ## Boundaries & security
 
 These tools run in a **frontend/browser-local prototype**. CSV and XLSX values are not verified against government portals or protected by a production database. No real confidential employee bulk loads should be made until an appropriate secured backend, access controls, audit logging, backups and import rollback are available. Government contribution tracking in this HRMS was planned to begin January 2027; that is a tracking scope choice and does not change independent statutory obligations.
+
+## Employee 201 — add-only HR master import (Patch 24)
+
+**Navigation:** Employee 201 Files → Bulk Add Employees → Download Excel/CSV Template → Detailed Guide → Upload & Preview → Confirm Import.
+
+The 25-column schema and all exact field rules are in [Employee 201 Bulk Add Guide](EMPLOYEE-201-BULK-ADD.md). Unlike tax bracket uploads, this import creates **new** employee profiles; it cannot update any existing employee, upload confidential files, change rate history or verify submitted documents. A missing DOB remains missing; age is derived from entered DOB. Required pay and leave values must be actual verified figures. Technical validation alone is not HR approval. Browser-local storage is not secure production infrastructure.
+
+For the source-level inventory of other module imports and pending gaps, see [Batch 24 audit](../revisions/batches/BATCH-24-EMPLOYEE-201-BULK-AND-CROSS-MODULE-AUDIT.md).

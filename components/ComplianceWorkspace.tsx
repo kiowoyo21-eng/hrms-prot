@@ -1,4 +1,6 @@
 "use client";
+import ModuleBulkImportDialog from "./ModuleBulkImportDialog";
+
 import {createPortal} from "react-dom";
 import {useEffect,useMemo,useState} from "react";
 import {Landmark,ShieldCheck,Flame,Leaf,Building2,CalendarDays,ClipboardCheck,FileDown,Plus,Search,AlertTriangle,CheckCircle2,Clock3,FileText,RefreshCcw,ChevronLeft,ChevronRight,Info,Upload,X} from "lucide-react";
@@ -46,6 +48,7 @@ export default function ComplianceWorkspace({branch,role}:{branch:Branch;role:Ro
  const [records,setRecords]=useLocalRecords("compliance",initial),[agency,setAgency]=useState<Agency|null>(null),[section,setSection]=useState<"tasks"|"calendar"|"planning"|"evidence">("tasks"),[search,setSearch]=useState(""),[status,setStatus]=useState("All"),[frequency,setFrequency]=useState("All"),[detailId,setDetailId]=useState<number|null>(null),[note,setNote]=useState(""),[feedback,setFeedback]=useState(""),[showAdd,setShowAdd]=useState(false),[year,setYear]=useState(String(new Date().getFullYear()));
  const [draft,setDraft]=useState<{title:string;agency:Agency;due:string;frequency:Frequency;owner:string;scope:"all"|"selected";selected:Shop[]}>({title:"",agency:"DOLE",due:"",frequency:"Annual",owner:"HR",scope:"all",selected:["UC Mandaluyong"]});
  const [calendarReviews,setCalendarReviews]=useLocalRecords("compliance-schedule-reviews",[] as {id:string;at:string;role:Role}[]);
+ const [bulkOpen,setBulkOpen]=useState(false);
  useEffect(()=>{setDetailId(null);setShowAdd(false);setNote("")},[branch]);
  const calendarReviewId=`${agency||"none"}:${branch}:${year}`;
  const calendarApproved=calendarReviews.some(r=>r.id===calendarReviewId);
@@ -71,7 +74,9 @@ export default function ComplianceWorkspace({branch,role}:{branch:Branch;role:Ro
  const dueStatusHere=(x:Item)=>isCompleteHere(x)?"Verified":daysUntil(x.due)<0?"Overdue":daysUntil(x.due)===0?"Due Today":daysUntil(x.due)<=7?"Critical":daysUntil(x.due)<=30?"Due Soon":"Upcoming";
  const agencyProgress=(a:Agency)=>{const list=scoped.filter(x=>x.agency===a);const total=list.reduce((n,x)=>n+visibleBranches(x).length,0);const verified=list.reduce((n,x)=>n+visibleBranches(x).filter(b=>branchVerified(x,b,shops)).length,0);return {list,count:list.length,done:list.filter(isCompleteHere).length,progress:total?Math.round(verified/total*100):0,due:list.filter(x=>!isCompleteHere(x)&&daysUntil(x.due)<=30).length}};
  return <div className="mu-compliance">
-  <div className="mu-notice-strip"><ShieldCheck size={16}/><span>Sample compliance dates and records. Verify actual government requirements and deadlines before use.</span><HelpButton topic="compliance" label="Info"/></div>
+{canEdit&&<div className="rev-actions"><button type="button" className="secondary" onClick={()=>setBulkOpen(true)}>Bulk Add Compliance References</button></div>}
+ <ModuleBulkImportDialog kind="compliance" open={bulkOpen} onClose={()=>setBulkOpen(false)} context={{people:[],compliance:records,scope:branch}} onCommit={rows=>{setRecords(old=>{let id=Math.max(0,...old.map(x=>x.id));return [...old,...rows.map(r=>({id:++id,agency:r.agency as Agency,title:r.requirement,branch:r.branch as Branch,due:r.due_date,frequency:r.frequency as Frequency,owner:r.owner,status:"Draft" as const,note:`Imported filing reference (requires independent review): ${r.source_reference}`,proof:"",scope:r.branch==="All Shops"?"all" as const:"selected" as const,selectedBranches:r.branch==="All Shops"?[]:[r.branch as Shop]}))]});setFeedback(`${rows.length} compliance references added as Draft; no verified government filing status assumed.`)}}/>
+   <div className="mu-notice-strip"><ShieldCheck size={16}/><span>Sample compliance dates and records. Verify actual government requirements and deadlines before use.</span><HelpButton topic="compliance" label="Info"/></div>
   {feedback&&<div className="ops-info" role="status"><Info size={16}/>{feedback}<button className="mu-clear" onClick={()=>setFeedback("")} aria-label="Dismiss"><X size={14}/></button></div>}
   {!agency?<>
    <div className="uc-gov-intro"><strong>Agencies</strong><span>{scoped.filter(x=>!isCompleteHere(x)).length} pending requirements · NCR branches</span></div>

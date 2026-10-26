@@ -25,7 +25,7 @@ const definitions:Record<LifecycleAction,{id:string;label:string}[]>={
  Regularize:[{id:"assessment",label:"Probationary assessment reviewed"},{id:"documents",label:"Required employee documents verified"},{id:"decision",label:"Authorized employment decision reference checked"}],
  Promote:[{id:"manager",label:"Management promotion approval verified"},{id:"compensation",label:"Compensation impact reviewed with Payroll"},{id:"memo",label:"Promotion memo / supporting record checked"}],
  Transfer:[{id:"release",label:"Releasing manager approval verified"},{id:"receive",label:"Receiving manager approval verified"},{id:"assets",label:"Device custody / transfer clearance checked"},{id:"payroll",label:"Branch payroll and attendance handoff reviewed"}],
- Offboard:[{id:"notice",label:"Resignation / separation supporting record verified"},{id:"assets",label:"All issued devices returned and inspected"},{id:"loans",label:"Outstanding loans and advances reviewed"},{id:"handover",label:"Branch and document handover completed"},{id:"finalpay",label:"Final-pay preparation referred to Payroll (not paid)"}]
+ Offboard:[{id:"notice",label:"Resignation / separation supporting record verified"},{id:"assets",label:"Asset custody reviewed; unresolved accountabilities recorded for clearance follow-up"},{id:"loans",label:"Outstanding loans and advances reviewed"},{id:"handover",label:"Branch and document handover completed"},{id:"finalpay",label:"Final-pay preparation referred to Payroll (not paid)"}]
 };
 export const dateInPH=(iso:string)=>new Date(new Date(iso).getTime()+8*60*60*1000).toISOString().slice(0,10);
 export const lifecycleCheckLabels=(action:LifecycleAction)=>definitions[action];
@@ -46,7 +46,7 @@ export function createLifecycleCase(state:HRState,person:HRPerson,draft:Lifecycl
  if(!isValidISODate(draft.effectiveDate)||draft.effectiveDate<person.hire)return {error:"Enter a valid effective date on or after the hire date."};
  if(draft.reason.trim().length<8)return {error:"Enter a supporting reason or reference (at least 8 characters)."};
  if(state.lifecycleCases?.some(c=>c.employeeId===person.id&&c.action===draft.action&&c.status==="Pending Review"))return {error:"An open request of this type already exists for this employee."};
- if(person.status==="Clearance Pending")return {error:"Resolve the employee's existing clearance status before another movement."};
+ if(person.status==="Clearance Pending"||person.status==="Separated")return {error:"An employee in clearance or separated status cannot enter another movement. Use an approved rehire process when applicable."};
  if(draft.action==="Regularize"&&person.status!=="Probationary")return {error:"Only probationary employees can have a regularization review."};
  if(draft.action==="Onboard"&&person.status==="Clearance Pending")return {error:"Clearance-pending employees cannot be onboarded."};
  if(draft.action==="Promote"&&(!draft.position?.trim()||!Number.isFinite(draft.salaryRate)||!(draft.salaryRate!>0)||!draft.department?.trim()))return {error:"A promotion requires a position, department, and positive proposed basic rate."};
@@ -82,7 +82,7 @@ export function finalizeLifecycleCase(state:HRState,caseId:string,role:string,no
   if(c.effectiveDate>dateInPH(now))return {ok:false,error:"Future-dated change: return on or after the effective date to apply it."};
   if(employee.branch!==c.snapshot.branch||employee.department!==c.snapshot.department||employee.position!==c.snapshot.position||employee.status!==c.snapshot.status)return {ok:false,error:"Employee assignment/status changed since submission. Create a new request."};
   if(["Regularize","Onboard"].includes(c.action)&&employee.documents.some(d=>d.status!=="Verified"))return {ok:false,error:"Verify all required Employee 201 documents before regularization review is applied."};
-  if(["Offboard","Transfer"].includes(c.action)&&outstandingCustody(state,employee.id).length)return {ok:false,error:"Outstanding assets remain. Complete physical return and inspection in Assets before applying this action."};
+  if(c.action==="Transfer"&&outstandingCustody(state,employee.id).length)return {ok:false,error:"Outstanding assets remain. Complete physical return and inspection in Assets before applying this transfer."};
   if(c.action==="Promote"&&basicRateOnDate(employee.id,employee.rate,dateInPH(now),state.payrollConfig?.rateChanges||[])!==c.snapshot.rate)return {ok:false,error:"Basic rate changed since request. Review a new compensation request."};
  }
  const decided={...c,status,decisionBy:role,decisionAt:now,decisionReason:reason.trim()};

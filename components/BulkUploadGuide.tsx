@@ -6,7 +6,7 @@ export default function BulkUploadGuide({kind,onClose}:{kind:BulkKind|null;onClo
  const isAttendance=kind==="Attendance";
  const columns=kind?bulkColumns(kind):[];
  const steps=isAttendance?[
-  "Open Payroll → Generate Payslips → Attendance Upload & Verification. Select the correct branch and the Thursday payroll cutoff start date BEFORE uploading.",
+  "Open Payroll → Generate Payslips → Attendance Upload & Verification. Select the required company/branch. The payroll workspace automatically uses the last completed Thursday–Wednesday cutoff; do not enter an arbitrary date range.",
   "Choose Download Excel Template (.xlsx), or Download CSV Template. The Excel file contains an Input sheet and a Guide - Read First sheet. Enter actual attendance in Input only.",
   "Enter one row for EACH employee and EACH applicable cutoff date, including Rest Day, Absent or On Leave when appropriate. Use existing Employee IDs rather than names.",
   "Enter YYYY-MM-DD dates. Use 08:00 and 17:00 for 24-hour Time In / Time Out only when punches are known. Do not fabricate attendance. Incomplete punches should be marked Incomplete.",

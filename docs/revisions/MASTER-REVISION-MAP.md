@@ -287,3 +287,18 @@ See [Batch 20](batches/BATCH-20-LOCAL-RESPONSE-REVIEW.md).
 | BULK-23D | Production data import | Requires secured backend | Server-side validation, durable audit, backups, access controls, migrations and statutory payroll rule verification |
 
 See [Bulk import standard](../guides/BULK-DATA-IMPORT-STANDARD.md).
+
+| IMPORT-24-01 | Employee 201 bulk add-only Excel/CSV input, full guide, preview, error report and atomic validations | 24 | implemented (browser QA pending) | components/EmployeeWorkspace.tsx; components/Employee201BulkImportDialog.tsx; lib/employee201Bulk.ts; docs/guides/EMPLOYEE-201-BULK-ADD.md |
+| IMPORT-24-02 | Employee 201 manual create opens a true modal instead of inline panel | 24 | implemented (browser QA pending) | components/EmployeeWorkspace.tsx; components/ui/HrmsPrimitives.tsx (reused) |
+| IMPORT-24-03 | Cross-module audit of bulk data/file imports and remaining gaps | 24 | audit complete, new module importers deferred | docs/revisions/batches/BATCH-24-EMPLOYEE-201-BULK-AND-CROSS-MODULE-AUDIT.md |
+
+## Batch 25 — Additional Guided Bulk Imports (2026-10-25)
+
+- Assets inventory, current SIL/VIL balances, recruitment applicants, effective-dated salary changes, compliance Draft references and employee document-reference manifest have front-end CSV/XLSX template import dialogs and field-level guides. See `docs/revisions/batches/BATCH-25-MODULE-BULK-IMPORTS.md` and `docs/guides/MODULE-BULK-IMPORTS.md`.
+- Employee 201 Bulk Add, Government Deductions and canonical Payroll Attendance imports are preserved from Patches 23–24.
+- Browser-only, no production-grade secure file uploads or cross-device data. Full Next.js/browser verification pending.
+
+## Consolidated Batch 26 (26 Oct 2026)
+- Source implemented: active-file-only Employee Document Library, in-module Templates file view, separate Verification, company-wide Thursday payroll preparation with last completed cutoff and attendance upload gate, separate clearance / final-pay review / external-payment evidence / demo closure, responsive navigation hotfix and CSS token compliance.
+- Package includes Patches 22–25 for the uploaded Patch 21 source baseline. See `batches/BATCH-26-CONSOLIDATED-OPERATIONS-AND-UI.md` for exact scope and limitations.
+- Verification: TS/TSX parse, local imports, CSS parse, focused and regression Node checks passed. Full Next.js production build and mobile/tablet browser testing not yet verified. Accounting integration, secure backend, and fully automatic legally verified payroll remain pending.
