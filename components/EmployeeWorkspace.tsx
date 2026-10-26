@@ -3,7 +3,7 @@
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {createPortal} from "react-dom";
 import {ArrowLeft,ArrowRight,Plus,Upload,FileText,UserRound,BriefcaseBusiness,ShieldCheck,ClipboardList,SlidersHorizontal,X,Info,Eye,Pencil,Laptop,Wallet,FileSpreadsheet} from "lucide-react";
-import type {Branch,Role} from "../lib/mock";
+import {isHrRole,type Branch,type Role} from "../lib/mock";
 import {employmentArrangements,jobLevels,getArrangement,getLevel,ageOnDate} from "../lib/employeeDemographics";
 import {dashboardTodayPH} from "../lib/dashboardAnalytics";
 import premium from "./EmployeePremium.module.css";
@@ -510,7 +510,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         <button type="button" className="emp201-card-excerpt" onClick={()=>setDetailKind("assets")}><small>Employee status · {person.status}</small><b>{assignedAssets.length} outstanding device{assignedAssets.length===1?"":"s"}{assignedAssets.length>0?` · ${assignedAssets[0].name}`:""}</b></button>
        </section>
       </div></>}
-      {tab==="Documents"&&<EmployeeDocumentLibrary canUpload={role!=="BM"} person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} requestedFolder={requestedFolder} onFolderHandled={()=>setRequestedFolder(null)} onUpload={(folder,file,memoId)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId}]}));return id}}/>}
+      {tab==="Documents"&&<EmployeeDocumentLibrary canUpload={role==="Super Admin"||isHrRole(role)} person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} requestedFolder={requestedFolder} onFolderHandled={()=>setRequestedFolder(null)} onUpload={(folder,file,memoId)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId}]}));return id}}/>}
      </div>
      {tab==="Profile"&&editing&&<div className="emp201-savebar"><span>Editing employee information · Save changes before leaving this profile</span><div className="rev-actions"><button type="button" className="secondary" onClick={()=>{setEditing(false);setProfileView("overview");setPersonal(null);setEmploymentDraft(null)}}>Cancel</button><button type="button" className="primary" onClick={persistProfile}>Save Profile Changes</button></div></div>}
     </>}
