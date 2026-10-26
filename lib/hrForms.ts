@@ -1,7 +1,7 @@
 /** Local-only documentation workflow. Approval of a documentation request does not
  * create a leave entitlement, permit, payroll entry, legal filing or disbursement. */
 import type {Branch,Role} from "./mock";
-export type FormKind="Overtime Authorization"|"Work Permit / Work Authorization"|"Leave Documentation"|"Workplace Dispute / Grievance"|"Employee Document Request"|"Attendance Correction"|"Schedule Change"|"Incident Statement"|"Asset Clearance"|"Employment Certificate Request"|"Policy Acknowledgment"|"Notice to Explain / Employee Response"|"Return-to-Work Clearance"|"Official Business / Field Assignment"|"Separation & Clearance Request";
+export type FormKind="Overtime Authorization"|"Work Permit / Work Authorization"|"Leave Documentation"|"Workplace Dispute / Grievance"|"Employee Document Request"|"Attendance Correction"|"Schedule Change"|"Incident Statement"|"Asset Clearance"|"Employment Certificate Request"|"Policy Acknowledgment"|"Notice to Explain / Employee Response"|"Return-to-Work Clearance"|"Official Business / Field Assignment"|"Separation & Clearance Request"|"Cash Advance Request";
 export type FormStatus="Draft"|"Submitted"|"Returned for Revision"|"Approved (Documentation Only)"|"Rejected";
 export type FormField={key:string;label:string;type:"text"|"date"|"time"|"textarea"|"select";required:boolean;options?:string[]};
 export type FormSchema={kind:FormKind;description:string;fields:FormField[]};
@@ -21,10 +21,11 @@ export const formSchemas:FormSchema[]=[
  {kind:"Notice to Explain / Employee Response",description:"Internal due-process paperwork reference; content and legal service require HR/legal review.",fields:[field("noticeId","Notice reference"),field("received","Date received","date"),field("response","Employee response","textarea"),field("evidence","Supporting reference","text",false)]},
  {kind:"Return-to-Work Clearance",description:"Request follow-up for return to duty, not a medical fitness determination.",fields:[field("returnDate","Proposed return date","date"),field("absence","Absence reference"),field("clearance","Medical/HR clearance document reference"),field("notes","HR follow-up notes","textarea",false)]},
  {kind:"Official Business / Field Assignment",description:"Field assignment reference; does not authorize payroll reimbursement or travel expense release.",fields:[field("from","Start date","date"),field("to","End date","date"),field("location","Destination"),field("purpose","Official business purpose","textarea"),field("supervisor","Supervisor") ]},
+ {kind:"Cash Advance Request",description:"Employee cash advance application only; approval and funds disbursement occur outside this form.",fields:[field("amount","Requested amount"),field("purpose","Reason for request","textarea"),field("needed","Needed by","date",false),field("repayment","Proposed repayment arrangement","textarea",false)]},
  {kind:"Separation & Clearance Request",description:"Clearance-document request only, not final pay release or actual employment termination.",fields:[field("lastDay","Proposed last working day","date"),field("reason","Separation reference","textarea"),field("assets","Asset return checklist reference"),field("caseId","Employee Lifecycle case reference","text",false)]}
 ];
 export const formKinds=formSchemas.map(x=>x.kind);
-export type HRFormRecord={id:string;kind:FormKind;branch:Exclude<Branch,"All Shops">;employeeId:string;requestor:string;createdAt:string;updatedAt:string;status:FormStatus;fields:Record<string,string>;additionalLabels?:Record<string,string>;evidenceRefs:string;remarks:string;reviewedBy?:string;reviewedAt?:string;history:{at:string;actor:string;action:string;status:FormStatus}[]};
+export type HRFormRecord={id:string;externalId?:string;source?:"Employee Handoff (Unverified)"|"HR-assisted";kind:FormKind;branch:Exclude<Branch,"All Shops">;employeeId:string;requestor:string;createdAt:string;updatedAt:string;status:FormStatus;fields:Record<string,string>;additionalLabels?:Record<string,string>;evidenceRefs:string;remarks:string;reviewedBy?:string;reviewedAt?:string;history:{at:string;actor:string;action:string;status:FormStatus}[]};
 export const FORM_STORE_KEY="uc-hr-forms-documentation-v1";
 export const FORM_STORE_EVENT="uc-hr-forms-changed";
 export function validateFields(kind:FormKind,values:Record<string,string>):string[]{
@@ -38,6 +39,7 @@ export function validateFields(kind:FormKind,values:Record<string,string>):strin
  }
  if((kind==="Leave Documentation"||kind==="Official Business / Field Assignment")&&values.from&&values.to&&values.to<values.from)errors.push("End date must not precede start");
  if(kind==="Overtime Authorization"&&values.start&&values.end&&values.start===values.end)errors.push("Start and end cannot be the same");
+ if(kind==="Cash Advance Request"&&(!/^\d+(?:\.\d{1,2})?$/.test(values.amount||"")||Number(values.amount)<=0))errors.push("Cash advance amount must be a positive peso value (up to 2 decimal places)");
  return errors;
 }
 export function canViewForm(record:HRFormRecord,actor:string,role:Role,branch:Branch){

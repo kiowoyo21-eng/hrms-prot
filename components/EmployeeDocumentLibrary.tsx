@@ -5,6 +5,7 @@ import {createPortal} from "react-dom";
 import {ArrowLeft,ArrowRight,ChevronLeft,ChevronRight,FileText,FolderOpen,Maximize2,Upload,X} from "lucide-react";
 import type {HRPerson,PayrollRelease,Submission} from "../lib/hrState";
 import {money} from "../lib/hrState";
+import {allEmployeeDocumentFiles,EMPLOYEE_DOCUMENT_SESSION_EVENT} from "../lib/employeeDocumentSession";
 
 export type LocalEmployeeFile={id:string;name:string;folder:FolderName;file:File;memoId?:string};
 type FolderName="Onboarding Files"|"Compliance & Other Forms"|"NOV / NTE"|"Employment Memos"|"Payslips";
@@ -29,12 +30,14 @@ function DocumentPreview({item,page}:{item:PreviewItem;page:number}){
  return <div className="empdoc-unavailable"><FileText size={32}/><strong>No document file attached</strong><span>“{item.name}” is an employee checklist record, not an uploaded file. Upload a PDF or image to preview it.</span></div>;
 }
 
-export default function EmployeeDocumentLibrary({person,releases,submissions,uploads,onUpload,requestedMemo,onMemoHandled,requestedFolder,onFolderHandled}:{person:HRPerson;releases:PayrollRelease[];submissions:Submission[];uploads:LocalEmployeeFile[];onUpload:(folder:FolderName,file:File,memoId?:string)=>string;requestedMemo?:string|null;onMemoHandled?:()=>void;requestedFolder?:"Onboarding Files"|"Payslips"|null;onFolderHandled?:()=>void}){
+export default function EmployeeDocumentLibrary({person,releases,submissions,uploads,onUpload,requestedMemo,onMemoHandled,requestedFolder,onFolderHandled,canUpload=true}:{person:HRPerson;releases:PayrollRelease[];submissions:Submission[];uploads:LocalEmployeeFile[];onUpload:(folder:FolderName,file:File,memoId?:string)=>string;requestedMemo?:string|null;onMemoHandled?:()=>void;requestedFolder?:"Onboarding Files"|"Payslips"|null;onFolderHandled?:()=>void;canUpload?:boolean}){
  const [folder,setFolder]=useState<FolderName>("Onboarding Files"),[selectedKey,setSelectedKey]=useState(""),[page,setPage]=useState(1),[full,setFull]=useState(false),[error,setError]=useState("");
  const [uploadFolder,setUploadFolder]=useState<FolderName>("Onboarding Files");
  const [paperSize,setPaperSize]=useState<"A4"|"Letter">("A4");
  const [pdfPages,setPdfPages]=useState<number|null>(null);
  const [uploadMemoId,setUploadMemoId]=useState("");
+ const [sessionVersion,setSessionVersion]=useState(0);
+ useEffect(()=>{const onChange=()=>setSessionVersion(n=>n+1);window.addEventListener(EMPLOYEE_DOCUMENT_SESSION_EVENT,onChange);return()=>window.removeEventListener(EMPLOYEE_DOCUMENT_SESSION_EVENT,onChange)},[]);
  const fullCloseRef=useRef<HTMLButtonElement>(null);
  const memoRefs=[...new Set((person.assignmentHistory||[]).map(h=>h.memoId).filter((m):m is string=>Boolean(m)))];
  useEffect(()=>{if(!requestedMemo)return;setFolder("Employment Memos");setUploadFolder("Employment Memos");setSelectedKey(`memo-${requestedMemo}`);setUploadMemoId(requestedMemo);setPage(1);setFull(false);onMemoHandled?.()},[requestedMemo,onMemoHandled]);
@@ -42,18 +45,18 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
  useEffect(()=>{if(!full)return;const before=document.body.style.overflow;document.body.style.overflow="hidden";fullCloseRef.current?.focus();const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setFull(false)};window.addEventListener("keydown",onKey);return ()=>{document.body.style.overflow=before;window.removeEventListener("keydown",onKey)}},[full]);
  const allItems=useMemo(()=>{
   const files:Record<FolderName,PreviewItem[]>={"Onboarding Files":[],"Compliance & Other Forms":[],"NOV / NTE":[],"Employment Memos":[],"Payslips":[]};
-  person.documents.forEach((d,i)=>files[folderFor(d.name)].push({key:`required-${i}-${d.name}`,name:d.fileName?`${d.name} · ${d.fileName}`:d.name,status:d.status,kind:"metadata"}));
-  submissions.filter(s=>s.employeeId===person.id).forEach(s=>files[folderFor(s.type)].push({key:`submitted-${s.id}`,name:`${s.type} · ${s.fileName}`,status:s.status,kind:"metadata"}));
+  // Only files with actual bytes belong in this archive; required-document statuses stay in verification/checklists.
+  allEmployeeDocumentFiles().filter(s=>s.employeeId===person.id&&s.status==="Verified").forEach(s=>files[folderFor(s.type)].push({key:`verified-${s.submissionId}`,name:s.file.name,status:"Verified (browser session)",kind:"upload",file:s.file}));
   const assignedMemoFiles=new Set<string>();
   (person.assignmentHistory||[]).filter(h=>Boolean(h.memoId)).forEach(h=>{
    const matching=[...uploads].reverse().find(f=>f.folder==="Employment Memos"&&f.memoId?.toUpperCase()===h.memoId?.toUpperCase());
    if(matching)assignedMemoFiles.add(matching.id);
-   files["Employment Memos"].push({key:`memo-${h.memoId}`,name:`${h.memoId} · ${h.memoType||"Employment Memo"}`,status:matching?"Attached file (session only)":"No file attached",kind:matching?"upload":"metadata",file:matching?.file});
+   if(matching)files["Employment Memos"].push({key:`memo-${h.memoId}`,name:`${h.memoId} · ${h.memoType||"Employment Memo"}`,status:"Attached file (session only)",kind:"upload",file:matching.file});
   });
   uploads.forEach(f=>{if(!assignedMemoFiles.has(f.id))files[f.folder].push({key:`upload-${f.id}`,name:f.name,status:"Session file",kind:"upload",file:f.file})});
-  releases.filter(r=>r.employeeId===person.id&&r.status==="Released").sort((a,b)=>b.paidAt.localeCompare(a.paidAt)).forEach(r=>files.Payslips.push({key:`payslip-${r.id}`,name:`${r.kind} · ${datePH(r.periodEnd)}`,status:r.source==="Sample"?"Sample Release":"Browser Review",kind:"payslip",release:r}));
+  // Browser-only payroll release metadata is not an archived payslip file.
   return files;
- },[person,submissions,uploads,releases]);
+ },[person,submissions,uploads,releases,sessionVersion]);
  const items=allItems[folder];
  const current=items.find(x=>x.key===selectedKey)||items[0];
  const itemIndex=current?items.findIndex(x=>x.key===current.key):-1;
@@ -85,8 +88,8 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
  return <div className="empdoc-root">
   <div className="empdoc-lifecycle-link"><a href={`/studio/lifecycle?employeeId=${encodeURIComponent(person.id)}`} target="_blank" rel="noopener noreferrer">Onboarding / Offboarding requirements &amp; documents ↗</a><span>Open dedicated HR document checklist for this employee</span></div>
   <div className="empdoc-folderbar" aria-label="Employee document folders">{folders.map(name=><button type="button" key={name} className={`empdoc-folder ${folder===name?"active":""}`} aria-pressed={folder===name} onClick={()=>choose(name)}><FolderOpen size={17}/><span>{name}</span><small>{allItems[name].length}</small></button>)}</div>
-  {folder==="Employment Memos"&&memoRefs.length>0&&<div className="empdoc-memoattach"><label>Attach uploaded file to memo <select value={uploadMemoId} onChange={e=>setUploadMemoId(e.target.value)}><option value="">Unlinked memo file</option>{memoRefs.map(id=><option key={id} value={id}>{id}</option>)}</select></label><small>Select the memo reference before uploading its PDF or image.</small></div>}
-  <div className="empdoc-toolbar"><div><h4>{folder}</h4><span className="muted">{items.length} file record{items.length===1?"":"s"}</span></div><label className="secondary empdoc-upload"><Upload size={14}/> Add File<input type="file" hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx" onChange={e=>{ingest(e.target.files?.[0]);e.target.value=""}}/></label></div>
+  {canUpload&&folder==="Employment Memos"&&memoRefs.length>0&&<div className="empdoc-memoattach"><label>Attach uploaded file to memo <select value={uploadMemoId} onChange={e=>setUploadMemoId(e.target.value)}><option value="">Unlinked memo file</option>{memoRefs.map(id=><option key={id} value={id}>{id}</option>)}</select></label><small>Select the memo reference before uploading its PDF or image.</small></div>}
+  <div className="empdoc-toolbar"><div><h4>{folder}</h4><span className="muted">{items.length} file record{items.length===1?"":"s"}</span></div>{canUpload&&<label className="secondary empdoc-upload"><Upload size={14}/> Add File<input type="file" hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx" onChange={e=>{ingest(e.target.files?.[0]);e.target.value=""}}/></label>}</div>
   {error&&<div className="rev-note" role="status">{error}</div>}
   <div className="empdoc-columns">
    <div className="empdoc-filelist" aria-label={`${folder} files`}>
@@ -96,6 +99,6 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
    {!full&&previewView}
    {full&&createPortal(<div className="empdoc-fullscreen-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setFull(false)}}>{previewView}</div>,document.body)}
   </div>
-  <p className="muted empdoc-disclaimer">Paper size changes the preview frame only; uploaded PDF page sizes are unchanged. Checklist records and past filenames contain no attached file bytes. New uploads are temporary until secure storage is connected.</p>
+  <p className="muted empdoc-disclaimer">Paper size changes the preview frame only; uploaded PDF page sizes are unchanged. Required-document checklist entries without actual files remain in verification, not this file cabinet. New uploads are temporary until secure storage is connected.</p>
  </div>;
 }
