@@ -10,7 +10,7 @@ import {browserLeaveBalance} from "../lib/leavePolicy";
 import {probationFinalDecision} from "../lib/probationAssessments";
 import premium from "./EmployeePremium.module.css";
 import {inBranch} from "../lib/branchRecordViews";
-import {readAuditEvents,watchAuditEvents,type AuditEvent} from "../lib/auditTrail";
+import {readAuditEvents,watchAuditEvents,writeAuditEvent,type AuditEvent} from "../lib/auditTrail";
 import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
 import HelpButton from "./HelpButton";
@@ -532,7 +532,9 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         <button type="button" className="emp201-card-excerpt" onClick={()=>setDetailKind("assets")}><small>Employee status · {person.status}</small><b>{assignedAssets.length} outstanding device{assignedAssets.length===1?"":"s"}{assignedAssets.length>0?` · ${assignedAssets[0].name}`:""}</b></button>
        </section>
       </div></>}
-      {tab==="Documents"&&<EmployeeDocumentLibrary canUpload={role==="Super Admin"||isHrRole(role)} person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} requestedFolder={requestedFolder} onFolderHandled={()=>setRequestedFolder(null)} onUpload={(folder,file,memoId)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId}]}));return id}}/>}
+      {tab==="Documents"&&<EmployeeDocumentLibrary canUpload={role==="Super Admin"||isHrRole(role)} person={person} releases={data.payrollReleases||[]} submissions={data.submissions} uploads={uploads[person.id]||[]} requestedMemo={requestedMemo} onMemoHandled={()=>setRequestedMemo(null)} requestedFolder={requestedFolder} onFolderHandled={()=>setRequestedFolder(null)} onUpload={(folder,file,memoId,attendance)=>{const id=`${Date.now()}-${Math.random().toString(36).slice(2,8)}`;setUploads(prev=>({...prev,[person.id]:[...(prev[person.id]||[]),{id,name:file.name,folder,file,memoId,attendance}]}));
+       if(attendance)writeAuditEvent({module:"Employee 201",action:"Added temporary attendance document (archive copy)",recordId:person.id,summary:`Category: ${attendance.category}; dated ${attendance.workDate}; not a leave/OT/work-permit approval`});
+       return id}}/>}
      </div>
      {tab==="Profile"&&editing&&<div className="emp201-savebar"><span>Editing employee information · Save changes before leaving this profile</span><div className="rev-actions"><button type="button" className="secondary" onClick={()=>{setEditing(false);setProfileView("overview");setPersonal(null);setEmploymentDraft(null)}}>Cancel</button><button type="button" className="primary" onClick={persistProfile}>Save Profile Changes</button></div></div>}
     </>}

@@ -6,11 +6,15 @@ import {ArrowLeft,ArrowRight,ChevronLeft,ChevronRight,FileText,FolderOpen,Maximi
 import type {HRPerson,PayrollRelease,Submission} from "../lib/hrState";
 import {money} from "../lib/hrState";
 import {allEmployeeDocumentFiles,EMPLOYEE_DOCUMENT_SESSION_EVENT} from "../lib/employeeDocumentSession";
+import {attendanceCategories,attendanceCategoryForRequest,readEmployeeAttendanceDocuments,type AttendanceCategory,type AttendanceDocumentLink} from "../lib/attendanceDocumentIndex";
+import {FORM_STORE_EVENT} from "../lib/hrForms";
+import {HR_FORM_EVIDENCE_EVENT} from "../lib/hrFormEvidence";
+import {isValidISODate} from "../lib/dateOnly";
 
-export type LocalEmployeeFile={id:string;name:string;folder:FolderName;file:File;memoId?:string};
-type FolderName="Onboarding Files"|"Compliance & Other Forms"|"NOV / NTE"|"Employment Memos"|"Payslips";
-const folders:FolderName[]=["Onboarding Files","Compliance & Other Forms","NOV / NTE","Employment Memos","Payslips"];
-type PreviewItem={key:string;name:string;status:string;kind:"metadata"|"upload"|"payslip";file?:File;release?:PayrollRelease};
+export type LocalEmployeeFile={id:string;name:string;folder:FolderName;file:File;memoId?:string;attendance?:{category:AttendanceCategory;workDate:string}};
+export type FolderName="Onboarding Files"|"Compliance & Other Forms"|"NOV / NTE"|"Employment Memos"|"Payslips"|"Attendance & Work Requests";
+const folders:FolderName[]=["Onboarding Files","Compliance & Other Forms","NOV / NTE","Employment Memos","Payslips","Attendance & Work Requests"];
+type PreviewItem={key:string;name:string;status:string;kind:"metadata"|"upload"|"payslip";file?:File;release?:PayrollRelease;attendance?:{category:AttendanceCategory;workDate:string;reference?:string;reviewedBy?:string;branch?:string}};
 const datePH=(s:string)=>new Date(`${s}T00:00:00`).toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"numeric"});
 const folderFor=(name:string):FolderName=>/memo|promotion|transfer|reassignment/i.test(name)?"Employment Memos":/\b(NTE|NOV|notice|disciplin|explanation|decision)\b/i.test(name)?"NOV / NTE":/government|sss|philhealth|pag-ibig|bir|compliance|form/i.test(name)?"Compliance & Other Forms":"Onboarding Files";
 const isSupported=(file:File)=>file.type==="application/pdf"||file.type.startsWith("image/");
@@ -30,34 +34,54 @@ function DocumentPreview({item,page}:{item:PreviewItem;page:number}){
  return <div className="empdoc-unavailable"><FileText size={32}/><strong>No document file attached</strong><span>“{item.name}” is an employee checklist record, not an uploaded file. Upload a PDF or image to preview it.</span></div>;
 }
 
-export default function EmployeeDocumentLibrary({person,releases,submissions,uploads,onUpload,requestedMemo,onMemoHandled,requestedFolder,onFolderHandled,canUpload=true}:{person:HRPerson;releases:PayrollRelease[];submissions:Submission[];uploads:LocalEmployeeFile[];onUpload:(folder:FolderName,file:File,memoId?:string)=>string;requestedMemo?:string|null;onMemoHandled?:()=>void;requestedFolder?:"Onboarding Files"|"Payslips"|null;onFolderHandled?:()=>void;canUpload?:boolean}){
+export default function EmployeeDocumentLibrary({person,releases,submissions,uploads,onUpload,requestedMemo,onMemoHandled,requestedFolder,onFolderHandled,canUpload=true}:{person:HRPerson;releases:PayrollRelease[];submissions:Submission[];uploads:LocalEmployeeFile[];onUpload:(folder:FolderName,file:File,memoId?:string,attendance?:{category:AttendanceCategory;workDate:string})=>string;requestedMemo?:string|null;onMemoHandled?:()=>void;requestedFolder?:"Onboarding Files"|"Payslips"|null;onFolderHandled?:()=>void;canUpload?:boolean}){
  const [folder,setFolder]=useState<FolderName>("Onboarding Files"),[selectedKey,setSelectedKey]=useState(""),[page,setPage]=useState(1),[full,setFull]=useState(false),[error,setError]=useState("");
  const [uploadFolder,setUploadFolder]=useState<FolderName>("Onboarding Files");
  const [paperSize,setPaperSize]=useState<"A4"|"Letter">("A4");
  const [pdfPages,setPdfPages]=useState<number|null>(null);
  const [uploadMemoId,setUploadMemoId]=useState("");
+ const [attendanceCategory,setAttendanceCategory]=useState<AttendanceCategory>("Overtime");
+ const [attendanceDate,setAttendanceDate]=useState("");
+ const [attendanceFilter,setAttendanceFilter]=useState<AttendanceCategory|"All">("All");
+ const [linkedAttendance,setLinkedAttendance]=useState<AttendanceDocumentLink[]>([]);
  const [sessionVersion,setSessionVersion]=useState(0);
  useEffect(()=>{const onChange=()=>setSessionVersion(n=>n+1);window.addEventListener(EMPLOYEE_DOCUMENT_SESSION_EVENT,onChange);return()=>window.removeEventListener(EMPLOYEE_DOCUMENT_SESSION_EVENT,onChange)},[]);
+ useEffect(()=>{
+  const refresh=()=>setLinkedAttendance(readEmployeeAttendanceDocuments(person.id));
+  refresh();
+  for(const event of [FORM_STORE_EVENT,HR_FORM_EVIDENCE_EVENT,"hrms-ops-evidence-changed"])
+   window.addEventListener(event,refresh);
+  const storage=(event:StorageEvent)=>{if(event.key?.includes("uc-hr-ops-permits")||event.key?.includes("uc-hr-forms-documentation"))refresh()};
+  window.addEventListener("storage",storage);
+  return ()=>{for(const event of [FORM_STORE_EVENT,HR_FORM_EVIDENCE_EVENT,"hrms-ops-evidence-changed"])window.removeEventListener(event,refresh);window.removeEventListener("storage",storage)};
+ },[person.id,person.branch]);
  const fullCloseRef=useRef<HTMLButtonElement>(null);
  const memoRefs=[...new Set((person.assignmentHistory||[]).map(h=>h.memoId).filter((m):m is string=>Boolean(m)))];
  useEffect(()=>{if(!requestedMemo)return;setFolder("Employment Memos");setUploadFolder("Employment Memos");setSelectedKey(`memo-${requestedMemo}`);setUploadMemoId(requestedMemo);setPage(1);setFull(false);onMemoHandled?.()},[requestedMemo,onMemoHandled]);
  useEffect(()=>{if(!requestedFolder)return;setFolder(requestedFolder);setUploadFolder(requestedFolder);setSelectedKey("");setPage(1);setFull(false);onFolderHandled?.()},[requestedFolder,onFolderHandled]);
  useEffect(()=>{if(!full)return;const before=document.body.style.overflow;document.body.style.overflow="hidden";fullCloseRef.current?.focus();const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setFull(false)};window.addEventListener("keydown",onKey);return ()=>{document.body.style.overflow=before;window.removeEventListener("keydown",onKey)}},[full]);
  const allItems=useMemo(()=>{
-  const files:Record<FolderName,PreviewItem[]>={"Onboarding Files":[],"Compliance & Other Forms":[],"NOV / NTE":[],"Employment Memos":[],"Payslips":[]};
+  const files:Record<FolderName,PreviewItem[]>={"Onboarding Files":[],"Compliance & Other Forms":[],"NOV / NTE":[],"Employment Memos":[],"Payslips":[],"Attendance & Work Requests":[]};
   // Only files with actual bytes belong in this archive; required-document statuses stay in verification/checklists.
-  allEmployeeDocumentFiles().filter(s=>s.employeeId===person.id&&s.status==="Verified").forEach(s=>files[folderFor(s.type)].push({key:`verified-${s.submissionId}`,name:s.file.name,status:"Verified (browser session)",kind:"upload",file:s.file}));
+  allEmployeeDocumentFiles().filter(s=>s.employeeId===person.id&&s.status==="Verified").forEach(s=>{
+   const category=attendanceCategoryForRequest(s.type);
+   const target=category?"Attendance & Work Requests":folderFor(s.type);
+   files[target].push({key:`verified-${s.submissionId}`,name:s.file.name,status:"Verified (browser session)",kind:"upload",file:s.file,
+    attendance:category?{category,workDate:"",reference:s.submissionId}:undefined});
+  });
   const assignedMemoFiles=new Set<string>();
   (person.assignmentHistory||[]).filter(h=>Boolean(h.memoId)).forEach(h=>{
    const matching=[...uploads].reverse().find(f=>f.folder==="Employment Memos"&&f.memoId?.toUpperCase()===h.memoId?.toUpperCase());
    if(matching)assignedMemoFiles.add(matching.id);
    if(matching)files["Employment Memos"].push({key:`memo-${h.memoId}`,name:`${h.memoId} · ${h.memoType||"Employment Memo"}`,status:"Attached file (session only)",kind:"upload",file:matching.file});
   });
-  uploads.forEach(f=>{if(!assignedMemoFiles.has(f.id))files[f.folder].push({key:`upload-${f.id}`,name:f.name,status:"Session file",kind:"upload",file:f.file})});
+  uploads.forEach(f=>{if(!assignedMemoFiles.has(f.id))files[f.folder].push({key:`upload-${f.id}`,name:f.name,status:"Session file · Not an approved request",kind:"upload",file:f.file,attendance:f.attendance})});
+  linkedAttendance.forEach(doc=>files["Attendance & Work Requests"].push({key:doc.key,name:doc.name,status:doc.status,kind:"upload",file:doc.file,
+   attendance:{category:doc.category,workDate:doc.workDate,reference:doc.reference,reviewedBy:doc.reviewedBy,branch:doc.branch}}));
   // Browser-only payroll release metadata is not an archived payslip file.
   return files;
- },[person,submissions,uploads,releases,sessionVersion]);
- const items=allItems[folder];
+ },[person,submissions,uploads,releases,sessionVersion,linkedAttendance]);
+ const items=folder==="Attendance & Work Requests"&&attendanceFilter!=="All"?allItems[folder].filter(item=>item.attendance?.category===attendanceFilter):allItems[folder];
  const current=items.find(x=>x.key===selectedKey)||items[0];
  const itemIndex=current?items.findIndex(x=>x.key===current.key):-1;
  useEffect(()=>{const file=current?.file;if(!file||file.type!=="application/pdf"){setPdfPages(null);return}let ignore=false;
@@ -65,7 +89,7 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
   return ()=>{ignore=true};
  },[current?.key,current?.file]);
  const maxPage=current?.kind==="payslip"?2:current?.file?.type==="application/pdf"?pdfPages||undefined:1;
- const choose=(name:FolderName)=>{setFolder(name);setUploadFolder(name);setSelectedKey("");setPage(1);setFull(false);setError("")};
+ const choose=(name:FolderName)=>{setFolder(name);setUploadFolder(name);setAttendanceFilter("All");setSelectedKey("");setPage(1);setFull(false);setError("")};
  const previousFile=()=>{const i=Math.max(0,itemIndex-1);setSelectedKey(items[i].key);setPage(1)};
  const nextFile=()=>{const i=Math.min(items.length-1,itemIndex+1);setSelectedKey(items[i].key);setPage(1)};
  const ingest=(file?:File)=>{
@@ -73,7 +97,8 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
   if(file.size>10*1024*1024){setError("Maximum file size is 10 MB.");return}
   if(!/\.(pdf|png|jpg|jpeg|webp|docx?)$/i.test(file.name)){setError("Supported files: PDF, images, DOC, or DOCX.");return}
   const memoId=uploadFolder==="Employment Memos"?uploadMemoId||undefined:undefined;
-  const id=onUpload(uploadFolder,file,memoId);setFolder(uploadFolder);setSelectedKey(memoId?`memo-${memoId}`:`upload-${id}`);setPage(1);setFull(false);
+  if(uploadFolder==="Attendance & Work Requests"&&!isValidISODate(attendanceDate)){setError("Select the relevant attendance/work date before adding the file.");return}
+  const id=onUpload(uploadFolder,file,memoId,uploadFolder==="Attendance & Work Requests"?{category:attendanceCategory,workDate:attendanceDate}:undefined);setFolder(uploadFolder);setSelectedKey(memoId?`memo-${memoId}`:`upload-${id}`);setPage(1);setFull(false);
   setError("File preview is temporary while Employee 201 stays open. It is not stored on a server.");
  };
  const previewView=(
@@ -89,12 +114,17 @@ export default function EmployeeDocumentLibrary({person,releases,submissions,upl
   <div className="empdoc-lifecycle-link"><a href={`/studio/lifecycle?employeeId=${encodeURIComponent(person.id)}`} target="_blank" rel="noopener noreferrer">Onboarding / Offboarding requirements &amp; documents ↗</a><span>Open dedicated HR document checklist for this employee</span></div>
   <div className="empdoc-folderbar" aria-label="Employee document folders">{folders.map(name=><button type="button" key={name} className={`empdoc-folder ${folder===name?"active":""}`} aria-pressed={folder===name} onClick={()=>choose(name)}><FolderOpen size={17}/><span>{name}</span><small>{allItems[name].length}</small></button>)}</div>
   {canUpload&&folder==="Employment Memos"&&memoRefs.length>0&&<div className="empdoc-memoattach"><label>Attach uploaded file to memo <select value={uploadMemoId} onChange={e=>setUploadMemoId(e.target.value)}><option value="">Unlinked memo file</option>{memoRefs.map(id=><option key={id} value={id}>{id}</option>)}</select></label><small>Select the memo reference before uploading its PDF or image.</small></div>}
+  {folder==="Attendance & Work Requests"&&<div className="empdoc-attendance-tools">
+   <label>Category filter<select aria-label="Attendance document category filter" value={attendanceFilter} onChange={e=>{setAttendanceFilter(e.target.value as AttendanceCategory|"All");setSelectedKey("");setPage(1)}}><option value="All">All categories</option>{attendanceCategories.map(c=><option key={c} value={c}>{c}</option>)}</select></label>
+   {canUpload&&<><label>New file category<select aria-label="Attendance document upload category" value={attendanceCategory} onChange={e=>setAttendanceCategory(e.target.value as AttendanceCategory)}>{attendanceCategories.map(c=><option key={c} value={c}>{c}</option>)}</select></label><label>Work / request date<input aria-label="Attendance document date" type="date" value={attendanceDate} onChange={e=>setAttendanceDate(e.target.value)}/></label></>}
+   <small>Actual request/permit attachments appear here automatically. Manual files are reference copies, not approvals.</small>
+  </div>}
   <div className="empdoc-toolbar"><div><h4>{folder}</h4><span className="muted">{items.length} file record{items.length===1?"":"s"}</span></div>{canUpload&&<label className="secondary empdoc-upload"><Upload size={14}/> Add File<input type="file" hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx" onChange={e=>{ingest(e.target.files?.[0]);e.target.value=""}}/></label>}</div>
   {error&&<div className="rev-note" role="status">{error}</div>}
   <div className="empdoc-columns">
    <div className="empdoc-filelist" aria-label={`${folder} files`}>
     {items.length===0&&<div className="empdoc-empty">No records in this folder.</div>}
-    {items.map((d,i)=><button key={d.key} type="button" className={`empdoc-file ${current?.key===d.key?"active":""}`} aria-pressed={current?.key===d.key} onClick={()=>{setSelectedKey(d.key);setPage(1)}}><FileText size={17}/><span><strong>{d.name}</strong><small>{d.status}</small></span><ChevronRight size={15}/></button>)}
+    {items.map((d,i)=><button key={d.key} type="button" className={`empdoc-file ${current?.key===d.key?"active":""}`} aria-pressed={current?.key===d.key} onClick={()=>{setSelectedKey(d.key);setPage(1)}}><FileText size={17}/><span><strong>{d.name}</strong><small>{d.attendance?`${d.attendance.category}${d.attendance.workDate?` · ${d.attendance.workDate}`:""} · `:""}{d.status}</small>{d.attendance?.reference&&<small>Source: {d.attendance.reference}{d.attendance.branch?` · ${d.attendance.branch}`:""}{d.attendance.reviewedBy?` · Reviewed by ${d.attendance.reviewedBy}`:""}</small>}</span><ChevronRight size={15}/></button>)}
    </div>
    {!full&&previewView}
    {full&&createPortal(<div className="empdoc-fullscreen-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setFull(false)}}>{previewView}</div>,document.body)}
