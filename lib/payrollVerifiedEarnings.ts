@@ -7,6 +7,7 @@ import type {PayrollConfig,ImportedAttendanceRow,PayslipDraft,HolidayRule} from 
 import {basicRateOnDate,roundMoney} from './payrollConfig';
 import {holidayWorkedMinimum,isOpsDepartment,holidayAttendanceReview} from './payrollDateRules';
 import {opsDayClassification,type OpsMonth,type OpsPermit} from './opsRestDays';
+import {hasOpsPermitFile} from './opsPermitEvidence';
 import type {PremiumProfile} from './hrState';
 
 export type EarningsBreakdown={date:string;classification:string;hours:number;multiplier:number;amount:number};
@@ -32,6 +33,7 @@ export function computeVerifiedEarnings(args:{person:Person;cfg:PayrollConfig;su
   if(isOps&&row.status==='Rest Day'&&!restDay)issues.push(`${row.date}: rest day attendance status conflicts with OPS published schedule`);
   if(isOps&&restDay&&isPaid(row)){
    if(ops?.kind!=='Approved Rest Day Work')issues.push(`${row.date}: OPS rest-day work requires approved BM permit`);
+   else if(!ops.permit||!hasOpsPermitFile(ops.permit.id))issues.push(`${row.date}: RDW work permit attachment is missing or unavailable for audit`);
    else if(row.workedHours>(ops.permit?.hours??0)+0.001)issues.push(`${row.date}: actual hours exceed approved permit`);
   }
   if(ops?.kind==='Approved Rest Day Work'&&!isPaid(row))issues.push(`${row.date}: approved permit has no verified work attendance`);

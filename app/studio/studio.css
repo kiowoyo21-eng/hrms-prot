@@ -171,3 +171,23 @@
 .hrms-tools .studio-scope .studio-hub-embedded .studio-file-grid{gap:10px}
 .hrms-tools .studio-scope .studio-hub-embedded :is(button,input,select,a):focus-visible{outline:2px solid #2563eb;outline-offset:2px}
 @media(max-width:700px){.hrms-tools .studio-scope .studio-hub-embedded .studio-hub-toolbar{flex-wrap:wrap}.hrms-tools .studio-scope .studio-hub-embedded .studio-search{flex-basis:100%}.hrms-tools .studio-scope .studio-hub-embedded .studio-top{flex-wrap:wrap}}
+
+/* HRMS document template library: neutral operational workspace, consistent with HRMS panels. */
+.studio-scope .docs-create{background:#72561c;color:#fff}
+.studio-scope .docs-home-item:hover{border-color:#c3ac72;box-shadow:0 4px 12px #49371214}
+.studio-scope .docs-home-item>svg,.studio-scope .docs-home-head p a{color:#816225}
+.studio-scope .studio-library-links a{color:#75571e;border-color:#d6c5a0}
+.studio-scope .docs-home{background:#f7f7f6;color:#282b30}
+.studio-scope .docs-home-search{border-color:#d8d8d3}
+
+/* Neutral/gold HRMS document template hub: override legacy blue action accents only within template library. */
+.docops-root .studio-scope .studio-hub{color:#292b30}
+.docops-root .studio-scope .studio-top{border-bottom-color:#dcd9d2}
+.docops-root .studio-scope .studio-new{border-color:#e0d9cb;background:#fff}
+.docops-root .studio-scope .studio-new button,.docops-root .studio-scope .studio-file-actions button{color:#5b491e;border-color:#d9ceba}
+.docops-root .studio-scope .studio-new button:hover,.docops-root .studio-scope .studio-file-actions button:hover{background:#f8f3e8}
+.docops-root .studio-scope .studio-file{border-color:#e1ddd3;box-shadow:0 2px 6px #2222220a}
+.docops-root .studio-scope .studio-file-icon{color:#92712f}
+.docops-root .studio-scope .studio-search{border-color:#e1d9c9}
+.docops-root .studio-scope .studio-library-links a{color:#71521b;border-color:#d7c7a7;background:#fffdf8}
+.docops-root .studio-scope .studio-message{border-left-color:#ae8841;background:#fff9ef;color:#654a20}

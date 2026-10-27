@@ -29,7 +29,7 @@ export const modules = [
 export type ModuleId = typeof modules[number]["id"] | "loans"; // internal legacy alert key; loans workspace now belongs under payroll
 const HR_MODULES:ModuleId[]=["dashboard","lifecycle","employees","demographics","hr-forms","requests-reports","reports-analytics","tools","payroll","leave","ir","assets","compliance","documents","filters","drive","spreadsheets","studio","settings"];
 /** Legacy module IDs remain routable for notification actions and existing workflows. */
-export const HIDDEN_SIDEBAR_MODULES:readonly ModuleId[]=["demographics","hr-forms","ir","filters","drive","spreadsheets","studio"];
+export const HIDDEN_SIDEBAR_MODULES:readonly ModuleId[]=["demographics","hr-forms","ir","filters","drive","spreadsheets","studio","submissions"];
 export const isAuditAdmin=(role:Role):boolean=>role==="Super Admin";
 export const permissions: Record<Role, ModuleId[]> = {
  "Super Admin":modules.map(m=>m.id),

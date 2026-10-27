@@ -1,6 +1,7 @@
 import {isValidISODate} from "./dateOnly";
+import {hasOpsPermitFile} from "./opsPermitEvidence";
 export type OpsMonth={id:string;employeeId:string;branch:string;month:string;offDates:string[];status:"Draft"|"Published";version:number;updatedAt:string;updatedBy:string};
-export type OpsPermit={id:string;employeeId:string;branch:string;date:string;reason:string;hours:number;status:"Pending"|"Approved"|"Rejected";requestedBy:string;reviewedBy?:string;reviewedAt?:string;createdAt:string;notes?:string};
+export type OpsPermit={id:string;employeeId:string;branch:string;date:string;reason:string;hours:number;status:"Pending"|"Approved"|"Rejected";requestedBy:string;reviewedBy?:string;reviewedAt?:string;createdAt:string;notes?:string;attachmentName?:string;attachmentType?:string};
 export const OPS_SCHEDULE_KEY="uc-hr-ops-rest-days-v1";
 export const OPS_PERMIT_KEY="uc-hr-ops-permits-v1";
 export const OPS_SCHEDULE_HISTORY_KEY="uc-hr-ops-rest-day-revisions-v1";
@@ -48,8 +49,11 @@ export function reviewOpsAttendance(rows:{employeeId:string;date:string;status:s
   const worked=row.workedHours>0||row.status==="Present";
   if(classification.kind==="Missing Schedule")exceptions.push({employeeId:row.employeeId,date:row.date,issue:"Missing published OPS OFF schedule"});
   else if(classification.kind==="Scheduled OFF"&&worked)exceptions.push({employeeId:row.employeeId,date:row.date,issue:"Worked on OFF without approved BM permit"});
-  else if(classification.kind==="Approved Rest Day Work"&&!worked)exceptions.push({employeeId:row.employeeId,date:row.date,issue:"Approved permit without verified work hours"});
-  else if(classification.kind==="Approved Rest Day Work"&&classification.permit&&row.workedHours>classification.permit.hours)exceptions.push({employeeId:row.employeeId,date:row.date,issue:"Actual hours exceed approved permit hours"});
+  else if(classification.kind==="Approved Rest Day Work"){
+   if(!classification.permit||!hasOpsPermitFile(classification.permit.id))exceptions.push({employeeId:row.employeeId,date:row.date,issue:"Approved RDW permit attachment unavailable: upload and verify the original work permit"});
+   if(!worked)exceptions.push({employeeId:row.employeeId,date:row.date,issue:"Approved permit without verified work hours"});
+   if(classification.permit&&row.workedHours>classification.permit.hours)exceptions.push({employeeId:row.employeeId,date:row.date,issue:"Actual hours exceed approved permit hours"});
+  }
  }
  return exceptions;
 }

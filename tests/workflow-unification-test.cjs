@@ -1,0 +1,20 @@
+/** Tests for HR request/OPS permit evidence guards and branch-scoped workflow utilities. */
+const fs=require('node:fs'), assert=require('node:assert/strict'), ts=require('typescript');
+require.extensions['.ts']=(mod,file)=>mod._compile(ts.transpileModule(fs.readFileSync(file,'utf8'),{fileName:file,compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText,file);
+const {attachOpsPermitFile,hasOpsPermitFile}=require('../lib/opsPermitEvidence');
+const {reviewOpsAttendance}=require('../lib/opsRestDays');
+const {permittedHRFile,saveHRFormFile,hasHRFormFile}=require('../lib/hrFormEvidence');
+const {canViewForm}=require('../lib/hrForms');
+const files=(id)=>new File(['demo file'],id+'.pdf',{type:'application/pdf'});
+const schedule=[{id:'X',employeeId:'E1',branch:'UC Las Piñas',month:'2026-10',offDates:['2026-10-05'],status:'Published',version:1}];
+const permit={id:'WP1',employeeId:'E1',branch:'UC Las Piñas',date:'2026-10-05',hours:8,status:'Approved',reviewedBy:'bmaccount',reviewedAt:'2026-10-03'};
+const punch=[{employeeId:'E1',date:'2026-10-05',status:'Present',workedHours:8}];
+let count=0;const check=(name,fn)=>{fn();count++;console.log('PASS:',name)};
+check('Absent work permit evidence flags RDW even when BM marked Approved',()=>{const e=reviewOpsAttendance(punch,schedule,[permit],new Set(['E1']));assert(e.some(x=>x.issue.includes('attachment')))});
+check('Approved RDW and original PDF evidence clear the evidence-only exception',()=>{attachOpsPermitFile('WP1',files('permit'));assert.equal(hasOpsPermitFile('WP1'),true);const e=reviewOpsAttendance(punch,schedule,[permit],new Set(['E1']));assert.equal(e.length,0)});
+check('Missing rest-day permit remains flagged',()=>{const e=reviewOpsAttendance(punch,schedule,[],new Set(['E1']));assert(e.some(x=>x.issue.includes('without approved')))});
+check('Oversized attachment rejected at request boundary',()=>{const bad=new File([new Uint8Array(1)],'bad.txt',{type:'text/plain'});assert.equal(permittedHRFile(bad),false)});
+check('HR document evidence is keyed by parent request and attachment ID',()=>{saveHRFormFile('REQ1','DOC1',files('proof'));assert(hasHRFormFile('REQ1','DOC1'));assert.equal(hasHRFormFile('REQ2','DOC1'),false)});
+check('BM can only see own branch and own HR form',()=>{const r={id:'X',branch:'UC Las Piñas',requestor:'bmaccount',status:'Submitted'};assert(canViewForm(r,'bmaccount','BM','UC Las Piñas'));assert(!canViewForm(r,'bmaccount','BM','UC Mandaluyong'));assert(!canViewForm(r,'someone-else','BM','UC Las Piñas'))});
+check('HR can review available branch, cannot see other branch under filtered view',()=>{const r={id:'X',branch:'UC Las Piñas',requestor:'bmaccount'};assert(canViewForm(r,'hraccount','HR','All Shops'));assert(!canViewForm(r,'hraccount','HR','UC Mandaluyong'))});
+console.log(`WORKFLOW UNIFICATION: ${count} targeted checks passed`);

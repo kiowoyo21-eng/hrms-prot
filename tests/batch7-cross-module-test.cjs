@@ -5,6 +5,7 @@ require.extensions['.ts']=(mod,file)=>mod._compile(ts.transpileModule(fs.readFil
 const root=path.resolve(__dirname,'..');
 const src=rel=>fs.readFileSync(path.join(root,rel),'utf8');
 const {computeVerifiedEarnings}=require('../lib/payrollVerifiedEarnings');
+const {attachOpsPermitFile}=require('../lib/opsPermitEvidence');
 const {initialPayrollConfig}=require('../lib/payrollConfig');
 const {validateOpsMonth,permittedOff,opsDayClassification}=require('../lib/opsRestDays');
 const {reviewCompanyPayroll}=require('../lib/companyWeeklyPayroll');
@@ -14,11 +15,13 @@ const employee={id:'QA-OPS-1',name:'Example Ops',branch:'UC Mandaluyong',departm
 const at=(date,status='Present',hours=8,ot=0)=>({employeeId:employee.id,branch:employee.branch,date,status,workedHours:hours,lateMinutes:0,approvedOtHours:ot,otApproved:ot>0,scheduledRestDay:false,notes:''});
 const schedule={id:'S1',employeeId:employee.id,branch:employee.branch,month:'2026-10',offDates:['2026-10-05'],status:'Published',version:1,updatedAt:'2026-10-01',updatedBy:'BM'};
 const permit={id:'P1',employeeId:employee.id,branch:employee.branch,date:'2026-10-05',reason:'Authorized work',hours:8,status:'Approved',requestedBy:'BM',createdAt:'2026-10-01'};
+attachOpsPermitFile('P1',new File(['permit evidence'],'permit.pdf',{type:'application/pdf'}));
 const calc=(days,opt={})=>computeVerifiedEarnings({person:opt.person||employee,cfg:{...initialPayrollConfig,...opt.cfg},summary:days,periodStart:opt.start||days[0].date,periodEnd:opt.end||days[days.length-1].date,schedules:opt.schedules===undefined?[schedule]:opt.schedules,permits:opt.permits===undefined?[permit]:opt.permits});
 test('OPS Friday/Saturday/Sunday prohibited, Monday to Thursday valid',()=>{for(const date of ['2026-10-09','2026-10-10','2026-10-11'])assert.equal(permittedOff(date),false);for(const date of ['2026-10-05','2026-10-06','2026-10-07','2026-10-08'])assert.equal(permittedOff(date),true)});
 test('invalid OPS Friday off is flagged',()=>assert(validateOpsMonth('2026-10',['2026-10-09']).some(v=>v.includes('Friday'))));
 test('OPS rest-day classification requires an approved permit',()=>{assert.equal(opsDayClassification(employee.id,'2026-10-05',[schedule],[]).kind,'Scheduled OFF');assert.equal(opsDayClassification(employee.id,'2026-10-05',[schedule],[permit]).kind,'Approved Rest Day Work')});
 test('OPS ordinary OFF work at 200%, worked ordinary day at 100%',()=>{const r=calc([at('2026-10-05'),at('2026-10-06')]);assert(r.ready,JSON.stringify(r.issues));assert.equal(r.basic,800);assert.equal(r.holidayExtra,1600);assert.equal(r.gross,2400)});
+test('RDW approved permit without original file is blocked',()=>{const r=calc([at('2026-10-05')],{permits:[{...permit,id:'MISSING-EVIDENCE'}]});assert.equal(r.ready,false);assert(r.issues.some(x=>x.includes('attachment')))});
 test('OPS OFF work without BM permit blocks automatic payroll',()=>{const r=calc([at('2026-10-05')],{permits:[]});assert.equal(r.ready,false);assert(r.issues.some(x=>x.includes('permit')))});
 test('OPS OFF permit cannot cover more than its approved hours',()=>{const r=calc([at('2026-10-05','Present',9,1)]);assert.equal(r.ready,false);assert(r.issues.some(x=>x.includes('exceed approved permit')))});
 test('effective salary rate divides a cutoff at real work date',()=>{const cfg={rateChanges:[{id:'M1',employeeId:employee.id,effective:'2026-10-08',amount:900,salaryType:'Daily',status:'Applied (Demo)',reason:'Promotion',recordedAt:'2026-10-01'}]};const r=calc([at('2026-10-06'),at('2026-10-07'),at('2026-10-08'),at('2026-10-09')],{cfg});assert(r.ready,JSON.stringify(r.issues));assert.deepEqual(r.basicRates.map(x=>x.rate),[800,800,900,900]);assert.equal(r.basic,3400)});

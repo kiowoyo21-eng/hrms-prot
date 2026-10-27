@@ -1,6 +1,7 @@
 /** Local-only documentation workflow. Approval of a documentation request does not
  * create a leave entitlement, permit, payroll entry, legal filing or disbursement. */
 import type {Branch,Role} from "./mock";
+import type {HRFormAttachment} from "./hrFormEvidence";
 export type FormKind="Overtime Authorization"|"Work Permit / Work Authorization"|"Leave Documentation"|"Workplace Dispute / Grievance"|"Employee Document Request"|"Attendance Correction"|"Schedule Change"|"Incident Statement"|"Asset Clearance"|"Employment Certificate Request"|"Policy Acknowledgment"|"Notice to Explain / Employee Response"|"Return-to-Work Clearance"|"Official Business / Field Assignment"|"Separation & Clearance Request"|"Cash Advance Request";
 export type FormStatus="Draft"|"Submitted"|"Returned for Revision"|"Approved (Documentation Only)"|"Rejected";
 export type FormField={key:string;label:string;type:"text"|"date"|"time"|"textarea"|"select";required:boolean;options?:string[]};
@@ -25,7 +26,7 @@ export const formSchemas:FormSchema[]=[
  {kind:"Separation & Clearance Request",description:"Clearance-document request only, not final pay release or actual employment termination.",fields:[field("lastDay","Proposed last working day","date"),field("reason","Separation reference","textarea"),field("assets","Asset return checklist reference"),field("caseId","Employee Lifecycle case reference","text",false)]}
 ];
 export const formKinds=formSchemas.map(x=>x.kind);
-export type HRFormRecord={id:string;externalId?:string;source?:"Employee Handoff (Unverified)"|"HR-assisted";kind:FormKind;branch:Exclude<Branch,"All Shops">;employeeId:string;requestor:string;createdAt:string;updatedAt:string;status:FormStatus;fields:Record<string,string>;additionalLabels?:Record<string,string>;evidenceRefs:string;remarks:string;reviewedBy?:string;reviewedAt?:string;history:{at:string;actor:string;action:string;status:FormStatus}[]};
+export type HRFormRecord={id:string;externalId?:string;source?:"Employee Handoff (Unverified)"|"HR-assisted";kind:FormKind;branch:Exclude<Branch,"All Shops">;employeeId:string;requestor:string;createdAt:string;updatedAt:string;status:FormStatus;fields:Record<string,string>;additionalLabels?:Record<string,string>;attachments?:HRFormAttachment[];evidenceRefs:string;remarks:string;reviewedBy?:string;reviewedAt?:string;history:{at:string;actor:string;action:string;status:FormStatus}[]};
 export const FORM_STORE_KEY="uc-hr-forms-documentation-v1";
 export const FORM_STORE_EVENT="uc-hr-forms-changed";
 export function validateFields(kind:FormKind,values:Record<string,string>):string[]{
@@ -43,7 +44,7 @@ export function validateFields(kind:FormKind,values:Record<string,string>):strin
  return errors;
 }
 export function canViewForm(record:HRFormRecord,actor:string,role:Role,branch:Branch){
- if(role==="BM")return record.branch==="UC Mandaluyong"&&record.requestor===actor;
+ if(role==="BM")return branch!=="All Shops"&&record.branch===branch&&record.requestor===actor; // role and branch scoped
  return branch==="All Shops"||record.branch===branch;
 }
 export function canReviewForm(record:HRFormRecord,actor:string,role:Role){
