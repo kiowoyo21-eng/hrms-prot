@@ -20,6 +20,7 @@ export function bulkColumns(kind:BulkKind):ColumnHelp[]{
   {name:"Status",required:true,meaning:"Present, Absent, Rest Day, On Leave, or Incomplete. One row per employee per cutoff date.",example:"Present"},
   {name:"Approved OT Hours",required:false,meaning:"Number 0–8; only positive when Status is Present and OT Approved is Yes.",example:"0"},
   {name:"OT Approved",required:false,meaning:"Yes or No; positive overtime requires Yes plus independent approval records.",example:"No"},
+  {name:"Scheduled Rest Day",required:false,meaning:"Yes or No. For non-OPS employees working on their OFF, mark Yes even though attendance Status is Present. OPS attendance is checked against the published BM OFF schedule.",example:"No"},
   {name:"Notes",required:false,meaning:"Attendance remarks, maximum 240 characters; do not paste sensitive personal data.",example:""}
  ];
  if(kind==="SSS")return [...common,{name:"employee",required:true,meaning:"Employee-side contribution AMOUNT in pesos, not percentage.",example:"0"},{name:"employer",required:true,meaning:"Employer-side contribution AMOUNT in pesos, including components per verified source.",example:"0"},eff];

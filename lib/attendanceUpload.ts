@@ -8,8 +8,8 @@ const ISO=/^\d{4}-\d{2}-\d{2}$/;
 export const addCutoffDays=(iso:string,n:number)=>{const d=new Date(`${iso}T12:00:00`);d.setDate(d.getDate()+n);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 export const localToday=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 export function cutoffForDate(day:string){const d=new Date(`${day}T12:00:00`);return addCutoffDays(day,-((d.getDay()+3)%7))};
-export const csvTemplateHeaders=['Employee ID','Date','Time In','Time Out','Status','Approved OT Hours','OT Approved','Notes'];
-export const attendanceTemplate=[csvTemplateHeaders,['UC-0001','2026-10-08','08:00','17:00','Present','0','No',''],['UC-0001','2026-10-09','','','Rest Day','0','No','']];
+export const csvTemplateHeaders=['Employee ID','Date','Time In','Time Out','Status','Approved OT Hours','OT Approved','Scheduled Rest Day','Notes'];
+export const attendanceTemplate=[csvTemplateHeaders,['UC-0001','2026-10-08','08:00','17:00','Present','0','No','No',''],['UC-0001','2026-10-09','','','Rest Day','0','No','Yes','']];
 /** RFC 4180 basic CSV scanner: quoted commas, escaped quotes and line breaks. */
 export function parseCsv(text:string):string[][]{
  const result:string[][]=[];let row:string[]=[],cell='',quoted=false;
@@ -34,6 +34,7 @@ const alias:Record<string,string>={
  status:'status',attendancestatus:'status',
  approvedothours:'ot',othours:'ot',overtimehours:'ot',
  otapproved:'otApproved',overtimeapproved:'otApproved',
+ scheduledrestday:'rest',isrestday:'rest',assignedoff:'rest',
  notes:'notes',remarks:'notes'
 };
 function clock(raw:string){const value=raw.trim();if(!value)return '';
@@ -75,7 +76,7 @@ export function parseAttendanceImport(text:string,employees:readonly Person[],br
   const approved=yes(get('otApproved'));
   if(ot>0&&!approved){issues.push(`Row ${i+1}: OT hours require OT Approved = Yes; set to 0 otherwise`);continue}
   if(ot>0&&status!=='Present'){issues.push(`Row ${i+1}: OT requires a complete present punch`);continue}
-  result.push({employeeId:employee.id,branch,date:day,timeIn:ti||'',timeOut:to||'',status,workedHours:hours,lateMinutes:late,approvedOtHours:ot,otApproved:approved,notes:get('notes').slice(0,240)});
+  result.push({employeeId:employee.id,branch,date:day,timeIn:ti||'',timeOut:to||'',status,workedHours:hours,lateMinutes:late,approvedOtHours:ot,otApproved:approved,scheduledRestDay:yes(get('rest'))||status==='Rest Day',notes:get('notes').slice(0,240)});
  }
  return {rows:result,issues,start,end};
 }

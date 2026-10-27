@@ -1,5 +1,6 @@
 "use client";
 import ModuleBulkImportDialog from "./ModuleBulkImportDialog";
+import ProbationaryAssessmentWorkspace from "./ProbationaryAssessmentWorkspace";
 
 import {createPortal} from "react-dom";
 import WorkflowSigning from "./WorkflowSigning";
@@ -27,7 +28,9 @@ const isOnboarding=(r:ApplicantRecord)=>r.stage==="Passed"||r.stage==="Hired";
 function readInterviews(r:ApplicantRecord):HiringInterview[]{if(r.interviews?.length)return r.interviews;if(r.interviewAt)return [{id:`legacy-${r.id}`,round:r.stage.includes("Interview")?r.stage:"Interview",at:r.interviewAt,interviewer:"Not recorded",result:r.interviewOutcome==="Passed"?"Passed":r.interviewOutcome==="Failed"?"Failed":"Pending",notes:"Previous interview schedule"}];return []}
 function qualificationScore(r:ApplicantRecord,form?:HiringForm){const keys=form?.qualifications||[];const complete=keys.filter(k=>r.qualifications?.[k]==="Yes").length;return {complete,total:keys.length};}
 function actor(role:Role){return role==="Super Admin"?"Super Admin":isHrRole(role)?role:"BM"}
-export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:Role}){
+export default function RecruitmentWorkspace({branch,role,username}:{branch:Branch;role:Role;username:string}){
+ const [probationOpen,setProbationOpen]=useState(false);
+ const [probationTarget,setProbationTarget]=useState<{employeeId:string;stage:1|3|5}|null>(null);
  const [records,setRecords]=useLocalRecords(RECRUITMENT_KEY,initialApplicants);
  const {data:hrData,update:updateHR}=useHR();
  const [forms,setForms]=useLocalRecords(HIRING_FORMS_KEY,DEFAULT_HIRING_FORMS);
@@ -198,11 +201,12 @@ export default function RecruitmentWorkspace({branch,role}:{branch:Branch;role:R
   setNotice(`Browser-demo hiring completed. Employee 201 record ${id} created with verified document statuses and pending salary destination. File bytes are not stored.`);
  }
  function previewFrame(){return <div className="hire-resume-paper">{resumeUrl&&(resumeFile?.type==="application/pdf"||/\.pdf$/i.test(resumeFile?.name||""))?<iframe title="Resume PDF preview" src={resumeUrl} className="hire-resume-embed"/>:resumeUrl&&resumeFile?.type.startsWith("image/")?<img src={resumeUrl} alt="Attached applicant resume" className="hire-resume-image"/>:<div className="hire-resume-empty"><FileText size={34}/><b>{selected?.resumeName||"No resume attached"}</b><small>{selected?.resumeName?"File name on record; original file is not stored in the frontend.":"Attach a PDF to preview it during this session."}</small></div>}</div>}
- function openAlert(action?:string){if(!action)return;const [where,id]=action.split(":");const candidate=visible.find(x=>x.id===id);if(!candidate)return;setPositionId(forms.find(f=>f.position===candidate.role)?.id||null);openCandidate(id,where==="onboarding"?"onboarding":"cycle");
+ function openAlert(action?:string){if(!action)return;if(action.startsWith("probation:")){const [,employeeId,month]=action.split(":");setProbationTarget({employeeId,stage:Number(month) as 1|3|5});setProbationOpen(true);return;}const [where,id]=action.split(":");const candidate=visible.find(x=>x.id===id);if(!candidate)return;setPositionId(forms.find(f=>f.position===candidate.role)?.id||null);openCandidate(id,where==="onboarding"?"onboarding":"cycle");
   if(candidate.stage==="New Applicant")setCandidateScreen("application");
   setCycleTab(candidate.stage==="Shortlisted"?"shortlisted":candidate.stage.includes("Interview")?"interviews":candidate.stage==="New Applicant"?"applications":"decisions");}
+ if(probationOpen)return <ProbationaryAssessmentWorkspace branch={branch} role={role} username={username} onBack={()=>{setProbationOpen(false);setProbationTarget(null)}} initialEmployeeId={probationTarget?.employeeId} initialStage={probationTarget?.stage}/>;
  return <div className="phase2-area hire-root">
- <div className="phase2-head mu-section-head"><div><small className="mu-compact-sub">{visible.length} applicants · {newApplicants.length} awaiting screening · {todayInterviews.length} interviews today</small></div><ModuleAlertButton module="lifecycle" branch={branch} onOpen={a=>openAlert(a.action)}/></div>
+ <div className="phase2-head mu-section-head"><div><button type="button" className="secondary" onClick={()=>{setProbationTarget(null);setProbationOpen(true)}}><ClipboardCheck size={15}/> Probationary Assessments ({hrData.people.filter(p=>p.status==='Probationary'&&(branch==='All Shops'||p.branch===branch)).length})</button> <small className="mu-compact-sub">{visible.length} applicants · {newApplicants.length} awaiting screening · {todayInterviews.length} interviews today</small></div><ModuleAlertButton module="lifecycle" branch={branch} onOpen={a=>openAlert(a.action)}/></div>
  {notice&&<div className="phase2-notice" role="status"><AlertTriangle size={15}/><span>{notice}</span><button type="button" onClick={()=>setNotice("")}>Dismiss</button></div>}
 {role!=="BM"&&<div className="rev-actions"><button type="button" className="secondary" onClick={()=>setBulkOpen(true)}>Bulk Add Applicants (Excel/CSV)</button></div>}
  <ModuleBulkImportDialog kind="recruitment" open={bulkOpen} onClose={()=>setBulkOpen(false)} context={{people:hrData.people,applicants:records,scope:branch}} onCommit={rows=>{setRecords(old=>{let high=old.reduce((m,a)=>{const match=/^APP-(\d+)$/.exec(a.id);return match?Math.max(m,Number(match[1])):m},1000);const added=rows.map(r=>({id:`APP-${++high}`,name:r.full_name,email:r.email,phone:r.phone,role:r.position,branch:r.branch,submitted:r.application_date,stage:"New Applicant" as const,notes:"Imported reference; screening, interview, offer and hire decision require review",relevantYears:r.relevant_years?Number(r.relevant_years):null,education:r.education,requirements:candidateRequirements(forms.find(f=>f.position===r.position)),history:[`${today()} · Applicant register import for review. Original applied date ${r.application_date}`]}));return [...old,...added]});setNotice(`${rows.length} new applicants added for screening. No past approvals or interviews inferred.`)}}/>

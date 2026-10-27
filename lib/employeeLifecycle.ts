@@ -5,6 +5,7 @@
 import type {HRPerson,HRState} from "./hrState";
 import {basicRateOnDate,type PayRateChange} from "./payrollConfig";
 import {shopNames,type Shop} from "./people";
+import {probationFinalDecision} from "./probationAssessments";
 
 export type LifecycleAction="Onboard"|"Evaluate"|"Regularize"|"Promote"|"Transfer"|"Offboard";
 export type LifecycleStatus="Pending Review"|"Deferred"|"Declined"|"Applied (Demo)";
@@ -81,6 +82,7 @@ export function finalizeLifecycleCase(state:HRState,caseId:string,role:string,no
   if(waiting.length)return {ok:false,error:`Complete required checklist: ${waiting.map(x=>x.label).join(", ")}.`};
   if(c.effectiveDate>dateInPH(now))return {ok:false,error:"Future-dated change: return on or after the effective date to apply it."};
   if(employee.branch!==c.snapshot.branch||employee.department!==c.snapshot.department||employee.position!==c.snapshot.position||employee.status!==c.snapshot.status)return {ok:false,error:"Employee assignment/status changed since submission. Create a new request."};
+  if(c.action==="Regularize"&&!probationFinalDecision(state,employee.id))return {ok:false,error:"Verify an independent fifth-month HR decision to regularize before applying this movement."};
   if(["Regularize","Onboard"].includes(c.action)&&employee.documents.some(d=>d.status!=="Verified"))return {ok:false,error:"Verify all required Employee 201 documents before regularization review is applied."};
   if(c.action==="Transfer"&&outstandingCustody(state,employee.id).length)return {ok:false,error:"Outstanding assets remain. Complete physical return and inspection in Assets before applying this transfer."};
   if(c.action==="Promote"&&basicRateOnDate(employee.id,employee.rate,dateInPH(now),state.payrollConfig?.rateChanges||[])!==c.snapshot.rate)return {ok:false,error:"Basic rate changed since request. Review a new compensation request."};

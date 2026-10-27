@@ -6,7 +6,7 @@ export const incidentDocumentCategories=["Initial Report","Written Explanation &
 export type IncidentDocumentCategory=(typeof incidentDocumentCategories)[number];
 export type IncidentAttachment={id:string;category:IncidentDocumentCategory;name:string;addedAt:string;addedBy:string};
 export type IncidentCase={
- id:string;reporter:string;respondent:string;reporterEmployeeId?:string;respondentEmployeeId?:string;respondentIsBM:boolean;
+ id:string;incidentDate?:string;category?:"Lateness"|"Attendance"|"Safety"|"Conduct"|"Other Policy Violation";findingStatus?:"Unverified"|"Substantiated"|"Dismissed"|"Inconclusive";hrFindingRecordedAt?:string;reporter:string;respondent:string;reporterEmployeeId?:string;respondentEmployeeId?:string;respondentIsBM:boolean;
  branch:Branch;summary:string;description:string;handler:"HR"|"BM";stage:IncidentStage;priority:"Normal"|"High"|"Critical";
  target:string;notes:string;history:string[];actionLog?:{at:string;actor:string;action:string;detail:string}[];
  explanation?:string;evidenceNotes?:string;mediation?:string;decision?:string;outcome?:string;closureSummary?:string;

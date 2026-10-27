@@ -9,7 +9,7 @@ export type HolidayRule={id:string;date:string;name:string;type:"Regular Holiday
 export type AttendanceStatus="Not Uploaded"|"Uploaded"|"For Verification"|"Verified"|"Needs Correction";
 export type AttendanceRecord={id:string;branch:string;periodStart:string;periodEnd:string;status:AttendanceStatus;fileName:string;uploadedAt:string;verifiedAt?:string;notes:string};
 /** Validated CSV row metadata retained in browser-local demo configuration, not authenticated punches. */
-export type ImportedAttendanceRow={employeeId:string;branch:string;date:string;timeIn:string;timeOut:string;status:"Present"|"Absent"|"Rest Day"|"On Leave"|"Incomplete";workedHours:number;lateMinutes:number;approvedOtHours:number;otApproved:boolean;notes:string};
+export type ImportedAttendanceRow={employeeId:string;branch:string;date:string;timeIn:string;timeOut:string;status:"Present"|"Absent"|"Rest Day"|"On Leave"|"Incomplete";workedHours:number;lateMinutes:number;approvedOtHours:number;otApproved:boolean;scheduledRestDay?:boolean;notes:string};
 export type PayrollBatch={id:string;branch:string;periodStart:string;periodEnd:string;createdAt:string;label:string;source:"Browser Review"|"Sample"|"Legacy"};
 export type PayslipDraft={
   batchId?:string;
@@ -18,11 +18,14 @@ export type PayslipDraft={
   salaryType?:"Daily"|"Monthly";rateAmount?:number;dailyRate?:number;hourlyRate?:number;
   attendanceSource?:"Uploaded CSV"|"Demo Cutoff";attendanceBatchId?:string;attendanceFingerprint?:string;
   ecolaPay?:number;basicPay?:number;otPay?:number;loanDeduction?:number;
+  basicRateBreakdown?:{date:string;rate:number}[];premiumBreakdown?:{date:string;classification:string;hours:number;multiplier:number;amount:number}[];
+  computationWarnings?:string[];monthlyDivisorSnapshot?:number;
   loanEntries?:{loanId:number;amount:number}[];manualDeduction?:number;
  id:string;employeeId:string;periodStart:string;periodEnd:string;days:number;otHours:number;allowances:number;holidayExtra:number;gross:number;deductions:number;net:number;deductionBreakdown?:{agency:Agency;employee:number;employer:number;version:string}[];status:"Draft"|"For Review"|"Approved"|"Released (Demo)";createdAt:string;releasedId?:string;reviewer?:string;remarks:string};
 export type SignatureRequest={id:string;releaseId:string;employeeId:string;method:"Phone / QR"|"On This Device"|"Print & Upload";status:"Prepared — Backend Required"|"Awaiting Physical Copy"|"Acknowledged (Demo Only)"|"Revoked";createdAt:string;notes:string};
-export type ThirteenthReview={employeeId:string;year:number;eligibleBasic:number;amount:number;status:"Draft"|"For Review"|"Approved";notes:string};
-export type PayrollConfig={payrollBatches:PayrollBatch[];minimumWages:MinimumWage[];rateChanges:PayRateChange[];deductionVersions:DeductionVersion[];holidayRules:HolidayRule[];payslipDrafts:PayslipDraft[];signatureRequests:SignatureRequest[];thirteenthReviews:ThirteenthReview[];attendanceRecords:AttendanceRecord[];attendanceRows:ImportedAttendanceRow[];attendanceReminderDays:number;monthlyBases:Record<string,number>;birExemptEmployees:string[]};
+export type HistoricalBasicLedger={id:string;employeeId:string;periodStart:string;periodEnd:string;eligibleBasic:number;sourceReference:string;status:"Pending Review"|"Verified"|"Rejected";createdBy:string;createdAt:string;verifiedBy?:string;verifiedAt?:string};
+export type ThirteenthReview={employeeId:string;year:number;eligibleBasic:number;amount:number;status:"Draft"|"For Review"|"Approved";notes:string;alreadyPaid?:number;preparedBy?:string;reviewedBy?:string;fingerprint?:string;updatedAt?:string};
+export type PayrollConfig={payrollBatches:PayrollBatch[];minimumWages:MinimumWage[];rateChanges:PayRateChange[];deductionVersions:DeductionVersion[];holidayRules:HolidayRule[];payslipDrafts:PayslipDraft[];signatureRequests:SignatureRequest[];thirteenthReviews:ThirteenthReview[];managerialThirteenthCoverage?:Record<string,{covered:boolean;reviewedAt:string;reviewedBy:string;notes:string}>;historicalBasicLedgers?:HistoricalBasicLedger[];attendanceRecords:AttendanceRecord[];attendanceRows:ImportedAttendanceRow[];attendanceReminderDays:number;monthlyBases:Record<string,number>;monthlySalaryDivisor?:number;monthlyDivisorReviewedAt?:string;monthlyDivisorReviewNotes?:string;opsCombinedHolidayRates?:{regular:number;special:number;reviewedAt:string;notes:string};birExemptEmployees:string[]};
 const SSS_SOURCE="https://www.sss.gov.ph/wp-content/uploads/2024/12/2025-SSS-Contribution-Table-rev.pdf";
 const BIR_SOURCE="https://bir-cdn.bir.gov.ph/local/pdf/Annex%20E%20RR%2011-2018.pdf";
 const PH_SOURCE="https://www.philhealth.gov.ph/uhc/";
@@ -39,13 +42,13 @@ export const referenceScheduleVersions:DeductionVersion[]=[
 ];
 export const initialPayrollConfig:PayrollConfig={
  minimumWages:[{id:"NCR-28-NA",region:"NCR",classification:"Non-Agriculture",amount:755,effective:"2026-09-26",source:NCR_SOURCE},{id:"NCR-28-SMALL",region:"NCR",classification:"Eligible Small Service/Retail or Agriculture",amount:718,effective:"2026-09-26",source:NCR_SOURCE}],
- rateChanges:[],deductionVersions:referenceScheduleVersions,holidayRules:[],payrollBatches:[],payslipDrafts:[],signatureRequests:[],thirteenthReviews:[],attendanceRecords:[],attendanceRows:[],attendanceReminderDays:2,monthlyBases:{},birExemptEmployees:[]
+ rateChanges:[],deductionVersions:referenceScheduleVersions,holidayRules:[],payrollBatches:[],payslipDrafts:[],signatureRequests:[],thirteenthReviews:[],managerialThirteenthCoverage:{},historicalBasicLedgers:[],attendanceRecords:[],attendanceRows:[],attendanceReminderDays:2,monthlyBases:{},monthlySalaryDivisor:undefined,monthlyDivisorReviewedAt:undefined,monthlyDivisorReviewNotes:"",opsCombinedHolidayRates:undefined,birExemptEmployees:[]
 };
 export const normalizePayrollConfig=(p?:Partial<PayrollConfig>):PayrollConfig=>({
  minimumWages:p?.minimumWages||initialPayrollConfig.minimumWages,
  rateChanges:p?.rateChanges||[],deductionVersions:p?.deductionVersions||referenceScheduleVersions,
  holidayRules:p?.holidayRules||[],payrollBatches:p?.payrollBatches||[],payslipDrafts:p?.payslipDrafts||[],
- signatureRequests:p?.signatureRequests||[],thirteenthReviews:p?.thirteenthReviews||[],attendanceRecords:p?.attendanceRecords||[],attendanceRows:p?.attendanceRows||[],attendanceReminderDays:p?.attendanceReminderDays??2,monthlyBases:p?.monthlyBases||{},birExemptEmployees:p?.birExemptEmployees||[]
+ signatureRequests:p?.signatureRequests||[],thirteenthReviews:p?.thirteenthReviews||[],managerialThirteenthCoverage:p?.managerialThirteenthCoverage||{},historicalBasicLedgers:p?.historicalBasicLedgers||[],attendanceRecords:p?.attendanceRecords||[],attendanceRows:p?.attendanceRows||[],attendanceReminderDays:p?.attendanceReminderDays??2,monthlyBases:p?.monthlyBases||{},monthlySalaryDivisor:p?.monthlySalaryDivisor,monthlyDivisorReviewedAt:p?.monthlyDivisorReviewedAt,monthlyDivisorReviewNotes:p?.monthlyDivisorReviewNotes||"",opsCombinedHolidayRates:p?.opsCombinedHolidayRates,birExemptEmployees:p?.birExemptEmployees||[]
 });
 export function basicRateOnDate(employeeId:string,original:number,asOf:string,changes:PayRateChange[]){return changes.filter(r=>r.employeeId===employeeId&&r.effective<=asOf).sort((a,b)=>b.effective.localeCompare(a.effective))[0]?.amount??original}
 export const roundMoney=(n:number)=>Math.round((n+Number.EPSILON)*100)/100;

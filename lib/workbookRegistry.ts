@@ -6,6 +6,7 @@ import {buildHRReportSheets} from "./reportSheetData";
 import {batchForDraft} from "./payrollBatches";
 import type {ReportSheet,ReportColumn,ReportCell} from "../components/ReportSpreadsheet";
 import {demoLoans} from "./loanLedger";
+import {leaveBalance} from "./leavePolicy";
 import {seedIncidents} from "./incidentRecords";
 import {RECRUITMENT_KEY,initialApplicants} from "./recruitmentCatalog";
 
@@ -90,10 +91,12 @@ export function buildWorkbookSheets(data:HRState,branch:Branch,workbook:Workbook
   type Credit={id:string;employeeId:string;type:string;days:number;effectiveDate:string;status:string;remarks:string};
   const requests=localRows<Leave>("leave").filter(l=>onlyBranch(l.branch,branch));
   const credits=localRows<Credit>("leave-credit-requests").filter(c=>people.some(p=>p.id===c.employeeId));
+  const conversions=localRows<{id:string;employeeId:string;days:number;effectiveDate:string;status:string;paymentReference?:string}>("leave-conversions").filter(c=>people.some(p=>p.id===c.employeeId));
   return [
    extra("leave-requests","Leave Requests",["Request ID","Employee","Branch","Leave Type","From","To","Days","Status"],requests.map(r=>[r.id,r.employee,r.branch,r.type,r.from,r.to,r.days,r.status]),"Browser leave register. Older records use employee names; ambiguous matches are not silently linked to employee IDs."),
    extra("leave-credits","Leave Credit Requests",["Credit ID","Employee ID","Employee","Type","Days","Effective Date","Status"],credits.map(c=>[c.id,c.employeeId,people.find(p=>p.id===c.employeeId)?.name||"Unknown",c.type,c.days,c.effectiveDate,c.status]),"Only stored credit requests; no invented credits."),
-   extra("leave-balances","Employee Leave Allocation",["Employee ID","Employee","Branch","SIL Allocated","VIL Allocated"],people.map(p=>[p.id,p.name,p.branch,p.sil,p.vil]),"Allocations only; not authoritative remaining balances while legacy leave records lack stable employee IDs.")
+   extra("leave-conversions","Recorded Leave Conversions",["Reference","Employee ID","Employee","Days Converted","Paid/Effective Date","Status","Payment Reference"],conversions.map(c=>[c.id,c.employeeId,people.find(p=>p.id===c.employeeId)?.name||"Unknown",c.days,c.effectiveDate,c.status,c.paymentReference||""]),"Only conversion records with recorded external payment evidence; browser-only prototype does not disburse funds."),
+   extra("leave-balances","Accumulated Paid Leave",["Employee ID","Employee","Branch","Accrued / opening + adjustments","Approved leave used","Paid converted days","Available days","Next grant","Opening balance verified"],people.map(p=>{const b=leaveBalance(p,requests,credits,new Date().toISOString().slice(0,10),conversions);return [p.id,p.name,p.branch,b.allocated,b.used,b.converted,b.available,b.nextGrant||"",b.verifiedOpening?"Yes":"Historical usage unverified"]}),"One combined bank for paid leave types. Opening records and old usage require HR reconciliation before final pay or conversion."),
   ];
  }
  if(workbook==="loans"){

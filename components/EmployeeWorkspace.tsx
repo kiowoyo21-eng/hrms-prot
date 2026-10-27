@@ -6,6 +6,8 @@ import {ArrowLeft,ArrowRight,Plus,Upload,FileText,UserRound,BriefcaseBusiness,Sh
 import {isHrRole,type Branch,type Role} from "../lib/mock";
 import {employmentArrangements,jobLevels,getArrangement,getLevel,ageOnDate} from "../lib/employeeDemographics";
 import {dashboardTodayPH} from "../lib/dashboardAnalytics";
+import {browserLeaveBalance} from "../lib/leavePolicy";
+import {probationFinalDecision} from "../lib/probationAssessments";
 import premium from "./EmployeePremium.module.css";
 import {inBranch} from "../lib/branchRecordViews";
 import {readAuditEvents,watchAuditEvents,type AuditEvent} from "../lib/auditTrail";
@@ -13,10 +15,11 @@ import {shopNames,type Shop} from "../lib/people";
 import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/hrState";
 import HelpButton from "./HelpButton";
 import Employee201BulkImportDialog from "./Employee201BulkImportDialog";
+import EmployeeIncidentHistoryPanel from "./EmployeeIncidentHistoryPanel";
 import {HrmsDialog} from "./ui/HrmsPrimitives";
 import EmployeeFullRecord,{toEmployeeFullDraft,statutoryMask,type EmployeeFullDraft,type EmployeeInfoSection} from "./workspace/EmployeeFullRecord";
 import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
-import {basicRateOnDate,type PayRateChange} from "../lib/payrollConfig";
+import {basicRateOnDate,normalizePayrollConfig,type PayRateChange} from "../lib/payrollConfig";
 import {emptySalaryDestination,salaryChannels,salaryDestinationLabel,type SalaryDestination,type SalaryChannel} from "../lib/salaryDisbursement";
 
 type Action="Evaluate"|"Regularize"|"Promote"|"Transfer"|"Offboard";
@@ -37,7 +40,7 @@ const departments=["Operations","Service","Administration","Marketing"];
 const emptyForm={
  name:"",branch:"" as Shop|"",department:"Operations",position:"",gender:"Prefer not to say",
  status:"Probationary",hire:"",salaryType:"Daily" as "Daily"|"Monthly",
- rate:"",probation:"6",sil:"5",vil:"0",email:"",phone:"",birthDate:"",
+ rate:"",probation:"6",sil:"0",vil:"0",email:"",phone:"",birthDate:"",
  civilStatus:"",address:"",emergencyName:"",emergencyRelationship:"",emergencyPhone:"",
  monthlyWorkDays:"",hoursPerDay:"",sssNumber:"",philhealthNumber:"",pagibigNumber:"",tinNumber:"",nationality:"",placeOfBirth:"",middleName:"",suffix:"",emergencyAddress:""
 };
@@ -191,7 +194,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
  const assignmentHistory:EmployeeAssignment[]=person?(person.assignmentHistory||[]):[];
  const assignedAssets=person?data.assets.filter(a=>a.employeeId===person.id&&["Assigned","For Return","Inspection"].includes(a.status)):[];
  const draft=personal;
- const evaluations=person?person.timeline.filter(t=>/evaluat|assessment/i.test(t)):[];
+ const evaluations=person?[...(data.probationAssessments||[]).filter(r=>r.employeeId===person.id).map(r=>`Month ${r.stage} assessment · ${r.status} · Score ${r.score}/5${r.stage===5?` · Decision ${r.decision||"Pending HR Review"}`:""}`),...person.timeline.filter(t=>/evaluat|assessment/i.test(t))]:[];
  const documentSubmissions=person?data.submissions.filter(s=>s.employeeId===person.id):[];
  const requiredDocs=person?.documents||[];
  const docStatusCount=(status:"Missing"|"Submitted"|"Verified")=>requiredDocs.filter(d=>d.status===status).length;
@@ -308,27 +311,47 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   if(!person||!action||!reason.trim()){
    setMessage("Enter a supporting reason, evaluation or approval reference before recording the action.");return;
   }
+  if(action==="Regularize"&&!probationFinalDecision(data,person.id)){setMessage("A separately HR-reviewed fifth-month Regularize decision is required. Open Recruitment & Hiring → Probationary Assessments.");return;}
   if(action==="Transfer"&&dest===person.branch&&newDepartment===person.department&&newPosition.trim()===person.position){setMessage("Change the branch, department, or position to record a transfer/reassignment.");return}
   if(action==="Promote"&&(!newPosition.trim()||!(Number(newRate)>0))){setMessage("Enter the new position and approved basic rate.");return}
   if((action==="Transfer"||action==="Promote")&&!newDepartment.trim()){setMessage("Select the receiving department.");return}
   if(action==="Offboard"&&decision==="Approved"&&assignedAssets.length>0){
    setMessage("Complete device retrieval and inspection before marking offboarding as approved.");return;
   }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(effective)||Number.isNaN(Date.parse(`${effective}T12:00:00Z`))||new Date(`${effective}T12:00:00Z`).toISOString().slice(0,10)!==effective||effective<person.hire){setMessage("Enter a valid action effective date on or after the original hire date.");return}
+  const recordingPayRate=action==="Promote"&&decision==="Approved";
+  if(recordingPayRate&&normalizePayrollConfig(data.payrollConfig).rateChanges.some(r=>r.employeeId===person.id&&r.effective===effective)){
+   setMessage("A salary change already exists on that effective date. Review the existing Payroll rate record instead of overwriting historical pay.");return;
+  }
   const entry=`${effective} · ${action}${action==="Offboard"?` — ${separationType}`:""} (${decision}) · ${reason.trim()}`;
   const employmentChange:Partial<HRPerson>=decision!=="Approved"?{}:
    action==="Regularize"?{status:"Regular",probation:0}:
    action==="Transfer"?{branch:dest,department:newDepartment,position:newPosition.trim()}:
-   action==="Promote"?{department:newDepartment,position:newPosition.trim(),rate:Number(newRate)}:
+   action==="Promote"?{department:newDepartment,position:newPosition.trim()}:
    action==="Offboard"?{status:"Clearance Pending"}:{};
   const isAssignmentChange=decision==="Approved"&&(action==="Transfer"||action==="Promote");
   const memoId=memoReference.trim().toUpperCase();
-  updatePerson(p=>({
+  const applyEmployeeChange=(p:HRPerson):HRPerson=>({
    ...p,...employmentChange,timeline:[entry,...p.timeline],
    assignmentHistory:isAssignmentChange?[
     ...(p.assignmentHistory?.length?p.assignmentHistory:[{id:`legacy-baseline-${p.id}-${Date.now()}`,effectiveDate:"",kind:"Initial Assignment" as const,branch:p.branch,department:p.department,position:p.position}]),
     {id:`assignment-${Date.now()}`,effectiveDate:effective,kind:action==="Transfer"?(dest===p.branch?"Reassignment":"Transfer"):"Promotion",branch:action==="Transfer"?dest:p.branch,department:newDepartment,position:newPosition.trim(),...(memoId?{memoId,memoType:action==="Transfer"?(dest===p.branch?"Memo of Reassignment":"Memo of Transfer"):"Memo of Promotion"}:{})}
    ]:p.assignmentHistory
-  }));
+  });
+  // The original Employee 201 rate is the baseline. Promotion pay is a dated
+  // entry in payroll history, NOT a replacement of that historical baseline.
+  const salaryHistoryEntry:PayRateChange|null=recordingPayRate?{
+   id:`EMP201-RATE-${person.id}-${effective}`,employeeId:person.id,salaryType:person.salaryType,
+   amount:Number(newRate),effective,reason:`Employee 201 promotion: ${reason.trim()}`,
+   status:effective>new Date().toISOString().slice(0,10)?"Scheduled":"Applied (Demo)",recordedAt:new Date().toISOString()
+  }:null;
+  update(s=>{
+   const cfg=normalizePayrollConfig(s.payrollConfig);
+   // Recheck inside the updater so multiple open HRMS screens cannot duplicate it.
+   if(salaryHistoryEntry&&cfg.rateChanges.some(r=>r.employeeId===person.id&&r.effective===effective))return s;
+   return {...s,people:s.people.map(p=>p.id===person.id?applyEmployeeChange(p):p),
+    ...(salaryHistoryEntry?{payrollConfig:{...cfg,rateChanges:[...cfg.rateChanges,salaryHistoryEntry]}}:{})};
+  });
   setAction(null);setStep(0);setMessage(`${action} decision recorded in employee history.`);
  }
  const next=()=>{
@@ -373,8 +396,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
      {form.status==="Probationary"&&<label>Probation period (months)<input type="number" min="1" max="12" value={form.probation} onChange={e=>setForm(s=>({...s,probation:e.target.value}))}/></label>}
      <label>Salary Type<select value={form.salaryType} onChange={e=>setForm(s=>({...s,salaryType:e.target.value as "Daily"|"Monthly"}))}><option>Daily</option><option>Monthly</option></select></label>
      <label>Basic rate ({form.salaryType==="Daily"?"per day":"per month"}) *<input required type="number" min="1" value={form.rate} onChange={e=>setForm(s=>({...s,rate:e.target.value}))}/></label>
-     <label>SIL allocation (days)<input type="number" min="0" value={form.sil} onChange={e=>setForm(s=>({...s,sil:e.target.value}))}/></label>
-     <label>VIL allocation (days)<input type="number" min="0" value={form.vil} onChange={e=>setForm(s=>({...s,vil:e.target.value}))}/></label>
+     <p className="muted employee201-wide">Paid leave accrues automatically: managers +5 on hire; covered non-managerial employees +5 from the first hire anniversary, then +5 yearly. One pooled balance, unused credits carry forward. Opening balance corrections are reviewed in Leave Management.</p>
      <label>Monthly divisor (working days)<input type="number" min="1" max="31" step="0.5" value={form.monthlyWorkDays} onChange={e=>setForm(s=>({...s,monthlyWorkDays:e.target.value}))}/></label>
      <label>Working hours per day<input type="number" min="1" max="24" step="0.5" value={form.hoursPerDay} onChange={e=>setForm(s=>({...s,hoursPerDay:e.target.value}))}/></label>
     </div></div>
@@ -496,7 +518,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
        <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("emergency")}><span className={premium.overviewIcon}><UserRound size={20}/></span><span><small>07 · EMERGENCY</small><b>Emergency Contact</b><em>{person.emergencyName||"Not recorded"}</em><em>{person.emergencyPhone||"No phone recorded"}</em></span><ArrowRight size={17}/></button>
        <button type="button" className={premium.overviewCard} onClick={()=>setDetailKind("government")}><span className={premium.overviewIcon}><ShieldCheck size={20}/></span><span><small>08 · STATUTORY</small><b>Government & Statutory</b><em>SSS, PhilHealth, Pag-IBIG, TIN</em><em>Restricted records · open details</em></span><ArrowRight size={17}/></button>
       </div>}
-      {tab==="Profile"&&profileView==="full"&&<><EmployeeFullRecord person={person} editing={editing} draft={personal} onDraft={setPersonal} probation={employmentDraft?.probation??person.probation} sil={employmentDraft?.sil??person.sil} vil={employmentDraft?.vil??person.vil} rateChanges={data.payrollConfig?.rateChanges||[]} rates={data.rates} onOpenPayroll={openPayRates} onOpenSection={setDetailKind}/><div className="emp201-card-grid">
+      {tab==="Profile"&&profileView==="full"&&<><EmployeeFullRecord person={person} editing={editing} draft={personal} onDraft={setPersonal} probation={employmentDraft?.probation??person.probation} sil={browserLeaveBalance(person,dashboardTodayPH()).available} vil={0} rateChanges={data.payrollConfig?.rateChanges||[]} rates={data.rates} onOpenPayroll={openPayRates} onOpenSection={setDetailKind}/><div className="emp201-card-grid">
        <section className="employee201-profile-section emp201-summary-card" id="emp201-evaluations">
         <button type="button" className="emp201-cardhead" onClick={()=>setDetailKind("reviews")}><span><ClipboardList size={17}/> Performance Reviews <i className="emp201-heading-count">{evaluations.length}</i></span><span>View Details <ArrowRight size={14}/></span></button>
         <button type="button" className="emp201-card-excerpt" onClick={()=>setDetailKind("reviews")}><small>{evaluations.length?"Latest assessment":"Assessment status"}</small><b>{evaluations[0]||"No performance reviews recorded"}</b></button>
@@ -544,12 +566,12 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         {person.documents.length===0&&documentSubmissions.length===0?<p className="muted">No document records available.</p>:<div className="emp201-log-list">{person.documents.map((d,i)=><div key={`req-${i}`}><span><FileText size={15}/> {d.name}</span><span className="tag">{d.status}</span></div>)}{documentSubmissions.map(s=><div key={s.id}><span><FileText size={15}/> {s.type} · {s.fileName}</span><span className="tag">{s.status}</span></div>)}</div>}
        </>}
        {detailKind==="employment"&&<>
-        <h4>Current Employment</h4><div className="emp201-dialog-facts"><div><small>Branch</small><b>{person.branch}</b></div><div><small>Department & Position</small><b>{person.department} — {person.position}</b></div><div><small>Employment Status</small><b>{person.status}</b></div><div><small>Hire Date (locked)</small><b>{formatDate(person.hire)}</b></div><div><small>Probation Period</small><b>{person.probation} months</b></div><div><small>Employee ID</small><b>{person.id}</b></div><div><small>Job level</small><b>{empty(person.jobLevel)}</b></div><div><small>Employment arrangement</small><b>{empty(person.employmentArrangement)}</b></div><div><small>SIL credits</small><b>{person.sil} days</b></div><div><small>VIL credits</small><b>{person.vil} days</b></div></div>
+        <h4>Current Employment</h4><div className="emp201-dialog-facts"><div><small>Branch</small><b>{person.branch}</b></div><div><small>Department & Position</small><b>{person.department} — {person.position}</b></div><div><small>Employment Status</small><b>{person.status}</b></div><div><small>Hire Date (locked)</small><b>{formatDate(person.hire)}</b></div><div><small>Probation Period</small><b>{person.probation} months</b></div><div><small>Employee ID</small><b>{person.id}</b></div><div><small>Job level</small><b>{empty(person.jobLevel)}</b></div><div><small>Employment arrangement</small><b>{empty(person.employmentArrangement)}</b></div><div><small>Combined paid leave available</small><b>{browserLeaveBalance(person,dashboardTodayPH()).available} days</b></div><div><small>Next annual grant</small><b>{browserLeaveBalance(person,dashboardTodayPH()).nextGrant||"Not scheduled"}</b></div></div>
         <div className="emp201-dialog-subhead"><h4>Assignment History</h4><div className="rev-actions"><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("branch")}}>Branch History</button><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("role")}}>Position History</button></div></div>
         <div className="emp201-dialog-timeline">{person.assignmentHistory?.length ? [...assignmentHistory].sort((a,b)=>b.effectiveDate.localeCompare(a.effectiveDate)).map((h,i)=><div key={h.id||i}><small>{formatDate(h.effectiveDate)} · {h.kind}</small><b>{h.branch} · {h.department} — {h.position}</b>{h.memoId?<button type="button" className="emp201-memo-link" onClick={()=>{setDetailKind(null);setTab("Documents");setRequestedMemo(h.memoId||null)}}><FileText size={13}/>{h.memoId}</button>:<small>No memo attached</small>}</div>):<p className="muted">No assignment-change history recorded. Only the current assignment is available.</p>}</div>
        </>}
        {detailKind==="salary"&&<>
-        <div className="emp201-dialog-facts"><div><small>Basic Rate</small><b>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</b></div><div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>SIL</small><b>{person.sil} days</b></div><div><small>VIL</small><b>{person.vil} days</b></div></div>
+        <div className="emp201-dialog-facts"><div><small>Basic Rate</small><b>{salaryAmount(person,data.payrollConfig?.rateChanges||[])}</b></div><div><small>Salary Type</small><b>{person.salaryType}</b></div><div><small>Paid leave available</small><b>{browserLeaveBalance(person,dashboardTodayPH()).available} days</b></div><div><small>Annual accrual</small><b>5 days / eligible year (cumulative)</b></div></div>
         <section className="emp201-salary-destination" aria-label="Employee salary disbursement reference">
          <div className="emp201-dialog-subhead"><h4>Salary Disbursement Account</h4>{!disbursementEditing&&<button type="button" className="secondary" onClick={startDisbursementEdit}><Pencil size={14}/> {person.salaryDestination?"Change Destination":"Add Destination"}</button>}</div>
          <p className="muted">Select where this employee's salary should be sent. Browser demo stores ONLY the last four digits of a fictional account reference. Real banking details and approvals require secure storage.</p>
@@ -575,7 +597,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         <h4>Premium Pay Rates</h4><div className="emp201-dialog-facts">{[["Overtime",effectiveRate(person,data.rates).ot],["Rest Day",effectiveRate(person,data.rates).rdw],["Rest-Day OT",effectiveRate(person,data.rates).rdot],["Regular Holiday",effectiveRate(person,data.rates).regular],["Special Day",effectiveRate(person,data.rates).special]].map(([n,v])=><div key={n}><small>{n}</small><b>{v}%</b></div>)}</div><p className="muted">Sample browser payroll records only. Actual pay history and government deductions require backend integration.</p>
        </>}
        {detailKind==="reviews"&&<><h4>Performance Assessments</h4>{evaluations.length?evaluations.map((t,i)=><div className="emp201-dialog-entry" key={i}><ClipboardList size={16}/><span>{t}</span></div>):<p className="muted">No assessments recorded yet. Use Employee Actions → Record Assessment to add one.</p>}</>}
-       {detailKind==="history"&&<><h4>Employment Timeline</h4>{person.timeline.map((t,i)=><div className="emp201-dialog-entry" key={i}><BriefcaseBusiness size={16}/><span>{t}</span></div>)}<div className="emp201-dialog-subhead"><h4>Assignment Memos</h4><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("role")}}>Open Assignment History <ArrowRight size={14}/></button></div></>}
+       {detailKind==="history"&&<><h4>Employment Timeline</h4>{person.timeline.map((t,i)=><div className="emp201-dialog-entry" key={i}><BriefcaseBusiness size={16}/><span>{t}</span></div>)}<div className="emp201-dialog-subhead"><h4>Assignment Memos</h4><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("role")}}>Open Assignment History <ArrowRight size={14}/></button></div><EmployeeIncidentHistoryPanel employeeId={person.id} role={role}/></>}
        {detailKind==="assets"&&<><div className="emp201-dialog-facts"><div><small>Employment Status</small><b>{person.status}</b></div><div><small>Outstanding Devices</small><b>{assignedAssets.length}</b></div></div><h4>Assigned Asset Records</h4>{assignedAssets.length?assignedAssets.map(a=><div className="emp201-dialog-entry" key={a.id}><Laptop size={16}/><span><b>{a.name}</b><small>{a.id} · {a.status}</small></span></div>):<p className="muted">No outstanding assigned devices.</p>}{assignedAssets.length>0&&<p className="muted">Outstanding devices require retrieval and inspection before final clearance.</p>}{onAssignDevice&&!(["Clearance Pending","Separated"].includes(person.status))&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openAssetsForPerson()}}>Assign Device <ArrowRight size={14}/></button>}</>}
       </div>
      </section>

@@ -1,7 +1,7 @@
 // Dependency-free pure selector tests; full browser/build QA is separate.
 const assert=require('node:assert/strict');
 const fs=require('node:fs');const Module=require('node:module');
-const ts=require('/opt/nvm/versions/node/v22.16.0/lib/node_modules/typescript/lib/typescript.js');
+const ts=require('typescript');
 const original=Module._extensions['.ts'];
 Module._extensions['.ts']=function(m,file){const source=fs.readFileSync(file,'utf8');const result=ts.transpileModule(source,{fileName:file,compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}});m._compile(result.outputText,file)};
 const {buildPsaDatasets,employeesAt,psaCsv,assignmentAt}=require('../lib/psaDataSupport.ts');

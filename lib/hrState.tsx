@@ -8,6 +8,7 @@ import {writeAuditEvent,changedFields} from "./auditTrail";
 import type {EmployeeLifecycleCase} from "./employeeLifecycle";
 import type {JobLevel,EmploymentArrangement} from "./employeeDemographics";
 import type {FinalPayCase} from "./finalPayReview";
+import type {ProbationAssessment} from "./probationAssessments";
 export type EmployeeAssignment={
  id:string;effectiveDate:string;kind:"Initial Assignment"|"Transfer"|"Promotion"|"Reassignment";
  branch:string;department:string;position:string;memoId?:string;memoType?:string;
@@ -37,16 +38,17 @@ export type PayrollRelease={
  salaryDestination?:SalaryDestination; // masked snapshot at time of SAMPLE release
 };
 export type Submission={id:string;employeeId:string;type:string;fileName:string;submittedBy:string;status:"Pending HR Review"|"Approved"|"Rejected";reason:string};
-export type HRState={lifecycleCases?:EmployeeLifecycleCase[];finalPayCases?:FinalPayCase[];payrollConfig?:PayrollConfig;people:HRPerson[];rates:Record<string,PremiumProfile>;assets:AssetRecord[];submissions:Submission[];payrollReleases:PayrollRelease[];earnings:Record<string,{days:number;ot:number;bonus:number;adjustment:number}>;deductions:Record<string,{sss:number;philhealth:number;pagibig:number;tax:number;loan:number}>};
+export type HRState={probationAssessments?:ProbationAssessment[];lifecycleCases?:EmployeeLifecycleCase[];finalPayCases?:FinalPayCase[];payrollConfig?:PayrollConfig;people:HRPerson[];rates:Record<string,PremiumProfile>;assets:AssetRecord[];submissions:Submission[];payrollReleases:PayrollRelease[];earnings:Record<string,{days:number;ot:number;bonus:number;adjustment:number}>;deductions:Record<string,{sss:number;philhealth:number;pagibig:number;tax:number;loan:number}>};
 const requirements=["Resume","Medical Clearance","Employment Contract","NDA / Company Policies","Government IDs"];
 export const defaultRate:PremiumProfile={ot:125,rdw:130,rdot:169,regular:200,special:130,effective:"2026-10-01",reason:"Company reference profile"};
-export const deptRate:Record<string,Partial<PremiumProfile>>={Operations:{ot:200,rdw:200,rdot:260},Service:{ot:150}};
+export const deptRate:Record<string,Partial<PremiumProfile>>={Operations:{ot:125,rdw:200,rdot:260},Service:{ot:150}};
 export const initialState:HRState={
+ probationAssessments:[],
  lifecycleCases:[],
  finalPayCases:[],
  payrollConfig:initialPayrollConfig,
  people:samples.map((p,i)=>({...p,...demoProfileFor(i),probation:p.status==="Probationary"?6:0,sil:5,vil:i%2?5:0,documents:requirements.map((name,j)=>({name,status:j===0?"Verified":j===1?"Missing":"Submitted"})),timeline:[`${p.hire} · Hired at ${p.branch}`],assignmentHistory:[{id:`initial-${p.id}`,effectiveDate:p.hire,kind:"Initial Assignment" as const,branch:p.branch,department:p.department,position:p.position}]})),
- rates:{"UC-0001":{...defaultRate,ot:200,rdw:200,rdot:260,effective:"2026-10-01",reason:"Approved individual reference profile"}},
+ rates:{"UC-0001":{...defaultRate,ot:125,rdw:200,rdot:260,effective:"2026-10-01",reason:"Approved individual reference profile"}},
  assets:[
  {id:"AST-1001",homeBranch:"UC Mandaluyong",name:"Mac mini M2",serial:"UC-MAC-1001",status:"Assigned",employeeId:"UC-0001",condition:"Good",accessories:"Keyboard, power cable",history:["2026-10-03 · Assigned to UC-0001"],signed:true,date:"2026-10-03"},
  {id:"AST-1002",homeBranch:"UC Las Piñas",name:"Canon EOS R50",serial:"UC-CAM-2002",status:"Free",employeeId:"",condition:"Good",accessories:"Lens, battery, charger",history:["2026-09-20 · Registered"],signed:false,date:"2026-09-20"},
@@ -68,7 +70,7 @@ const HRContext=createContext<ContextValue|null>(null);
 export function HRProvider({children}:{children:ReactNode}){
  const [data,setData]=useState<HRState>(initialState);const [ready,setReady]=useState(false);
  const previousSaved=useRef<string|null>(null);
- useEffect(()=>{try{const raw=window.localStorage.getItem(KEY);if(raw){const loaded=JSON.parse(raw) as Partial<HRState>;if(Array.isArray(loaded.people)&&Array.isArray(loaded.assets)){const seedKey="uc-hr-demo-profile-enrichment-v1";const shouldSeed=window.localStorage.getItem(seedKey)!=="1";setData({...initialState,...loaded,people:shouldSeed?enrichExistingDemoProfiles(loaded.people):loaded.people,lifecycleCases:Array.isArray(loaded.lifecycleCases)?loaded.lifecycleCases:[],finalPayCases:Array.isArray(loaded.finalPayCases)?loaded.finalPayCases:[],earnings:loaded.earnings||{},deductions:loaded.deductions||{},payrollReleases:loaded.payrollReleases||initialState.payrollReleases,payrollConfig:normalizePayrollConfig(loaded.payrollConfig)});if(shouldSeed)window.localStorage.setItem(seedKey,"1");}}}catch{}setReady(true)},[]);
+ useEffect(()=>{try{const raw=window.localStorage.getItem(KEY);if(raw){const loaded=JSON.parse(raw) as Partial<HRState>;if(Array.isArray(loaded.people)&&Array.isArray(loaded.assets)){const seedKey="uc-hr-demo-profile-enrichment-v1";const shouldSeed=window.localStorage.getItem(seedKey)!=="1";setData({...initialState,...loaded,people:shouldSeed?enrichExistingDemoProfiles(loaded.people):loaded.people,lifecycleCases:Array.isArray(loaded.lifecycleCases)?loaded.lifecycleCases:[],probationAssessments:Array.isArray(loaded.probationAssessments)?loaded.probationAssessments:[],finalPayCases:Array.isArray(loaded.finalPayCases)?loaded.finalPayCases:[],earnings:loaded.earnings||{},deductions:loaded.deductions||{},payrollReleases:loaded.payrollReleases||initialState.payrollReleases,payrollConfig:normalizePayrollConfig(loaded.payrollConfig)});if(shouldSeed)window.localStorage.setItem(seedKey,"1");}}}catch{}setReady(true)},[]);
  useEffect(()=>{if(!ready)return;
   const next=JSON.stringify(data),prior=previousSaved.current;
   if(next===prior)return;
@@ -76,7 +78,7 @@ export function HRProvider({children}:{children:ReactNode}){
   previousSaved.current=next;
   if(prior===null)return; // initial loading of stored or seeded data is not a user change
   try{const before=JSON.parse(prior) as HRState;
-   const groups:[keyof HRState,string][]=[["people","Employee 201"],["lifecycleCases","Employee Lifecycle"],["finalPayCases","Final Pay Review"],["assets","Assets"],["payrollReleases","Payroll Releases"],["submissions","Document Intake"],["rates","Compensation Rates"],["earnings","Payroll Earnings"],["deductions","Payroll Deductions"],["payrollConfig","Payroll Configuration"]];
+   const groups:[keyof HRState,string][]=[["people","Employee 201"],["lifecycleCases","Employee Lifecycle"],["probationAssessments","Probationary Assessments"],["finalPayCases","Final Pay Review"],["assets","Assets"],["payrollReleases","Payroll Releases"],["submissions","Document Intake"],["rates","Compensation Rates"],["earnings","Payroll Earnings"],["deductions","Payroll Deductions"],["payrollConfig","Payroll Configuration"]];
    for(const [key,module] of groups){
     if(JSON.stringify(before[key])===JSON.stringify(data[key]))continue;
     const oldVal=before[key],newVal=data[key];

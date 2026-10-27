@@ -16,3 +16,8 @@
 .hrms-unified-workspace > :not(.hrms-unified-tabs){min-width:0}
 .hrms-tools .drive-shell,.hrms-tools .sw-home,.hrms-tools .studio-scope{max-width:100%;min-width:0}
 @media(max-width:720px){.hrms-unified-tabs{width:100%;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain}.hrms-unified-tabs button{flex:0 0 auto}.hrms-unified-workspace{gap:9px}}
+/* Employee 201 identity selector — searching never creates an unverified name. */
+.uc-employee-picker{display:flex;flex-direction:column;gap:5px;min-width:0}
+.uc-employee-picker label{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:13px}
+.uc-employee-picker input,.uc-employee-picker select{width:100%;max-width:100%;min-width:0;min-height:36px;padding:7px 9px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#1e293b;font:inherit}
+.uc-employee-picker small{color:#64748b;font-size:11px;overflow-wrap:anywhere}

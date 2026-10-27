@@ -2,12 +2,13 @@
 import type {HRState} from "./hrState";
 import {outstandingCustody} from "./employeeLifecycle";
 import type {Role} from "./mock";
+import {reconciliationForEmployee,type ThirteenthSettlement} from "./thirteenthSettlement";
 
 export type FinalPayStatus="Draft"|"For HR Review"|"HR Reviewed"|"Returned for Correction"|"Accounting Handoff (Demo)"|"Payment Recorded (Demo)";
 export type FinalPayAmounts={unpaidBasic:number;thirteenthAdjustment:number;leaveConversion:number;otherEarnings:number;taxWithholding:number;loanRecovery:number;otherDeductions:number};
 export type FinalPayReferences={attendance:string;payroll:string;loans:string;assets:string;statutory:string};
 export type FinalPayEvent={at:string;actor:string;action:string;from:string;to:string;reference:string};
-export type FinalPayCase={clearanceStatus?:"Pending"|"In Progress"|"Cleared"|"Outstanding Issues";clearanceNote?:string;clearanceBy?:string;clearanceAt?:string;paymentReference?:string;paymentAt?:string;closedAt?:string;closedBy?:string;id:string;lifecycleCaseId:string;employeeId:string;branch:string;createdAt:string;createdBy:string;status:FinalPayStatus;lastWorkingDay:string;amounts:FinalPayAmounts;references:FinalPayReferences;notes:string;reviewedBy?:string;reviewedAt?:string;handoffAt?:string;history:FinalPayEvent[]};
+export type FinalPayCase={thirteenthSnapshot?:ThirteenthSettlement;clearanceStatus?:"Pending"|"In Progress"|"Cleared"|"Outstanding Issues";clearanceNote?:string;clearanceBy?:string;clearanceAt?:string;paymentReference?:string;paymentAt?:string;paymentRecordedAt?:string;closedAt?:string;closedBy?:string;id:string;lifecycleCaseId:string;employeeId:string;branch:string;createdAt:string;createdBy:string;status:FinalPayStatus;lastWorkingDay:string;amounts:FinalPayAmounts;references:FinalPayReferences;notes:string;reviewedBy?:string;reviewedAt?:string;handoffAt?:string;history:FinalPayEvent[]};
 export type FinalPayResult={ok:true;record:FinalPayCase}|{ok:false;error:string};
 export const finalPayFields:[keyof FinalPayAmounts,string][]=[
  ["unpaidBasic","Unpaid basic wages (verified)"],["thirteenthAdjustment","13th-month adjustment (verified)"],
@@ -34,6 +35,13 @@ export function finalPayBlockers(state:HRState,record:FinalPayCase):string[]{
  const p=state.people.find(x=>x.id===record.employeeId);
  const errors:string[]=[];
  if(!c||c.status!=="Applied (Demo)")errors.push("A completed offboarding lifecycle review is required.");
+ if(c&&p){
+  const current=reconciliationForEmployee(state,p,Number(c.effectiveDate.slice(0,4)),c.effectiveDate);
+  if(!current.complete)errors.push(`13th-month reconciliation incomplete: ${current.issues[0]}`);
+  if(!record.thirteenthSnapshot||JSON.stringify(record.thirteenthSnapshot)!==JSON.stringify(current))errors.push("13th-month calculation has changed or is not yet saved. Reconcile and save the latest calculation.");
+  if(current.complete&&Math.abs(record.amounts.thirteenthAdjustment-current.outstanding)>0.009)errors.push("13th-month final-pay amount does not match the verified remaining entitlement.");
+ }
+
  if(!p||p.status!=="Clearance Pending"||p.branch!==record.branch)errors.push("Employee must still be Clearance Pending in the original branch.");
  // Outstanding assets must be visible to HR but must NOT automatically block statutory final-pay review.
  if((state.payrollConfig?.payslipDrafts||[]).some(d=>d.employeeId===record.employeeId&&d.status!=="Released (Demo)"))errors.push("Unreleased regular-payroll drafts must be reviewed for overlap or duplication.");
@@ -54,10 +62,11 @@ export function createFinalPay(state:HRState,caseId:string,actor:string,role:Rol
  if(!p||p.status!=="Clearance Pending"||p.branch!==c.sourceBranch)return {ok:false,error:"Employee is no longer in eligible clearance status."};
  if((state.finalPayCases||[]).some(x=>x.lifecycleCaseId===caseId))return {ok:false,error:"A final-pay preparation already exists for this offboarding case."};
  if((state.finalPayCases||[]).some(x=>x.id===id))return {ok:false,error:"A duplicate final-pay reference was generated."};
- const record:FinalPayCase={id,lifecycleCaseId:c.id,employeeId:p.id,branch:p.branch,createdAt:now,createdBy:actor,status:"Draft",clearanceStatus:"Pending",lastWorkingDay:c.effectiveDate,amounts:blankFinalPayAmounts(),references:blankFinalPayReferences(),notes:"",history:[event(now,actor,"Created draft","None","Draft","Offboarding checklist handoff") ]};
+ const settlement=reconciliationForEmployee(state,p,Number(c.effectiveDate.slice(0,4)),c.effectiveDate);
+ const record:FinalPayCase={thirteenthSnapshot:settlement,id,lifecycleCaseId:c.id,employeeId:p.id,branch:p.branch,createdAt:now,createdBy:actor,status:"Draft",clearanceStatus:"Pending",lastWorkingDay:c.effectiveDate,amounts:{...blankFinalPayAmounts(),thirteenthAdjustment:settlement.complete?settlement.outstanding:0},references:blankFinalPayReferences(),notes:"",history:[event(now,actor,"Created draft","None","Draft","Offboarding checklist handoff") ]};
  return {ok:true,record};
 }
-export function reviseFinalPay(record:FinalPayCase,actor:string,role:Role,now:string,updates:{amounts:FinalPayAmounts;references:FinalPayReferences;lastWorkingDay:string;notes:string}):FinalPayResult{
+export function reviseFinalPay(record:FinalPayCase,actor:string,role:Role,now:string,updates:{amounts:FinalPayAmounts;references:FinalPayReferences;lastWorkingDay:string;notes:string;thirteenthSnapshot?:ThirteenthSettlement}):FinalPayResult{
  if(!finalPayRole(role)||!actor.trim())return {ok:false,error:"HR authorization required."};
  if(!["Draft","Returned for Correction"].includes(record.status))return {ok:false,error:"This review is locked. Return it for correction first."};
  if(finalPayFields.some(([key])=>!validMoney(updates.amounts[key])))return {ok:false,error:"Enter valid nonnegative amounts with at most two decimal places."};
@@ -91,12 +100,14 @@ export function reviewClearance(state:HRState,record:FinalPayCase,actor:string,r
  return {ok:true,record:{...record,clearanceStatus:status,clearanceNote:note.trim(),clearanceBy:actor,clearanceAt:now,history:[...record.history,event(now,actor,"Clearance review",record.clearanceStatus||"Pending",status,note.trim())]}};
 }
 /** Demo-only acknowledgement of external payment evidence. Not an actual Accounting transaction. */
-export function noteExternalPayment(record:FinalPayCase,actor:string,role:Role,now:string,reference:string):FinalPayResult{
+export function noteExternalPayment(record:FinalPayCase,actor:string,role:Role,now:string,reference:string,actualPaymentDate?:string):FinalPayResult{
  if(!finalPayRole(role)||!actor.trim())return {ok:false,error:"HR authorization required."};
  if(record.status!=="Accounting Handoff (Demo)")return {ok:false,error:"Record Accounting handoff first."};
  if(record.createdBy===actor)return {ok:false,error:"Independent reviewer must record the external payment reference."};
  if(reference.trim().length<8)return {ok:false,error:"Provide an external Accounting/payment reference of at least 8 characters."};
- return {ok:true,record:{...record,status:"Payment Recorded (Demo)",paymentReference:reference.trim(),paymentAt:now,history:[...record.history,event(now,actor,"External payment reference recorded",record.status,"Payment Recorded (Demo)",reference.trim())]}};
+ const paid=actualPaymentDate||now.slice(0,10);
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(paid)||Number.isNaN(Date.parse(`${paid}T00:00:00Z`))||new Date(`${paid}T00:00:00Z`).toISOString().slice(0,10)!==paid||paid>now.slice(0,10))return {ok:false,error:"Enter the actual (not future) payment date."};
+ return {ok:true,record:{...record,status:"Payment Recorded (Demo)",paymentReference:reference.trim(),paymentAt:paid,paymentRecordedAt:now,history:[...record.history,event(now,actor,"External payment reference recorded",record.status,"Payment Recorded (Demo)",reference.trim())]}};
 }
 export function closeSeparationReview(state:HRState,record:FinalPayCase,actor:string,role:Role,now:string,reference:string):FinalPayResult{
  if(!finalPayRole(role)||!actor.trim())return {ok:false,error:"HR authorization required."};

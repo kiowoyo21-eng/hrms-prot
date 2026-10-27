@@ -14,13 +14,15 @@ const people=[employee('UC-001','UC Las Piñas'),employee('UC-002','UC Mandaluyo
 let rows=[];let records=[];
 for(const p of people){for(let i=0;i<7;i++){let d=new Date('2026-10-22T00:00:00Z');d.setUTCDate(d.getUTCDate()+i);rows.push({employeeId:p.id,branch:p.branch,date:d.toISOString().slice(0,10),status:i===6?'Rest Day':'Present',workedHours:i===6?0:8,lateMinutes:0,approvedOtHours:0,otApproved:false})}records.push({branch:p.branch,periodStart:'2026-10-22',periodEnd:'2026-10-28',status:'Verified'})}
 const cfg={attendanceRecords:records,attendanceRows:rows,rateChanges:[],holidayRules:[],payslipDrafts:[]};
-const state={people,payrollReleases:[],assets:[],lifecycleCases:[],finalPayCases:[]};
-let uc=reviewCompanyPayroll(state,cfg,'Underchargers','2026-10-22','2026-10-28');
+const state={people,rates:{},payrollReleases:[],assets:[],lifecycleCases:[],finalPayCases:[]};
+const schedules=people.map(p=>({id:'TEST-'+p.id,employeeId:p.id,branch:p.branch,month:'2026-10',offDates:['2026-10-28'],status:'Published',version:1,updatedAt:'2026-10-01T00:00:00Z',updatedBy:'BM'}));
+let uc=reviewCompanyPayroll(state,cfg,'Underchargers','2026-10-22','2026-10-28',schedules);
+assert.equal(reviewCompanyPayroll(state,cfg,'Underchargers','2026-10-22','2026-10-28').blocked.length,2,'Missing published OPS schedule must block company payroll');
 assert.equal(uc.employees.length,2);assert.equal(uc.blocked.length,0);assert.equal(uc.employees[0].basic,4200); // 6 verified present days
-let mm=reviewCompanyPayroll(state,cfg,'Mastermind','2026-10-22','2026-10-28');assert.equal(mm.employees.length,1);assert.equal(mm.employees[0].employeeId,'MM-001');
+let mm=reviewCompanyPayroll(state,cfg,'Mastermind','2026-10-22','2026-10-28',schedules);assert.equal(mm.employees.length,1);assert.equal(mm.employees[0].employeeId,'MM-001');
 let incomplete={...cfg,attendanceRows:rows.filter(x=>!(x.employeeId==='UC-002'&&x.date==='2026-10-25'))};
-assert.equal(reviewCompanyPayroll(state,incomplete,'Underchargers','2026-10-22','2026-10-28').blocked.length,1);
-let duplicate={...cfg,payslipDrafts:[{employeeId:'UC-001',periodStart:'2026-10-22',periodEnd:'2026-10-28'}]};assert.equal(reviewCompanyPayroll(state,duplicate,'Underchargers','2026-10-22','2026-10-28').blocked.length,1);
+assert.equal(reviewCompanyPayroll(state,incomplete,'Underchargers','2026-10-22','2026-10-28',schedules).blocked.length,1);
+let duplicate={...cfg,payslipDrafts:[{employeeId:'UC-001',periodStart:'2026-10-22',periodEnd:'2026-10-28'}]};assert.equal(reviewCompanyPayroll(state,duplicate,'Underchargers','2026-10-22','2026-10-28',schedules).blocked.length,1);
 const clearanceState={...state,people:people.map(p=>p.id==='UC-001'?{...p,status:'Clearance Pending'}:p)};
 let withAsset={...clearanceState,assets:[{id:'A1',employeeId:'UC-001',status:'Assigned'}]};
 const base={id:'FP-01',employeeId:'UC-001',branch:'UC Las Piñas',lifecycleCaseId:'L1',createdBy:'maker',status:'Accounting Handoff (Demo)',amounts:{unpaidBasic:0,thirteenthAdjustment:0,leaveConversion:0,otherEarnings:0,taxWithholding:0,loanRecovery:0,otherDeductions:0},references:{attendance:'attendance123',payroll:'payroll123',loans:'reviewed123',assets:'assetpending',statutory:'statutory123'},lastWorkingDay:'2026-10-22',notes:'',history:[]};

@@ -4,6 +4,7 @@ import {useHR} from '../lib/hrState';
 import {useEffect,useState} from 'react';
 import {useLoanLedger} from '../lib/useLoanLedger';
 import {reconcileAutoPayroll} from '../lib/autoPayroll';
+import {OPS_SCHEDULE_KEY,OPS_PERMIT_KEY,type OpsMonth,type OpsPermit} from '../lib/opsRestDays';
 import {normalizePayrollConfig} from '../lib/payrollConfig';
 import {localToday,cutoffForDate,addCutoffDays,reminderState,employeeCoverage} from '../lib/attendanceUpload';
 import {usePublishModuleAlerts,type ModuleAlert} from './ModuleAlerts';
@@ -13,16 +14,19 @@ export default function PayrollCutoffAlertPublisher(){
  const [loans]=useLoanLedger();
  const [today,setToday]=useState(localToday);
  useEffect(()=>{const check=()=>setToday(localToday());const interval=window.setInterval(check,60000);document.addEventListener('visibilitychange',check);return ()=>{window.clearInterval(interval);document.removeEventListener('visibilitychange',check)}},[]);
+ const [opsRevision,setOpsRevision]=useState(0);
+ useEffect(()=>{const reload=()=>setOpsRevision(v=>v+1);window.addEventListener('storage',reload);window.addEventListener('focus',reload);window.addEventListener('hrms-ops-evidence-changed',reload);return()=>{window.removeEventListener('storage',reload);window.removeEventListener('focus',reload);window.removeEventListener('hrms-ops-evidence-changed',reload)}},[]);
+ const readOps=<T,>(key:string):T[]=>{try{const value=JSON.parse(window.localStorage.getItem(key)||'[]');return Array.isArray(value)?value:[]}catch{return []}};
  const cfg=normalizePayrollConfig(data.payrollConfig);
  useEffect(()=>{
   if(!ready||!cfg.attendanceRecords.some(a=>a.status==='Verified'&&a.periodEnd<=today))return;
   update(prev=>{
    const p=normalizePayrollConfig(prev.payrollConfig);
-   const result=reconcileAutoPayroll({cfg:p,people:prev.people,premiums:prev.rates,loans,releases:prev.payrollReleases,today});
+   const result=reconcileAutoPayroll({cfg:p,people:prev.people,premiums:prev.rates,loans,releases:prev.payrollReleases,today,schedules:readOps<OpsMonth>(OPS_SCHEDULE_KEY),permits:readOps<OpsPermit>(OPS_PERMIT_KEY)});
    if(result.created===0&&result.refreshed===0)return prev;
    return {...prev,payrollConfig:{...p,payslipDrafts:result.drafts}};
   });
- },[ready,today,cfg.attendanceRecords,cfg.attendanceRows,cfg.rateChanges,cfg.deductionVersions,cfg.monthlyBases,cfg.birExemptEmployees,data.people,data.rates,data.payrollReleases,loans,update]);
+ },[ready,today,cfg.attendanceRecords,cfg.attendanceRows,cfg.rateChanges,cfg.deductionVersions,cfg.monthlyBases,cfg.monthlySalaryDivisor,cfg.monthlyDivisorReviewedAt,cfg.opsCombinedHolidayRates,cfg.holidayRules,cfg.birExemptEmployees,opsRevision,data.people,data.rates,data.payrollReleases,loans,update]);
  const current=cutoffForDate(today),prev=addCutoffDays(current,-7);
  const branches:string[]=[...new Set<string>(data.people.map(p=>p.branch))];
  const alerts:ModuleAlert[]=[];

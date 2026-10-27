@@ -7,7 +7,7 @@ const loader=(code)=>{const m={exports:{}};new Function('require','module','expo
 const m=loader(js);
 assert.deepEqual(m.bulkHeaders('BIR'),['min','max','rate','fixed','effective']);
 assert.deepEqual(m.bulkHeaders('SSS'),['min','max','employee','employer','effective']);
-assert.deepEqual(m.bulkHeaders('Attendance'),['Employee ID','Date','Time In','Time Out','Status','Approved OT Hours','OT Approved','Notes']);
+assert.deepEqual(m.bulkHeaders('Attendance'),['Employee ID','Date','Time In','Time Out','Status','Approved OT Hours','OT Approved','Scheduled Rest Day','Notes']);
 let preview=m.validateDeductionRows([m.bulkHeaders('BIR'),['0','100','0','0','2027-01-01'],['100.01','999999999','15','0','2027-01-01']],'BIR');
 assert.equal(preview.errors.length,0,JSON.stringify(preview.errors));assert.equal(preview.rows.length,2);assert.equal(preview.effective,'2027-01-01');
 assert(preview.warnings.some(x=>x.includes('WEEKLY')));

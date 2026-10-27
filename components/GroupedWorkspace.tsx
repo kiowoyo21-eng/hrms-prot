@@ -23,7 +23,7 @@ function Tabs<T extends string>({label,options,value,onChange}:{label:string;opt
 }
 export function RequestReportsWorkspace({branch,role,username,tab,setTab}:{branch:Branch;role:Role;username:string;tab:RequestTab;setTab:(value:RequestTab)=>void}){
  return <div className="hrms-unified-workspace"><Tabs label="Request and Reports" value={tab} onChange={setTab} options={[{id:"forms",title:"HR Forms & Requests",icon:<ClipboardList size={17}/>},{id:"incidents",title:"Incident Reports",icon:<FileWarning size={17}/>}]} />
-  {tab==="forms"?<HRFormsRequestsWorkspace branch={branch} role={role} username={username}/>:<IncidentWorkspace branch={branch} role={role}/>}
+  {tab==="forms"?<HRFormsRequestsWorkspace branch={branch} role={role} username={username}/>:<IncidentWorkspace branch={branch} role={role} username={username}/>}
  </div>;
 }
 export function UnifiedReportsWorkspace({branch,role,tab,setTab}:{branch:Branch;role:Role;tab:ReportTab;setTab:(value:ReportTab)=>void}){

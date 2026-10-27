@@ -13,6 +13,7 @@ export function useLocalRecords<T>(key:string,seed:T):[T,Dispatch<SetStateAction
   if(next===old){if(!hasStored.current)try{localStorage.setItem(`uc-hr-ui-${key}`,next);hasStored.current=true}catch{}return;}
   try{localStorage.setItem(`uc-hr-ui-${key}`,next);hasStored.current=true}catch{return}
   lastStored.current=next;
+  window.dispatchEvent(new CustomEvent("hrms:localrecords",{detail:key}));
   if(old!==null){
    try{const previous=JSON.parse(old) as unknown;
     const oldItems=Array.isArray(previous)?previous:[],newItems=Array.isArray(value)?value:[];
