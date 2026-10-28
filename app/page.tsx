@@ -52,7 +52,7 @@ export default function Home(){return <HRProvider><ModuleAlertsProvider><Payroll
 function HRApp(){
  const [user,setUser]=useState<User|null>(null),[sessionReady,setSessionReady]=useState(false),[username,setUsername]=useState(""),[password,setPassword]=useState(""),[showPassword,setShowPassword]=useState(false),[loginError,setLoginError]=useState("");
  const [auditRecords,setAuditRecords]=useState<AuditEvent[]>([]);
- const [requestTab,setRequestTab]=useState<"forms"|"incidents">("forms");
+ const [requestTab,setRequestTab]=useState<"forms"|"incidents"|"erp">("forms");
  const [reportsTab,setReportsTab]=useState<"reports"|"demographics">("reports");
  const [toolsTab,setToolsTab]=useState<"drive"|"spreadsheets"|"library"|"forms">("drive");
  const [assetPrefill,setAssetPrefill]=useState(""),[payrollPrefill,setPayrollPrefill]=useState(""),[page,setPage]=useState<ModuleId>("dashboard"),[branch,setBranch]=useState<Branch>("All Shops"),[menu,setMenu]=useState(false),[signatureName,setSignatureName]=useState(""),[toast,setToast]=useState("");

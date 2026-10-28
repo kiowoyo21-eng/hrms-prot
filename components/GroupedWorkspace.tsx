@@ -4,10 +4,11 @@ import {HrmsTabs} from "./ui/HrmsPrimitives";
 import "../app/studio/studio.css";
 import "../app/spreadsheets/spreadsheet.css";
 import "../app/tools-file-view.css";
-import {ClipboardList,FileWarning,ChartNoAxesCombined,Users,HardDrive,FileSpreadsheet,Files,ListChecks} from "lucide-react";
+import {ClipboardList,FileWarning,FileSpreadsheet as CsvReportIcon,ChartNoAxesCombined,Users,HardDrive,FileSpreadsheet,Files,ListChecks} from "lucide-react";
 import FormBuilderWorkspace from "./intake/FormBuilderWorkspace";
 import HRFormsRequestsWorkspace from "./HRFormsRequestsWorkspace";
 import IncidentWorkspace from "./IncidentWorkspace";
+import ErpRelatedReportsWorkspace from "./ErpRelatedReportsWorkspace";
 import ReportsLanding from "./ReportsLanding";
 import EmployeeDemographicsWorkspace from "./EmployeeDemographicsWorkspace";
 import DriveWorkspace from "./workspace/DriveWorkspace";
@@ -15,15 +16,15 @@ import SpreadsheetPageClient from "./SpreadsheetPageClient";
 import StudioIndex from "./studio/StudioIndex";
 import type {Branch,Role} from "../lib/mock";
 
-type RequestTab="forms"|"incidents";
+type RequestTab="forms"|"incidents"|"erp";
 type ReportTab="reports"|"demographics";
 type ToolTab="drive"|"spreadsheets"|"library"|"forms";
 function Tabs<T extends string>({label,options,value,onChange}:{label:string;options:{id:T;title:string;icon:ReactNode}[];value:T;onChange:(value:T)=>void}){
  return <HrmsTabs label={label} items={options.map(option=>({id:option.id,label:option.title,icon:option.icon}))} value={value} onChange={onChange}/>;
 }
 export function RequestReportsWorkspace({branch,role,username,tab,setTab}:{branch:Branch;role:Role;username:string;tab:RequestTab;setTab:(value:RequestTab)=>void}){
- return <div className="hrms-unified-workspace"><Tabs label="Request and Reports" value={tab} onChange={setTab} options={[{id:"forms",title:"HR Forms & Requests",icon:<ClipboardList size={17}/>},{id:"incidents",title:"Incident Reports",icon:<FileWarning size={17}/>}]} />
-  {tab==="forms"?<HRFormsRequestsWorkspace branch={branch} role={role} username={username}/>:<IncidentWorkspace branch={branch} role={role} username={username}/>}
+ return <div className="hrms-unified-workspace"><Tabs label="Request and Reports" value={tab} onChange={setTab} options={[{id:"forms",title:"HR Forms & Requests",icon:<ClipboardList size={17}/>},{id:"incidents",title:"Incident Reports",icon:<FileWarning size={17}/>},{id:"erp",title:"ERP Related Reports",icon:<CsvReportIcon size={17}/>}]} />
+  {tab==="forms"?<HRFormsRequestsWorkspace branch={branch} role={role} username={username}/>:tab==="incidents"?<IncidentWorkspace branch={branch} role={role} username={username}/>:<ErpRelatedReportsWorkspace branch={branch} role={role} username={username}/>}
  </div>;
 }
 export function UnifiedReportsWorkspace({branch,role,tab,setTab}:{branch:Branch;role:Role;tab:ReportTab;setTab:(value:ReportTab)=>void}){

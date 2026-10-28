@@ -1,0 +1,16 @@
+.ops-roster{margin:14px 0 18px;border:1px solid var(--border,#e2e5e9);border-radius:12px;padding:14px;background:var(--card,#fff)}
+.ops-roster-heading{display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.ops-roster-heading h4{margin:0 0 3px;font-size:1rem}
+.ops-roster-heading p{margin:0;color:var(--muted,#667085);font-size:.82rem}
+.ops-roster-heading label{font-size:.78rem;color:var(--muted,#667085)}
+.ops-roster-heading select{display:block;margin-top:4px;padding:7px 8px;max-width:230px}
+.ops-roster-table{min-width:780px}
+.ops-roster-table td,.ops-roster-table th{vertical-align:middle;padding:8px 10px}
+.ops-roster-table td select{max-width:150px;width:100%;padding:7px 8px}
+.ops-roster-small{display:block;font-size:.73rem;opacity:.76;margin-top:2px}
+.ops-roster-dates{display:block;max-width:215px;font-size:.75rem;overflow-wrap:anywhere;line-height:1.5}
+.ops-roster-actions{display:flex;gap:6px;align-items:center}
+.ops-roster-actions button{white-space:nowrap}
+@media(max-width:800px){.ops-roster{padding:10px}.ops-roster-table{min-width:720px}}
+
+.ops-roster-detail{margin:12px 0;max-width:460px}.ops-roster-detail label{font-size:.83rem;font-weight:600}.ops-roster-detail select{display:block;width:100%;margin-top:6px;padding:8px;border-radius:7px}
