@@ -30,7 +30,7 @@ const ids=['probation-standards','preemployment-checklist','statutory-contributi
 const onboarding=['employee-information','job-offer','employment-contract','orientation-acknowledgment'];
 for (const id of ids) {assert.ok(catalog.includes(`source("${id}"`),`Catalog id missing ${id}`);assert.ok(registry.includes(`"${id}":`),`Printable id missing ${id}`)}
 for(const id of onboarding) assert.ok(registry.includes(`"${id}":`),`Onboarding id missing ${id}`);
-assert.equal(fs.readdirSync(templateDir).filter(x=>x.endsWith('.tsx')).length,17,'Each source/onboarding template has an independent TSX component');
+assert.equal(fs.readdirSync(templateDir).filter(x=>x.endsWith('.tsx')).length,18,'Source, onboarding, and incident templates each have an independent TSX component');
 const paper=source(path.join(root,'components/formPrint/Paper.tsx'));
 assert.ok(paper.includes('Blank signature line'),'Signature placeholders must not pretend to be signed');
 const preview=source(path.join(root,'components/formPrint/FormPrintPreview.tsx'));
@@ -44,4 +44,4 @@ for (const [company,filename] of [['UC','underchargers.png'],['MM','mastermind.p
 }
 const css=source(path.join(root,'components/formPrint/printForms.css'));
 assert.ok(css.includes('@page{size:A4 portrait')&&css.includes('print-color-adjust'),'A4 print styles missing');
-console.log(`PASS: ${files.length} TypeScript/TSX source files, 17 individual forms, 13 catalog mappings, company logos, routes, printer and permissions-preserving linkage`);
+console.log(`PASS: ${files.length} TypeScript/TSX source files, 18 individual forms, 13 catalog mappings, company logos, routes, printer and permissions-preserving linkage`);
