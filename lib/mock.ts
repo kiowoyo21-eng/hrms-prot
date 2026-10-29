@@ -1,5 +1,7 @@
-export type Role = "Super Admin" | "HR" | "BM" | "Special Final Approver — Ms Kate";
+export type Role = "Super Admin" | "HR" | "BM" | "Dept Head" | "Special Final Approver — Ms Kate";
 export const isHrRole=(role:Role):boolean=>role==="HR"||role==="Special Final Approver — Ms Kate";
+/** Display four core roles without changing legacy access keys. */
+export const roleDisplayName=(role:Role)=>role==="Super Admin"?"ADMIN":role==="Special Final Approver — Ms Kate"?"HR · Final Approver":role;
 export type Branch = "All Shops" | "UC Mandaluyong" | "UC Las Piñas" | "UC Quezon City" | "MM Mandaluyong";
 export const branches: Branch[] = ["All Shops","UC Mandaluyong","UC Las Piñas","UC Quezon City","MM Mandaluyong"];
 export const modules = [
@@ -35,9 +37,10 @@ export const permissions: Record<Role, ModuleId[]> = {
  "Super Admin":modules.map(m=>m.id),
  "HR":HR_MODULES,
  "BM": ["dashboard","submissions","hr-forms","requests-reports","lifecycle","leave","ir","settings"],
+ "Dept Head": ["dashboard","hr-forms","requests-reports","settings"],
  "Special Final Approver — Ms Kate": [...HR_MODULES,"final-approvals"]
 };
-export const demoAccounts = [{username:"admin",password:"admin12345",role:"Super Admin" as Role},{username:"hraccount",password:"hraccount12345",role:"HR" as Role},{username:"bmaccount",password:"bm12345",role:"BM" as Role},{username:"mskate",password:"mskate-demo12345",role:"Special Final Approver — Ms Kate" as Role}];
+export const demoAccounts = [{username:"admin",password:"admin12345",role:"Super Admin" as Role},{username:"hraccount",password:"hraccount12345",role:"HR" as Role},{username:"hrreviewer",password:"hrreviewer-demo12345",role:"HR" as Role},{username:"bmaccount",password:"bm12345",role:"BM" as Role},{username:"marketinghead",password:"marketing-demo12345",role:"Dept Head" as Role},{username:"pmhead",password:"pm-demo12345",role:"Dept Head" as Role},{username:"mskate",password:"mskate-demo12345",role:"Special Final Approver — Ms Kate" as Role}];
 export const activity=[
  {module:"Payroll",text:"Payroll calculation preview requested",user:"HR Sample",date:"Oct 11, 2026"},
  {module:"Employee 201",text:"Onboarding requirement flagged",user:"HR Sample",date:"Oct 10, 2026"},

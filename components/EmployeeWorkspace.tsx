@@ -16,6 +16,8 @@ import {useHR,effectiveRate,type HRPerson,type EmployeeAssignment} from "../lib/
 import HelpButton from "./HelpButton";
 import Employee201BulkImportDialog from "./Employee201BulkImportDialog";
 import EmployeeIncidentHistoryPanel from "./EmployeeIncidentHistoryPanel";
+import EmployeeRequestHistoryPanel from "./EmployeeRequestHistoryPanel";
+import {HRMS_PENDING_EMPLOYEE} from "../lib/requestNavigation";
 import {HrmsDialog} from "./ui/HrmsPrimitives";
 import EmployeeFullRecord,{toEmployeeFullDraft,statutoryMask,type EmployeeFullDraft,type EmployeeInfoSection} from "./workspace/EmployeeFullRecord";
 import EmployeeDocumentLibrary,{type LocalEmployeeFile} from "./EmployeeDocumentLibrary";
@@ -217,6 +219,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
   setHistoryKind(null);setRequestedMemo(null);setRequestedFolder(null);setDetailKind(null);
   setMessage("");setAdd(false);
  };
+ useEffect(()=>{try{const id=window.sessionStorage.getItem(HRMS_PENDING_EMPLOYEE);if(id&&data.people.some(p=>p.id===id&&inBranch(p.branch,branch))){window.sessionStorage.removeItem(HRMS_PENDING_EMPLOYEE);openProfile(id)}}catch{}},[branch,data.people]);
  const backToDirectory=()=>{
   setSelected(null);setHistoryKind(null);setRequestedMemo(null);setRequestedFolder(null);setDetailKind(null);setAction(null);setEditing(false);setPersonal(null);setEmploymentDraft(null);setMessage("");setAdd(false);
  };
@@ -599,7 +602,7 @@ export default function EmployeeWorkspace({branch,role,onAssignDevice,onOpenPayr
         <h4>Premium Pay Rates</h4><div className="emp201-dialog-facts">{[["Overtime",effectiveRate(person,data.rates).ot],["Rest Day",effectiveRate(person,data.rates).rdw],["Rest-Day OT",effectiveRate(person,data.rates).rdot],["Regular Holiday",effectiveRate(person,data.rates).regular],["Special Day",effectiveRate(person,data.rates).special]].map(([n,v])=><div key={n}><small>{n}</small><b>{v}%</b></div>)}</div><p className="muted">Sample browser payroll records only. Actual pay history and government deductions require backend integration.</p>
        </>}
        {detailKind==="reviews"&&<><h4>Performance Assessments</h4>{evaluations.length?evaluations.map((t,i)=><div className="emp201-dialog-entry" key={i}><ClipboardList size={16}/><span>{t}</span></div>):<p className="muted">No assessments recorded yet. Use Employee Actions → Record Assessment to add one.</p>}</>}
-       {detailKind==="history"&&<><h4>Employment Timeline</h4>{person.timeline.map((t,i)=><div className="emp201-dialog-entry" key={i}><BriefcaseBusiness size={16}/><span>{t}</span></div>)}<div className="emp201-dialog-subhead"><h4>Assignment Memos</h4><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("role")}}>Open Assignment History <ArrowRight size={14}/></button></div><EmployeeIncidentHistoryPanel employeeId={person.id} role={role}/></>}
+       {detailKind==="history"&&<><h4>Employment Timeline</h4>{person.timeline.map((t,i)=><div className="emp201-dialog-entry" key={i}><BriefcaseBusiness size={16}/><span>{t}</span></div>)}<div className="emp201-dialog-subhead"><h4>Assignment Memos</h4><button type="button" className="secondary" onClick={()=>{setDetailKind(null);setHistoryKind("role")}}>Open Assignment History <ArrowRight size={14}/></button></div><EmployeeIncidentHistoryPanel employeeId={person.id} role={role}/>{(role==="HR"||role==="Special Final Approver — Ms Kate"||role==="Super Admin")&&<EmployeeRequestHistoryPanel employeeId={person.id}/>}</>}
        {detailKind==="assets"&&<><div className="emp201-dialog-facts"><div><small>Employment Status</small><b>{person.status}</b></div><div><small>Outstanding Devices</small><b>{assignedAssets.length}</b></div></div><h4>Assigned Asset Records</h4>{assignedAssets.length?assignedAssets.map(a=><div className="emp201-dialog-entry" key={a.id}><Laptop size={16}/><span><b>{a.name}</b><small>{a.id} · {a.status}</small></span></div>):<p className="muted">No outstanding assigned devices.</p>}{assignedAssets.length>0&&<p className="muted">Outstanding devices require retrieval and inspection before final clearance.</p>}{onAssignDevice&&!(["Clearance Pending","Separated"].includes(person.status))&&<button type="button" className="secondary" onClick={()=>{setDetailKind(null);openAssetsForPerson()}}>Assign Device <ArrowRight size={14}/></button>}</>}
       </div>
      </section>

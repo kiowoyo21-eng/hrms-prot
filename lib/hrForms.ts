@@ -1,9 +1,10 @@
 /** Local-only documentation workflow. Approval of a documentation request does not
  * create a leave entitlement, permit, payroll entry, legal filing or disbursement. */
 import type {Branch,Role} from "./mock";
+import {canActOnAssignedRequest,type RequestRoute} from "./requestRouting";
 import type {HRFormAttachment} from "./hrFormEvidence";
 export type FormKind="Overtime Authorization"|"Work Permit / Work Authorization"|"Leave Documentation"|"Workplace Dispute / Grievance"|"Employee Document Request"|"Attendance Correction"|"Schedule Change"|"Incident Statement"|"Asset Clearance"|"Employment Certificate Request"|"Policy Acknowledgment"|"Notice to Explain / Employee Response"|"Return-to-Work Clearance"|"Official Business / Field Assignment"|"Separation & Clearance Request"|"Cash Advance Request";
-export type FormStatus="Draft"|"Submitted"|"Returned for Revision"|"Approved (Documentation Only)"|"Rejected";
+export type FormStatus="Draft"|"Submitted"|"Returned for Revision"|"For Additional Documents"|"Approved (Documentation Only)"|"Rejected";
 export type FormField={key:string;label:string;type:"text"|"date"|"time"|"textarea"|"select";required:boolean;options?:string[]};
 export type FormSchema={kind:FormKind;description:string;fields:FormField[]};
 const field=(key:string,label:string,type:FormField["type"]="text",required=true,options?:string[]):FormField=>({key,label,type,required,options});
@@ -26,7 +27,7 @@ export const formSchemas:FormSchema[]=[
  {kind:"Separation & Clearance Request",description:"Clearance-document request only, not final pay release or actual employment termination.",fields:[field("lastDay","Proposed last working day","date"),field("reason","Separation reference","textarea"),field("assets","Asset return checklist reference"),field("caseId","Employee Lifecycle case reference","text",false)]}
 ];
 export const formKinds=formSchemas.map(x=>x.kind);
-export type HRFormRecord={id:string;externalId?:string;source?:"Employee Handoff (Unverified)"|"HR-assisted";kind:FormKind;branch:Exclude<Branch,"All Shops">;employeeId:string;requestor:string;createdAt:string;updatedAt:string;status:FormStatus;fields:Record<string,string>;additionalLabels?:Record<string,string>;attachments?:HRFormAttachment[];evidenceRefs:string;remarks:string;reviewedBy?:string;reviewedAt?:string;history:{at:string;actor:string;action:string;status:FormStatus}[]};
+export type HRFormRecord={id:string;externalId?:string;source?:"Employee Handoff (Unverified)"|"HR-assisted";kind:FormKind;branch:Exclude<Branch,"All Shops">;employeeId:string;requestor:string;createdAt:string;updatedAt:string;status:FormStatus;route?:RequestRoute;fields:Record<string,string>;additionalLabels?:Record<string,string>;attachments?:HRFormAttachment[];evidenceRefs:string;remarks:string;reviewedBy?:string;reviewedAt?:string;history:{at:string;actor:string;action:string;status:FormStatus}[]};
 export const FORM_STORE_KEY="uc-hr-forms-documentation-v1";
 export const FORM_STORE_EVENT="uc-hr-forms-changed";
 export function validateFields(kind:FormKind,values:Record<string,string>):string[]{
@@ -44,22 +45,25 @@ export function validateFields(kind:FormKind,values:Record<string,string>):strin
  return errors;
 }
 export function canViewForm(record:HRFormRecord,actor:string,role:Role,branch:Branch){
- if(role==="BM")return branch!=="All Shops"&&record.branch===branch&&record.requestor===actor; // role and branch scoped
+ if(role==="BM"||role==="Dept Head")return (branch==="All Shops"||record.branch===branch)&&(record.requestor===actor||canActOnAssignedRequest(actor,role,record.route));
  return branch==="All Shops"||record.branch===branch;
 }
 export function canReviewForm(record:HRFormRecord,actor:string,role:Role){
- return (role==="HR"||role==="Special Final Approver — Ms Kate"||role==="Super Admin")&&record.requestor!==actor&&record.status==="Submitted";
+ if(record.requestor===actor||record.status!=="Submitted")return false;
+ // Old records have no assigned route: retain their existing HR-only documentation review.
+ if(record.route)return canActOnAssignedRequest(actor,role,record.route);
+ return role==="HR"||role==="Special Final Approver — Ms Kate"||role==="Super Admin";
 }
-export function transitionForm(record:HRFormRecord,action:"Submit"|"Approve"|"Reject"|"Return",actor:string,role:Role,remarks:string,now:string):HRFormRecord{
+export function transitionForm(record:HRFormRecord,action:"Submit"|"Approve"|"Reject"|"Return"|"Request Documents",actor:string,role:Role,remarks:string,now:string):HRFormRecord{
  if(!actor.trim())throw Error("Sign in is required");
  if(action==="Submit"){
-  if(record.requestor!==actor||!(["Draft","Returned for Revision"] as FormStatus[]).includes(record.status))throw Error("Cannot submit this request");
+  if(record.requestor!==actor||!(["Draft","Returned for Revision","For Additional Documents"] as FormStatus[]).includes(record.status))throw Error("Cannot submit this request");
   const errors=validateFields(record.kind,record.fields);if(errors.length)throw Error(errors[0]);
  }else{
   if(!canReviewForm(record,actor,role))throw Error("Only a separate authorized reviewer may decide a submitted request");
-  if((action==="Reject"||action==="Return")&&!remarks.trim())throw Error("Reason is required");
+  if((action==="Reject"||action==="Return"||action==="Request Documents")&&!remarks.trim())throw Error("Reason is required");
  }
- const status:FormStatus=action==="Submit"?"Submitted":action==="Approve"?"Approved (Documentation Only)":action==="Reject"?"Rejected":"Returned for Revision";
+ const status:FormStatus=action==="Submit"?"Submitted":action==="Approve"?"Approved (Documentation Only)":action==="Reject"?"Rejected":action==="Request Documents"?"For Additional Documents":"Returned for Revision";
  return {...record,status,updatedAt:now,remarks:remarks.trim().slice(0,1000),...(action==="Submit"?{reviewedBy:undefined,reviewedAt:undefined}:{reviewedBy:actor,reviewedAt:now}),history:[...record.history,{at:now,actor,action,status}]};
 }
 export function readForms():HRFormRecord[]{if(typeof window==="undefined")return [];try{const v=JSON.parse(localStorage.getItem(FORM_STORE_KEY)||"[]");return Array.isArray(v)?v.filter(x=>x&&typeof x.id==="string"&&typeof x.requestor==="string"&&typeof x.kind==="string"&&typeof x.branch==="string"&&Array.isArray(x.history)&&x.fields&&typeof x.fields==="object").slice(-800):[]}catch{return []}}
@@ -67,5 +71,5 @@ export function persistForms(records:HRFormRecord[]):boolean{if(typeof window===
 /** Unsigned internal draft for records review. Never a filing, permit or signature. */
 export function formDraftText(record:HRFormRecord){
  const schema=formSchemas.find(s=>s.kind===record.kind);
- return ["HRMS INTERNAL DOCUMENTATION DRAFT", "NOT AN OFFICIAL GOVERNMENT FILING, SIGNATURE, WORK PERMIT, OR PAYROLL APPROVAL", "",`Request ID: ${record.id}`,`Type: ${record.kind}`,`Branch: ${record.branch}`,`Employee 201 ID: ${record.employeeId}`,`Requestor: ${record.requestor}`,`Status: ${record.status}`,`Created UTC: ${record.createdAt}`,"",...(schema?.fields||[]).map(f=>`${f.label}: ${record.fields[f.key]||"Not entered"}`),...Object.entries(record.additionalLabels||{}).map(([key,label])=>`${label}: ${record.fields[key]||"Not entered"}`),"",`Evidence references: ${record.evidenceRefs||"None"}`,`Last review remarks: ${record.remarks||"None"}`,"", "HISTORY",...record.history.map(h=>`${h.at} | ${h.actor} | ${h.action} | ${h.status}`),"", "Actual legal sufficiency, supporting documents, signatories, retention and approvals require authorized HR/legal review."].join("\n");
+ return ["HRMS INTERNAL DOCUMENTATION DRAFT", "NOT AN OFFICIAL GOVERNMENT FILING, SIGNATURE, WORK PERMIT, OR PAYROLL APPROVAL", "",`Request ID: ${record.id}`,`Type: ${record.kind}`,`Branch: ${record.branch}`,`Employee 201 ID: ${record.employeeId}`,`Requestor: ${record.requestor}`,`Status: ${record.status}`,`Assigned approver: ${record.route?.approverUsername||"Legacy HR review"}`,`Created UTC: ${record.createdAt}`,"",...(schema?.fields||[]).map(f=>`${f.label}: ${record.fields[f.key]||"Not entered"}`),...Object.entries(record.additionalLabels||{}).map(([key,label])=>`${label}: ${record.fields[key]||"Not entered"}`),"",`Evidence references: ${record.evidenceRefs||"None"}`,`Last review remarks: ${record.remarks||"None"}`,"", "HISTORY",...record.history.map(h=>`${h.at} | ${h.actor} | ${h.action} | ${h.status}`),"", "Actual legal sufficiency, supporting documents, signatories, retention and approvals require authorized HR/legal review."].join("\n");
 }
