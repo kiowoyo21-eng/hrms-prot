@@ -1,3 +1,4 @@
+import {activeStage,approveStage,canAct,resetPlan,type ApprovalPlan} from "./workspace/approval";
 /** Local-only documentation workflow. Approval of a documentation request does not
  * create a leave entitlement, permit, payroll entry, legal filing or disbursement. */
 import type {Branch,Role} from "./mock";
@@ -27,7 +28,7 @@ export const formSchemas:FormSchema[]=[
  {kind:"Separation & Clearance Request",description:"Clearance-document request only, not final pay release or actual employment termination.",fields:[field("lastDay","Proposed last working day","date"),field("reason","Separation reference","textarea"),field("assets","Asset return checklist reference"),field("caseId","Employee Lifecycle case reference","text",false)]}
 ];
 export const formKinds=formSchemas.map(x=>x.kind);
-export type HRFormRecord={id:string;externalId?:string;source?:"Employee Handoff (Unverified)"|"HR-assisted";kind:FormKind;branch:Exclude<Branch,"All Shops">;employeeId:string;requestor:string;createdAt:string;updatedAt:string;status:FormStatus;route?:RequestRoute;fields:Record<string,string>;additionalLabels?:Record<string,string>;attachments?:HRFormAttachment[];evidenceRefs:string;remarks:string;reviewedBy?:string;reviewedAt?:string;history:{at:string;actor:string;action:string;status:FormStatus}[]};
+export type HRFormRecord={id:string;externalId?:string;source?:"Employee Handoff (Unverified)"|"HR-assisted";kind:FormKind;branch:Exclude<Branch,"All Shops">;employeeId:string;requestor:string;createdAt:string;updatedAt:string;status:FormStatus;route?:RequestRoute;approvalPlan?:ApprovalPlan;fields:Record<string,string>;additionalLabels?:Record<string,string>;attachments?:HRFormAttachment[];evidenceRefs:string;remarks:string;reviewedBy?:string;reviewedAt?:string;history:{at:string;actor:string;action:string;status:FormStatus}[]};
 export const FORM_STORE_KEY="uc-hr-forms-documentation-v1";
 export const FORM_STORE_EVENT="uc-hr-forms-changed";
 export function validateFields(kind:FormKind,values:Record<string,string>):string[]{
@@ -45,11 +46,12 @@ export function validateFields(kind:FormKind,values:Record<string,string>):strin
  return errors;
 }
 export function canViewForm(record:HRFormRecord,actor:string,role:Role,branch:Branch){
- if(role==="BM"||role==="Dept Head")return (branch==="All Shops"||record.branch===branch)&&(record.requestor===actor||canActOnAssignedRequest(actor,role,record.route));
+ if(role==="BM"||role==="Dept Head")return (branch==="All Shops"||record.branch===branch)&&(record.requestor===actor||(record.approvalPlan?record.approvalPlan.stages.some(s=>s.members.some(m=>m.username===actor&&m.role===role)):canActOnAssignedRequest(actor,role,record.route)));
  return branch==="All Shops"||record.branch===branch;
 }
 export function canReviewForm(record:HRFormRecord,actor:string,role:Role){
  if(record.requestor===actor||record.status!=="Submitted")return false;
+ if(record.approvalPlan)return canAct(record.approvalPlan,actor,role);
  // Old records have no assigned route: retain their existing HR-only documentation review.
  if(record.route)return canActOnAssignedRequest(actor,role,record.route);
  return role==="HR"||role==="Special Final Approver — Ms Kate"||role==="Super Admin";
@@ -63,8 +65,11 @@ export function transitionForm(record:HRFormRecord,action:"Submit"|"Approve"|"Re
   if(!canReviewForm(record,actor,role))throw Error("Only a separate authorized reviewer may decide a submitted request");
   if((action==="Reject"||action==="Return"||action==="Request Documents")&&!remarks.trim())throw Error("Reason is required");
  }
- const status:FormStatus=action==="Submit"?"Submitted":action==="Approve"?"Approved (Documentation Only)":action==="Reject"?"Rejected":action==="Request Documents"?"For Additional Documents":"Returned for Revision";
- return {...record,status,updatedAt:now,remarks:remarks.trim().slice(0,1000),...(action==="Submit"?{reviewedBy:undefined,reviewedAt:undefined}:{reviewedBy:actor,reviewedAt:now}),history:[...record.history,{at:now,actor,action,status}]};
+ const plan=record.approvalPlan?(action==="Approve"?approveStage(record.approvalPlan,actor,role,now):action==="Submit"?resetPlan(record.approvalPlan):record.approvalPlan):undefined;
+ const status:FormStatus=action==="Approve"&&plan&&activeStage(plan)?"Submitted":action==="Submit"?"Submitted":action==="Approve"?"Approved (Documentation Only)":action==="Reject"?"Rejected":action==="Request Documents"?"For Additional Documents":"Returned for Revision";
+ const nextMember=plan&&activeStage(plan)?.members.find(m=>!m.approvedAt);
+ const route=record.route&&nextMember?{...record.route,approverUsername:nextMember.username,approverRole:nextMember.role as import("./requestRouting").AssignedApproverRole}:record.route;
+ return {...record,route,approvalPlan:plan,status,updatedAt:now,remarks:remarks.trim().slice(0,1000),...(action==="Submit"?{reviewedBy:undefined,reviewedAt:undefined}:{reviewedBy:actor,reviewedAt:now}),history:[...record.history,{at:now,actor,action,status}]};
 }
 export function readForms():HRFormRecord[]{if(typeof window==="undefined")return [];try{const v=JSON.parse(localStorage.getItem(FORM_STORE_KEY)||"[]");return Array.isArray(v)?v.filter(x=>x&&typeof x.id==="string"&&typeof x.requestor==="string"&&typeof x.kind==="string"&&typeof x.branch==="string"&&Array.isArray(x.history)&&x.fields&&typeof x.fields==="object").slice(-800):[]}catch{return []}}
 export function persistForms(records:HRFormRecord[]):boolean{if(typeof window==="undefined")return false;try{localStorage.setItem(FORM_STORE_KEY,JSON.stringify(records.slice(-800)));window.dispatchEvent(new Event(FORM_STORE_EVENT));return true}catch{return false}}

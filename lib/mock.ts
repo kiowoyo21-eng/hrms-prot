@@ -26,18 +26,20 @@ export const modules = [
  {id:"spreadsheets",name:"Spreadsheets",icon:"FileSpreadsheet",count:0},
  {id:"studio",name:"Document Library",icon:"FilePenLine",count:0},
  {id:"audit",name:"Audit Logs",icon:"ScrollText",count:2},
- {id:"settings",name:"Settings",icon:"Settings",count:0}
+ {id:"settings",name:"Settings",icon:"Settings",count:0},
+ {id:"it-support",name:"IT Support",icon:"Laptop",count:0},
+ {id:"employee-app-review",name:"Employee App Review",icon:"ClipboardCheck",count:0}
 ] as const;
 export type ModuleId = typeof modules[number]["id"] | "loans"; // internal legacy alert key; loans workspace now belongs under payroll
-const HR_MODULES:ModuleId[]=["dashboard","lifecycle","employees","demographics","hr-forms","requests-reports","reports-analytics","tools","payroll","leave","ir","assets","compliance","documents","filters","drive","spreadsheets","studio","settings"];
+const HR_MODULES:ModuleId[]=["dashboard","lifecycle","employees","demographics","hr-forms","requests-reports","reports-analytics","tools","payroll","leave","ir","assets","compliance","documents","filters","drive","spreadsheets","studio","settings","it-support","employee-app-review"];
 /** Legacy module IDs remain routable for notification actions and existing workflows. */
 export const HIDDEN_SIDEBAR_MODULES:readonly ModuleId[]=["demographics","hr-forms","ir","filters","drive","spreadsheets","studio","submissions"];
 export const isAuditAdmin=(role:Role):boolean=>role==="Super Admin";
 export const permissions: Record<Role, ModuleId[]> = {
  "Super Admin":modules.map(m=>m.id),
  "HR":HR_MODULES,
- "BM": ["dashboard","submissions","hr-forms","requests-reports","lifecycle","leave","ir","settings"],
- "Dept Head": ["dashboard","hr-forms","requests-reports","settings"],
+ "BM": ["dashboard","submissions","hr-forms","requests-reports","lifecycle","leave","ir","settings","it-support"],
+ "Dept Head": ["dashboard","hr-forms","requests-reports","settings","it-support"],
  "Special Final Approver — Ms Kate": [...HR_MODULES,"final-approvals"]
 };
 export const demoAccounts = [{username:"admin",password:"admin12345",role:"Super Admin" as Role},{username:"hraccount",password:"hraccount12345",role:"HR" as Role},{username:"hrreviewer",password:"hrreviewer-demo12345",role:"HR" as Role},{username:"bmaccount",password:"bm12345",role:"BM" as Role},{username:"marketinghead",password:"marketing-demo12345",role:"Dept Head" as Role},{username:"pmhead",password:"pm-demo12345",role:"Dept Head" as Role},{username:"mskate",password:"mskate-demo12345",role:"Special Final Approver — Ms Kate" as Role}];

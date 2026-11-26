@@ -9,10 +9,10 @@ import FormPrintPreview from "./formPrint/FormPrintPreview";
 import styles from "./RequestReview.module.css";
 import {FileText,Printer,Paperclip,ClipboardCheck,Clock3,ArrowLeft} from "lucide-react";
 const pretty=(v:string)=>{const d=new Date(v);return Number.isNaN(d.valueOf())?v:d.toLocaleString("en-PH",{timeZone:"Asia/Manila",dateStyle:"medium",timeStyle:"short"})};
-export default function RequestReviewDetail({record,employeeName,position,department,username,role,canDecide,remarks,onRemarks,onAction,onAttachment,onVerify,onEdit,onAssistResubmit,onDownload,onBack}:{
+export default function RequestReviewDetail({record,employeeName,position,department,username,role,canDecide,remarks,onRemarks,onAction,onAttachment,onVerify,onEdit,onAssistResubmit,onDownload,onBack,onReassign}:{
  record:HRFormRecord;employeeName:string;position?:string;department?:string;username:string;role:Role;canDecide:boolean;remarks:string;onRemarks:(v:string)=>void;
  onAction:(action:"Approve"|"Reject"|"Return"|"Request Documents")=>void;onAttachment:(file:File|null)=>void;
- onVerify:(id:string,decision:"Verified"|"Rejected")=>void;onEdit:()=>void;onAssistResubmit:()=>void;onDownload:()=>void;onBack:()=>void;
+ onVerify:(id:string,decision:"Verified"|"Rejected")=>void;onEdit:()=>void;onAssistResubmit:()=>void;onDownload:()=>void;onBack:()=>void;onReassign?:(replacement:string,reason:string)=>void;
 }){
  const [printing,setPrinting]=useState(false);
  const editable=["Draft","Returned for Revision","For Additional Documents"].includes(record.status)&&record.requestor===username;
@@ -25,6 +25,7 @@ export default function RequestReviewDetail({record,employeeName,position,depart
    <div className={styles.detailStatus}><span data-status={record.status}>{record.status}</span><small>Assigned to {record.route?.approverUsername||"HR legacy review"}</small></div>
   </header>
   <div className={styles.detailActions}><button type="button" className="secondary" onClick={()=>setPrinting(true)}><Printer size={15}/> Print / PDF</button><button type="button" className="secondary" onClick={onDownload}><FileText size={15}/> Unsigned text copy</button>{editable&&<button type="button" className="secondary" onClick={onEdit}>Edit / resubmit</button>}</div>
+  {record.approvalPlan&&<section className={styles.subsection}><h4>Assigned workflow</h4>{record.approvalPlan.stages.map((stage,i)=><div key={stage.id}><b>Stage {i+1} · {stage.mode}</b><p>{stage.members.map(m=>`${m.username}: ${m.approvedAt?"approved":"pending"}`).join(" · ")}</p></div>)}{canDecide&&onReassign&&<button type="button" className="secondary" onClick={()=>{const name=window.prompt("Eligible replacement username");if(name){const why=window.prompt("Reason for reassignment");if(why)onReassign(name,why)}}}>Reassign my stage</button>}</section>}
   <div className={styles.formPreviewLabel}><FileText size={16}/><b>Submitted Form</b><small>Live preview of the saved request · company-specific layout</small></div>
   <InlineRequestForm record={record} employeeName={employeeName} position={position} department={department}/>
   <section className={styles.subsection}><h4><Paperclip size={16}/> Supporting Documents & Verification</h4><p className={styles.hint}>Attached files are linked to this request. Original files must be available before marking Verified. Browser-local evidence is not secure permanent storage.</p>

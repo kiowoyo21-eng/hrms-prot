@@ -1,4 +1,5 @@
 "use client";
+import DriveNoticeIndex from "./DriveNoticeIndex";
 import {useEffect,useMemo,useRef,useState} from "react";
 import Link from "next/link";
 import {ArrowLeft,ChevronRight,Download,ExternalLink,File,FileSpreadsheet,FileText,FileType2,Folder,HardDrive,LayoutGrid,List,Search,Trash2,FolderPlus,Upload,Ellipsis,RotateCcw,FolderInput,Pencil,Plus,FilePlus2} from "lucide-react";
@@ -55,7 +56,7 @@ export default function DriveWorkspace({embedded=false}:{embedded?:boolean}){
  <button type="button" className={mode==="trash"?"selected":""} onClick={()=>{setMode("trash");setQuery("")}}><Trash2 size={17}/> Trash</button>
  {!embedded&&<><hr/><Link href="/studio"><FileText size={17}/> Documents</Link><Link href="/spreadsheets"><FileSpreadsheet size={17}/> Spreadsheets</Link></>}
  </aside>
- <main className="drive-main"><div className="drive-toolbar"><div className="drive-path"><button type="button" onClick={()=>setFolder(null)}>My Drive</button>{folderPath.map(f=><span key={f.id}><ChevronRight size={15}/><button type="button" onClick={()=>setFolder(f.id)}>{f.name}</button></span>)}</div>
+ <main className="drive-main">{mode==="files"&&folder===null&&<DriveNoticeIndex actor={{...actor,branch:"All Shops"}} query={query}/>}<div className="drive-toolbar"><div className="drive-path"><button type="button" onClick={()=>setFolder(null)}>My Drive</button>{folderPath.map(f=><span key={f.id}><ChevronRight size={15}/><button type="button" onClick={()=>setFolder(f.id)}>{f.name}</button></span>)}</div>
  <label className="drive-search"><Search size={17}/><input aria-label="Search Drive files" placeholder="Search files or folders" value={query} onChange={e=>setQuery(e.target.value)}/></label></div>
  <div className="drive-title"><h2>{mode==="trash"?"Trash":folderPath.at(-1)?.name||"My Drive"}</h2><div className="drive-title-actions">
  {mode==="files"&&<details className="drive-new-menu" ref={newMenuRef}><summary aria-label="Create or upload file"><Plus size={16}/> New</summary><div className="drive-new-choices"><button type="button" onClick={()=>chooseNew("folder")}><FolderPlus size={17}/> New folder</button><button type="button" onClick={()=>chooseNew("new-doc")}><FilePlus2 size={17}/> New document</button><button type="button" onClick={()=>chooseNew("new-sheet")}><FileSpreadsheet size={17}/> New spreadsheet</button><button type="button" onClick={()=>chooseNew("upload")}><Upload size={17}/> Upload files</button></div></details>}

@@ -57,7 +57,7 @@ export function ModuleAlertButton({module,onOpen}:{module:ModuleId;branch:Branch
 }
 export function ModuleAlertSummary({module,branch}:{module:ModuleId;branch:Branch}){const {registry}=useModuleAlerts();const alerts=visibleAlerts(registry,module,branch);if(!alerts.length)return <span>No pending actions in loaded records</span>;return <span>{alerts.length} requiring action · {alerts.filter(a=>a.level==="urgent").length} high priority</span>}
 const alertCardIcons={lifecycle:BriefcaseBusiness,employees:Users,payroll:Wallet,leave:CalendarCheck,ir:FileWarning,assets:Laptop,documents:Files,compliance:Landmark,"hr-forms":ClipboardList,"final-approvals":ShieldCheck,submissions:FolderOpen} as const;
-const alertCardNames:Partial<Record<ModuleId,string>>={lifecycle:"Recruitment & Hiring",employees:"Employee 201",payroll:"Payroll Management",leave:"Leave Management",ir:"Incident Reports",assets:"Assets & Devices",documents:"Employee Documents",compliance:"Government Compliance","hr-forms":"HR Forms & Requests","final-approvals":"Final Approvals",submissions:"Employee Documents"};
+const alertCardNames:Partial<Record<ModuleId,string>>={lifecycle:"Recruitment & Hiring",employees:"Employee 201",payroll:"Payroll Management",leave:"Leave Management",ir:"Incident Reports",assets:"Assets & Devices",documents:"Employee Documents",compliance:"Government Compliance","hr-forms":"HR Forms & Requests","final-approvals":"Final Approvals",submissions:"Employee Documents","it-support":"IT Support"};
 export function DashboardModuleAlerts({branch,onNavigate,allowed}:{branch:Branch;onNavigate:(id:ModuleId)=>void;allowed:ModuleId[]}){
  const {registry}=useModuleAlerts();
  const [recordView,setRecordView]=useState<DashboardRecordView|null>(null);

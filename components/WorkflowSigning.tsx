@@ -9,13 +9,14 @@ type WorkflowSigningProps={
  documentFile?:File|null;
  /** Read-only rendered document content, e.g. the payable payslip summary. */
  documentText?:string;
+ onConfirmDemo?:(signature:string)=>void;
 };
 
 /** Frontend-only document review and signing demonstration.
  * Never issues a live signing link or saves a legally verifiable signature.
  * An actual source document must be available before drawing is enabled.
  */
-export default function WorkflowSigning({documentName,recipient,documentFile=null,documentText}:WorkflowSigningProps){
+export default function WorkflowSigning({documentName,recipient,documentFile=null,documentText,onConfirmDemo}:WorkflowSigningProps){
  const [method,setMethod]=useState<"device"|"remote">("device");
  const [drawn,setDrawn]=useState(false);
  const [previewed,setPreviewed]=useState(false);
@@ -65,6 +66,7 @@ export default function WorkflowSigning({documentName,recipient,documentFile=nul
    <p>{!documentReviewed?"Preview the source document and confirm review before using the demo signature pad.":"Demo signature is visible only in this browser; it is not stored or verified."}</p>
    <canvas ref={pad} width={700} height={160} aria-label="Demo signature drawing pad" onPointerDown={start} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} style={{touchAction:documentReviewed?"none":"auto",opacity:documentReviewed?1:0.5}}/>
    <div className="wf-signing-footer"><button type="button" className="secondary" onClick={reset}><RotateCcw size={14}/> Clear</button><button type="button" className="secondary" disabled={!drawn||!documentReviewed} onClick={()=>setPreviewed(true)}><CheckCircle2 size={14}/> Preview Captured Signature</button></div>
+   {previewed&&onConfirmDemo&&<button type="button" className="primary" onClick={()=>{if(pad.current&&window.confirm("Confirm demo signature on this exact document?")){onConfirmDemo(pad.current.toDataURL("image/png"));reset()}}}>Confirm demo signature</button>}
    {previewed&&<p className="wf-signing-feedback"><Info size={14}/> Browser-only preview. No authenticated signing, tamper-evident PDF or stored approval was created.</p>}
   </div>:<div className="wf-signing-remote"><QrCode size={29}/><div><strong>Secure QR / Link — Backend Required</strong><p>Real document-bound signing requires an authenticated backend, recipient identity validation, an expiring link and an archived signed PDF. No fake live link is generated.</p></div></div>}
  </div>;
