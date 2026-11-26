@@ -9,3 +9,7 @@ Frontend-only Next.js/React HRMS. No live Accounting, Cashier, or ERP integratio
 - [Master revision map](docs/revisions/MASTER-REVISION-MAP.md)
 
 This is a browser-local demonstration, **not** a production authentication, payroll or employee records system.
+
+## Workspace v1.0 integration review
+
+See [README_WORKSPACE_V1.md](README_WORKSPACE_V1.md) for the new standalone review, scope, local launch instructions and test limitations. Open `/workspace/index.html` from the original application. This is a separate fictional-data prototype, not a live backend.
